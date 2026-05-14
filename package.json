@@ -4,6 +4,8 @@
   "packageManager": "pnpm@10.11.0",
   "scripts": {
     "dev": "pnpm --parallel --filter @caltrek/web --filter @caltrek/shared-types dev",
+    "dev:api": "node -e \"const { spawn } = require('node:child_process'); const process = require('node:process'); const cwd = 'apps/api'; const child = process.platform === 'win32' ? spawn(process.env.ComSpec || 'cmd.exe', ['/d', '/s', '/c', 'gradlew.bat bootRun'], { cwd, stdio: 'inherit' }) : spawn('./gradlew', ['bootRun'], { cwd, stdio: 'inherit' }); child.on('exit', (code) => process.exit(code ?? 1));\"",
+    "dev:all": "node -e \"const { spawn } = require('node:child_process'); const process = require('node:process'); const run = (script) => process.platform === 'win32' ? spawn(process.env.ComSpec || 'cmd.exe', ['/d', '/s', '/c', `pnpm run ${script}`], { stdio: 'inherit' }) : spawn('pnpm', ['run', script], { stdio: 'inherit' }); const children = ['dev', 'dev:api'].map(run); let exiting = false; const stop = (code) => { if (exiting) return; exiting = true; children.forEach((child) => child.kill()); process.exit(code ?? 0); }; children.forEach((child) => child.on('exit', (code) => stop(code))); process.on('SIGINT', () => stop(130)); process.on('SIGTERM', () => stop(143));\"",
     "generate:api": "openapi-ts",
     "build": "pnpm -r build",
     "lint": "pnpm -r lint",
