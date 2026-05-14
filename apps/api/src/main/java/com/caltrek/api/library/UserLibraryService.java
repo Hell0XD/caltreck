@@ -1,6 +1,7 @@
 package com.caltrek.api.library;
 
 import com.caltrek.api.auth.ForbiddenException;
+import com.caltrek.api.common.InputNormalizer;
 import com.caltrek.api.common.NotFoundException;
 import com.caltrek.api.food.FoodRepository;
 import java.time.OffsetDateTime;
@@ -54,10 +55,10 @@ public class UserLibraryService {
                 UUID.randomUUID(),
                 userId,
                 request.foodId(),
-                blankToNull(request.label()),
+                InputNormalizer.blankToNull(request.label()),
                 request.favorite(),
                 request.defaultQuantity(),
-                blankToNull(request.defaultUnit()),
+                InputNormalizer.blankToNull(request.defaultUnit()),
                 now,
                 now);
     }
@@ -67,10 +68,10 @@ public class UserLibraryService {
                 existing.id(),
                 existing.userId(),
                 existing.foodId(),
-                blankToNull(request.label()),
+                InputNormalizer.blankToNull(request.label()),
                 request.favorite(),
                 request.defaultQuantity(),
-                blankToNull(request.defaultUnit()),
+                InputNormalizer.blankToNull(request.defaultUnit()),
                 existing.createdAt(),
                 OffsetDateTime.now());
     }
@@ -80,9 +81,5 @@ public class UserLibraryService {
             return Mono.error(new ForbiddenException("Library entry belongs to another user."));
         }
         return Mono.just(entry);
-    }
-
-    private String blankToNull(String value) {
-        return value == null || value.isBlank() ? null : value.trim();
     }
 }

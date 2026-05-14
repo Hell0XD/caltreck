@@ -1,5 +1,6 @@
 package com.caltrek.api.user;
 
+import com.caltrek.api.common.InputNormalizer;
 import com.caltrek.api.common.NotFoundException;
 import java.time.OffsetDateTime;
 import java.util.UUID;
@@ -19,10 +20,10 @@ public class UserService {
         OffsetDateTime now = OffsetDateTime.now();
         User user = new User(
                 UUID.randomUUID(),
-                request.email().trim().toLowerCase(),
+                InputNormalizer.normalizeEmail(request.email()),
                 null,
-                blankToNull(request.displayName()),
-                request.timezone() == null || request.timezone().isBlank() ? "UTC" : request.timezone().trim(),
+                InputNormalizer.blankToNull(request.displayName()),
+                InputNormalizer.normalizeTimezone(request.timezone()),
                 now,
                 now);
         return userRepository.save(user).map(UserResponse::from);
@@ -32,9 +33,5 @@ public class UserService {
         return userRepository.findById(id)
                 .switchIfEmpty(Mono.error(new NotFoundException("User was not found.")))
                 .map(UserResponse::from);
-    }
-
-    private String blankToNull(String value) {
-        return value == null || value.isBlank() ? null : value.trim();
     }
 }

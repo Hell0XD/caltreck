@@ -1,5 +1,6 @@
 package com.caltrek.api.food;
 
+import com.caltrek.api.common.InputNormalizer;
 import com.caltrek.api.common.NotFoundException;
 import java.time.OffsetDateTime;
 import java.util.UUID;
@@ -39,13 +40,13 @@ public class FoodService {
         Food food = new Food(
                 UUID.randomUUID(),
                 request.name().trim(),
-                blankToNull(request.brand()),
-                blankToNull(request.barcode()),
+                InputNormalizer.blankToNull(request.brand()),
+                InputNormalizer.blankToNull(request.barcode()),
                 "USER",
                 null,
-                blankToNull(request.locale()),
+                InputNormalizer.blankToNull(request.locale()),
                 request.servingSize(),
-                blankToNull(request.servingUnit()),
+                InputNormalizer.blankToNull(request.servingUnit()),
                 request.caloriesPer100g(),
                 zeroIfNull(request.proteinPer100g()),
                 zeroIfNull(request.carbsPer100g()),
@@ -59,12 +60,7 @@ public class FoodService {
         return foodRepository.save(food).map(FoodResponse::from);
     }
 
-    private String blankToNull(String value) {
-        return value == null || value.isBlank() ? null : value.trim();
-    }
-
     private java.math.BigDecimal zeroIfNull(java.math.BigDecimal value) {
         return value == null ? java.math.BigDecimal.ZERO : value;
     }
 }
-

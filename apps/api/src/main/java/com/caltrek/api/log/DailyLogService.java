@@ -1,6 +1,7 @@
 package com.caltrek.api.log;
 
 import com.caltrek.api.auth.ForbiddenException;
+import com.caltrek.api.common.InputNormalizer;
 import com.caltrek.api.common.NotFoundException;
 import com.caltrek.api.food.Food;
 import com.caltrek.api.food.FoodRepository;
@@ -138,10 +139,7 @@ public class DailyLogService {
     }
 
     private String normalizeUnit(String requestUnit, String fallbackUnit) {
-        if (requestUnit != null && !requestUnit.isBlank()) {
-            return requestUnit.trim();
-        }
-        return fallbackUnit == null || fallbackUnit.isBlank() ? "g" : fallbackUnit;
+        return InputNormalizer.blankToDefault(requestUnit, InputNormalizer.blankToDefault(fallbackUnit, "g"));
     }
 
     private record Nutrition(BigDecimal calories, BigDecimal protein, BigDecimal carbs, BigDecimal fat) {

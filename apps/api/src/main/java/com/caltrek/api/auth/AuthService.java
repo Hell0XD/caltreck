@@ -1,5 +1,6 @@
 package com.caltrek.api.auth;
 
+import com.caltrek.api.common.InputNormalizer;
 import com.caltrek.api.common.NotFoundException;
 import com.caltrek.api.user.User;
 import com.caltrek.api.user.UserRepository;
@@ -45,10 +46,10 @@ public class AuthService {
         OffsetDateTime now = OffsetDateTime.now();
         User user = new User(
                 UUID.randomUUID(),
-                normalizeEmail(request.email()),
+                InputNormalizer.normalizeEmail(request.email()),
                 passwordEncoder.encode(request.password()),
-                blankToNull(request.displayName()),
-                normalizeTimezone(request.timezone()),
+                InputNormalizer.blankToNull(request.displayName()),
+                InputNormalizer.normalizeTimezone(request.timezone()),
                 now,
                 now);
         return userRepository.save(user)
@@ -57,7 +58,7 @@ public class AuthService {
     }
 
     public Mono<AuthResponse> login(LoginRequest request) {
-        return userRepository.findByEmail(normalizeEmail(request.email()))
+        return userRepository.findByEmail(InputNormalizer.normalizeEmail(request.email()))
                 .filter(user -> user.passwordHash() != null
                         && passwordEncoder.matches(request.password(), user.passwordHash()))
                 .switchIfEmpty(Mono.error(new AuthException("Invalid email or password.")))
@@ -102,8 +103,8 @@ public class AuthService {
                         user.id(),
                         user.email(),
                         user.passwordHash(),
-                        blankToNull(request.displayName()),
-                        normalizeTimezone(request.timezone()),
+                        InputNormalizer.blankToNull(request.displayName()),
+                        InputNormalizer.normalizeTimezone(request.timezone()),
                         user.createdAt(),
                         OffsetDateTime.now()))
                 .flatMap(userRepository::save)
@@ -158,15 +159,4 @@ public class AuthService {
         }
     }
 
-    private String normalizeEmail(String email) {
-        return email.trim().toLowerCase();
-    }
-
-    private String normalizeTimezone(String timezone) {
-        return timezone == null || timezone.isBlank() ? "UTC" : timezone.trim();
-    }
-
-    private String blankToNull(String value) {
-        return value == null || value.isBlank() ? null : value.trim();
-    }
 }

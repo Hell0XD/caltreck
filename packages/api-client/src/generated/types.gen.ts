@@ -4,6 +4,18 @@ export type ClientOptions = {
     baseUrl: 'http://localhost:8080' | (string & {});
 };
 
+export type ProfileUpdateRequest = {
+    displayName?: string;
+    timezone: string;
+};
+
+export type UserResponse = {
+    id?: string;
+    email?: string;
+    displayName?: string;
+    timezone?: string;
+};
+
 export type UpdateDailyLogRequest = {
     logDate?: string;
     mealType?: 'BREAKFAST' | 'LUNCH' | 'DINNER' | 'SNACK';
@@ -23,19 +35,6 @@ export type DailyLogResponse = {
     protein?: number;
     carbs?: number;
     fat?: number;
-};
-
-export type CreateUserRequest = {
-    email: string;
-    displayName?: string;
-    timezone?: string;
-};
-
-export type UserResponse = {
-    id?: string;
-    email?: string;
-    displayName?: string;
-    timezone?: string;
 };
 
 export type SaveLibraryEntryRequest = {
@@ -101,6 +100,30 @@ export type FoodResponse = {
     saltPer100g?: number;
 };
 
+export type RegisterRequest = {
+    email: string;
+    password: string;
+    displayName?: string;
+    timezone?: string;
+};
+
+export type AuthResponse = {
+    accessToken?: string;
+    accessTokenExpiresAt?: string;
+    refreshToken?: string;
+    refreshTokenExpiresAt?: string;
+    user?: UserResponse;
+};
+
+export type RefreshTokenRequest = {
+    refreshToken: string;
+};
+
+export type LoginRequest = {
+    email: string;
+    password: string;
+};
+
 export type DailySummaryResponse = {
     userId?: string;
     logDate?: string;
@@ -110,6 +133,38 @@ export type DailySummaryResponse = {
     fat?: number;
     entries?: Array<DailyLogResponse>;
 };
+
+export type GetApiUsersMeData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/users/me';
+};
+
+export type GetApiUsersMeResponses = {
+    /**
+     * OK
+     */
+    200: UserResponse;
+};
+
+export type GetApiUsersMeResponse = GetApiUsersMeResponses[keyof GetApiUsersMeResponses];
+
+export type PutApiUsersMeData = {
+    body: ProfileUpdateRequest;
+    path?: never;
+    query?: never;
+    url: '/api/users/me';
+};
+
+export type PutApiUsersMeResponses = {
+    /**
+     * OK
+     */
+    200: UserResponse;
+};
+
+export type PutApiUsersMeResponse = PutApiUsersMeResponses[keyof PutApiUsersMeResponses];
 
 export type DeleteApiLogsDailyByIdData = {
     body?: never;
@@ -147,27 +202,11 @@ export type PutApiLogsDailyByIdResponses = {
 
 export type PutApiLogsDailyByIdResponse = PutApiLogsDailyByIdResponses[keyof PutApiLogsDailyByIdResponses];
 
-export type PostApiUsersData = {
-    body: CreateUserRequest;
-    path?: never;
-    query?: never;
-    url: '/api/users';
-};
-
-export type PostApiUsersResponses = {
-    /**
-     * Created
-     */
-    201: UserResponse;
-};
-
-export type PostApiUsersResponse = PostApiUsersResponses[keyof PostApiUsersResponses];
-
 export type GetApiUserLibraryData = {
     body?: never;
     path?: never;
-    query: {
-        userId: string;
+    query?: {
+        userId?: string;
         favoritesOnly?: boolean;
     };
     url: '/api/user-library';
@@ -202,7 +241,7 @@ export type GetApiLogsDailyData = {
     body?: never;
     path?: never;
     query: {
-        userId: string;
+        userId?: string;
         date: string;
     };
     url: '/api/logs/daily';
@@ -249,29 +288,75 @@ export type PostApiFoodsResponses = {
 
 export type PostApiFoodsResponse = PostApiFoodsResponses[keyof PostApiFoodsResponses];
 
-export type GetApiUsersByIdData = {
-    body?: never;
-    path: {
-        id: string;
-    };
+export type PostApiAuthRegisterData = {
+    body: RegisterRequest;
+    path?: never;
     query?: never;
-    url: '/api/users/{id}';
+    url: '/api/auth/register';
 };
 
-export type GetApiUsersByIdResponses = {
+export type PostApiAuthRegisterResponses = {
+    /**
+     * Created
+     */
+    201: AuthResponse;
+};
+
+export type PostApiAuthRegisterResponse = PostApiAuthRegisterResponses[keyof PostApiAuthRegisterResponses];
+
+export type PostApiAuthRefreshData = {
+    body: RefreshTokenRequest;
+    path?: never;
+    query?: never;
+    url: '/api/auth/refresh';
+};
+
+export type PostApiAuthRefreshResponses = {
     /**
      * OK
      */
-    200: UserResponse;
+    200: AuthResponse;
 };
 
-export type GetApiUsersByIdResponse = GetApiUsersByIdResponses[keyof GetApiUsersByIdResponses];
+export type PostApiAuthRefreshResponse = PostApiAuthRefreshResponses[keyof PostApiAuthRefreshResponses];
+
+export type PostApiAuthLogoutData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/auth/logout';
+};
+
+export type PostApiAuthLogoutResponses = {
+    /**
+     * No Content
+     */
+    204: void;
+};
+
+export type PostApiAuthLogoutResponse = PostApiAuthLogoutResponses[keyof PostApiAuthLogoutResponses];
+
+export type PostApiAuthLoginData = {
+    body: LoginRequest;
+    path?: never;
+    query?: never;
+    url: '/api/auth/login';
+};
+
+export type PostApiAuthLoginResponses = {
+    /**
+     * OK
+     */
+    200: AuthResponse;
+};
+
+export type PostApiAuthLoginResponse = PostApiAuthLoginResponses[keyof PostApiAuthLoginResponses];
 
 export type GetApiLogsDailySummaryData = {
     body?: never;
     path?: never;
     query: {
-        userId: string;
+        userId?: string;
         date: string;
     };
     url: '/api/logs/daily/summary';

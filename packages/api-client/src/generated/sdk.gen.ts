@@ -2,7 +2,7 @@
 
 import type { Client, Options as Options2, TDataShape } from './client';
 import { client } from './client.gen';
-import type { DeleteApiLogsDailyByIdData, DeleteApiLogsDailyByIdResponses, DeleteApiUserLibraryByIdData, DeleteApiUserLibraryByIdResponses, GetApiFoodsBarcodeByBarcodeData, GetApiFoodsBarcodeByBarcodeResponses, GetApiFoodsSearchData, GetApiFoodsSearchResponses, GetApiLogsDailyData, GetApiLogsDailyResponses, GetApiLogsDailySummaryData, GetApiLogsDailySummaryResponses, GetApiUserLibraryData, GetApiUserLibraryResponses, GetApiUsersByIdData, GetApiUsersByIdResponses, PostApiFoodsData, PostApiFoodsResponses, PostApiLogsDailyData, PostApiLogsDailyResponses, PostApiUserLibraryData, PostApiUserLibraryResponses, PostApiUsersData, PostApiUsersResponses, PutApiLogsDailyByIdData, PutApiLogsDailyByIdResponses } from './types.gen';
+import type { DeleteApiLogsDailyByIdData, DeleteApiLogsDailyByIdResponses, DeleteApiUserLibraryByIdData, DeleteApiUserLibraryByIdResponses, GetApiFoodsBarcodeByBarcodeData, GetApiFoodsBarcodeByBarcodeResponses, GetApiFoodsSearchData, GetApiFoodsSearchResponses, GetApiLogsDailyData, GetApiLogsDailyResponses, GetApiLogsDailySummaryData, GetApiLogsDailySummaryResponses, GetApiUserLibraryData, GetApiUserLibraryResponses, GetApiUsersMeData, GetApiUsersMeResponses, PostApiAuthLoginData, PostApiAuthLoginResponses, PostApiAuthLogoutData, PostApiAuthLogoutResponses, PostApiAuthRefreshData, PostApiAuthRefreshResponses, PostApiAuthRegisterData, PostApiAuthRegisterResponses, PostApiFoodsData, PostApiFoodsResponses, PostApiLogsDailyData, PostApiLogsDailyResponses, PostApiUserLibraryData, PostApiUserLibraryResponses, PutApiLogsDailyByIdData, PutApiLogsDailyByIdResponses, PutApiUsersMeData, PutApiUsersMeResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -46,19 +46,52 @@ class HeyApiRegistry<T> {
     }
 }
 
+export class Users extends HeyApiClient {
+    /**
+     * Get the current user profile
+     */
+    public getCurrentUser<ThrowOnError extends boolean = false>(options?: Options<GetApiUsersMeData, ThrowOnError>) {
+        return (options?.client ?? this.client).get<GetApiUsersMeResponses, unknown, ThrowOnError>({
+            security: [{ scheme: 'bearer', type: 'http' }],
+            url: '/api/users/me',
+            ...options
+        });
+    }
+    
+    /**
+     * Update the current user profile
+     */
+    public updateCurrentUser<ThrowOnError extends boolean = false>(options: Options<PutApiUsersMeData, ThrowOnError>) {
+        return (options.client ?? this.client).put<PutApiUsersMeResponses, unknown, ThrowOnError>({
+            security: [{ scheme: 'bearer', type: 'http' }],
+            url: '/api/users/me',
+            ...options,
+            headers: {
+                'Content-Type': 'application/json',
+                ...options.headers
+            }
+        });
+    }
+}
+
 export class DailyLogs extends HeyApiClient {
     /**
      * Delete a daily log entry
      */
-    public delete<ThrowOnError extends boolean = false>(options: Options<DeleteApiLogsDailyByIdData, ThrowOnError>) {
-        return (options.client ?? this.client).delete<DeleteApiLogsDailyByIdResponses, unknown, ThrowOnError>({ url: '/api/logs/daily/{id}', ...options });
+    public deleteDailyLog<ThrowOnError extends boolean = false>(options: Options<DeleteApiLogsDailyByIdData, ThrowOnError>) {
+        return (options.client ?? this.client).delete<DeleteApiLogsDailyByIdResponses, unknown, ThrowOnError>({
+            security: [{ scheme: 'bearer', type: 'http' }],
+            url: '/api/logs/daily/{id}',
+            ...options
+        });
     }
     
     /**
      * Update a daily log entry
      */
-    public update<ThrowOnError extends boolean = false>(options: Options<PutApiLogsDailyByIdData, ThrowOnError>) {
+    public updateDailyLog<ThrowOnError extends boolean = false>(options: Options<PutApiLogsDailyByIdData, ThrowOnError>) {
         return (options.client ?? this.client).put<PutApiLogsDailyByIdResponses, unknown, ThrowOnError>({
+            security: [{ scheme: 'bearer', type: 'http' }],
             url: '/api/logs/daily/{id}',
             ...options,
             headers: {
@@ -71,15 +104,20 @@ export class DailyLogs extends HeyApiClient {
     /**
      * List daily log entries
      */
-    public list1<ThrowOnError extends boolean = false>(options: Options<GetApiLogsDailyData, ThrowOnError>) {
-        return (options.client ?? this.client).get<GetApiLogsDailyResponses, unknown, ThrowOnError>({ url: '/api/logs/daily', ...options });
+    public listDailyLogs<ThrowOnError extends boolean = false>(options: Options<GetApiLogsDailyData, ThrowOnError>) {
+        return (options.client ?? this.client).get<GetApiLogsDailyResponses, unknown, ThrowOnError>({
+            security: [{ scheme: 'bearer', type: 'http' }],
+            url: '/api/logs/daily',
+            ...options
+        });
     }
     
     /**
      * Create a daily log entry
      */
-    public create1<ThrowOnError extends boolean = false>(options: Options<PostApiLogsDailyData, ThrowOnError>) {
+    public createDailyLog<ThrowOnError extends boolean = false>(options: Options<PostApiLogsDailyData, ThrowOnError>) {
         return (options.client ?? this.client).post<PostApiLogsDailyResponses, unknown, ThrowOnError>({
+            security: [{ scheme: 'bearer', type: 'http' }],
             url: '/api/logs/daily',
             ...options,
             headers: {
@@ -92,31 +130,12 @@ export class DailyLogs extends HeyApiClient {
     /**
      * Get daily macro summary
      */
-    public summary<ThrowOnError extends boolean = false>(options: Options<GetApiLogsDailySummaryData, ThrowOnError>) {
-        return (options.client ?? this.client).get<GetApiLogsDailySummaryResponses, unknown, ThrowOnError>({ url: '/api/logs/daily/summary', ...options });
-    }
-}
-
-export class Users extends HeyApiClient {
-    /**
-     * Create a user
-     */
-    public create<ThrowOnError extends boolean = false>(options: Options<PostApiUsersData, ThrowOnError>) {
-        return (options.client ?? this.client).post<PostApiUsersResponses, unknown, ThrowOnError>({
-            url: '/api/users',
-            ...options,
-            headers: {
-                'Content-Type': 'application/json',
-                ...options.headers
-            }
+    public getDailySummary<ThrowOnError extends boolean = false>(options: Options<GetApiLogsDailySummaryData, ThrowOnError>) {
+        return (options.client ?? this.client).get<GetApiLogsDailySummaryResponses, unknown, ThrowOnError>({
+            security: [{ scheme: 'bearer', type: 'http' }],
+            url: '/api/logs/daily/summary',
+            ...options
         });
-    }
-    
-    /**
-     * Find a user by ID
-     */
-    public find<ThrowOnError extends boolean = false>(options: Options<GetApiUsersByIdData, ThrowOnError>) {
-        return (options.client ?? this.client).get<GetApiUsersByIdResponses, unknown, ThrowOnError>({ url: '/api/users/{id}', ...options });
     }
 }
 
@@ -124,15 +143,20 @@ export class UserLibrary extends HeyApiClient {
     /**
      * List user library entries
      */
-    public list<ThrowOnError extends boolean = false>(options: Options<GetApiUserLibraryData, ThrowOnError>) {
-        return (options.client ?? this.client).get<GetApiUserLibraryResponses, unknown, ThrowOnError>({ url: '/api/user-library', ...options });
+    public listUserLibraryEntries<ThrowOnError extends boolean = false>(options?: Options<GetApiUserLibraryData, ThrowOnError>) {
+        return (options?.client ?? this.client).get<GetApiUserLibraryResponses, unknown, ThrowOnError>({
+            security: [{ scheme: 'bearer', type: 'http' }],
+            url: '/api/user-library',
+            ...options
+        });
     }
     
     /**
      * Save or update a user library entry
      */
-    public save<ThrowOnError extends boolean = false>(options: Options<PostApiUserLibraryData, ThrowOnError>) {
+    public saveUserLibraryEntry<ThrowOnError extends boolean = false>(options: Options<PostApiUserLibraryData, ThrowOnError>) {
         return (options.client ?? this.client).post<PostApiUserLibraryResponses, unknown, ThrowOnError>({
+            security: [{ scheme: 'bearer', type: 'http' }],
             url: '/api/user-library',
             ...options,
             headers: {
@@ -145,8 +169,12 @@ export class UserLibrary extends HeyApiClient {
     /**
      * Remove a user library entry
      */
-    public remove<ThrowOnError extends boolean = false>(options: Options<DeleteApiUserLibraryByIdData, ThrowOnError>) {
-        return (options.client ?? this.client).delete<DeleteApiUserLibraryByIdResponses, unknown, ThrowOnError>({ url: '/api/user-library/{id}', ...options });
+    public removeUserLibraryEntry<ThrowOnError extends boolean = false>(options: Options<DeleteApiUserLibraryByIdData, ThrowOnError>) {
+        return (options.client ?? this.client).delete<DeleteApiUserLibraryByIdResponses, unknown, ThrowOnError>({
+            security: [{ scheme: 'bearer', type: 'http' }],
+            url: '/api/user-library/{id}',
+            ...options
+        });
     }
 }
 
@@ -154,8 +182,9 @@ export class Foods extends HeyApiClient {
     /**
      * Create a user-entered food
      */
-    public create2<ThrowOnError extends boolean = false>(options: Options<PostApiFoodsData, ThrowOnError>) {
+    public createFood<ThrowOnError extends boolean = false>(options: Options<PostApiFoodsData, ThrowOnError>) {
         return (options.client ?? this.client).post<PostApiFoodsResponses, unknown, ThrowOnError>({
+            security: [{ scheme: 'bearer', type: 'http' }],
             url: '/api/foods',
             ...options,
             headers: {
@@ -168,15 +197,78 @@ export class Foods extends HeyApiClient {
     /**
      * Search local foods by name or brand
      */
-    public search<ThrowOnError extends boolean = false>(options: Options<GetApiFoodsSearchData, ThrowOnError>) {
-        return (options.client ?? this.client).get<GetApiFoodsSearchResponses, unknown, ThrowOnError>({ url: '/api/foods/search', ...options });
+    public searchFoods<ThrowOnError extends boolean = false>(options: Options<GetApiFoodsSearchData, ThrowOnError>) {
+        return (options.client ?? this.client).get<GetApiFoodsSearchResponses, unknown, ThrowOnError>({
+            security: [{ scheme: 'bearer', type: 'http' }],
+            url: '/api/foods/search',
+            ...options
+        });
     }
     
     /**
      * Find a local food by barcode
      */
-    public findByBarcode<ThrowOnError extends boolean = false>(options: Options<GetApiFoodsBarcodeByBarcodeData, ThrowOnError>) {
-        return (options.client ?? this.client).get<GetApiFoodsBarcodeByBarcodeResponses, unknown, ThrowOnError>({ url: '/api/foods/barcode/{barcode}', ...options });
+    public findFoodByBarcode<ThrowOnError extends boolean = false>(options: Options<GetApiFoodsBarcodeByBarcodeData, ThrowOnError>) {
+        return (options.client ?? this.client).get<GetApiFoodsBarcodeByBarcodeResponses, unknown, ThrowOnError>({
+            security: [{ scheme: 'bearer', type: 'http' }],
+            url: '/api/foods/barcode/{barcode}',
+            ...options
+        });
+    }
+}
+
+export class Authentication extends HeyApiClient {
+    /**
+     * Register a user
+     */
+    public registerUser<ThrowOnError extends boolean = false>(options: Options<PostApiAuthRegisterData, ThrowOnError>) {
+        return (options.client ?? this.client).post<PostApiAuthRegisterResponses, unknown, ThrowOnError>({
+            url: '/api/auth/register',
+            ...options,
+            headers: {
+                'Content-Type': 'application/json',
+                ...options.headers
+            }
+        });
+    }
+    
+    /**
+     * Refresh an authenticated session
+     */
+    public refreshSession<ThrowOnError extends boolean = false>(options: Options<PostApiAuthRefreshData, ThrowOnError>) {
+        return (options.client ?? this.client).post<PostApiAuthRefreshResponses, unknown, ThrowOnError>({
+            url: '/api/auth/refresh',
+            ...options,
+            headers: {
+                'Content-Type': 'application/json',
+                ...options.headers
+            }
+        });
+    }
+    
+    /**
+     * Logout the current user
+     */
+    public logoutUser<ThrowOnError extends boolean = false>(options?: Options<PostApiAuthLogoutData, ThrowOnError>) {
+        return (options?.client ?? this.client).post<PostApiAuthLogoutResponses, unknown, ThrowOnError>({
+            security: [{ scheme: 'bearer', type: 'http' }],
+            url: '/api/auth/logout',
+            ...options
+        });
+    }
+    
+    /**
+     * Login a user
+     */
+    public loginUser<ThrowOnError extends boolean = false>(options: Options<PostApiAuthLoginData, ThrowOnError>) {
+        return (options.client ?? this.client).post<PostApiAuthLoginResponses, unknown, ThrowOnError>({
+            url: '/api/auth/login',
+            ...options,
+            headers: {
+                'Content-Type': 'application/json',
+                ...options.headers
+            }
+        });
     }
 }
 
@@ -191,14 +283,14 @@ export class Api extends HeyApiClient {
         Api.__registry.set(this, args?.key);
     }
     
-    private _dailyLogs?: DailyLogs;
-    get dailyLogs(): DailyLogs {
-        return this._dailyLogs ??= new DailyLogs({ client: this.client });
-    }
-    
     private _users?: Users;
     get users(): Users {
         return this._users ??= new Users({ client: this.client });
+    }
+    
+    private _dailyLogs?: DailyLogs;
+    get dailyLogs(): DailyLogs {
+        return this._dailyLogs ??= new DailyLogs({ client: this.client });
     }
     
     private _userLibrary?: UserLibrary;
@@ -209,5 +301,10 @@ export class Api extends HeyApiClient {
     private _foods?: Foods;
     get foods(): Foods {
         return this._foods ??= new Foods({ client: this.client });
+    }
+    
+    private _authentication?: Authentication;
+    get authentication(): Authentication {
+        return this._authentication ??= new Authentication({ client: this.client });
     }
 }
