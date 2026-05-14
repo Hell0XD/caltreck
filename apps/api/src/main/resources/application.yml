@@ -1,0 +1,35 @@
+spring:
+  application:
+    name: caltrek-api
+  r2dbc:
+    url: ${SPRING_R2DBC_URL:r2dbc:postgresql://localhost:5432/caltrek}
+    username: ${SPRING_R2DBC_USERNAME:caltrek}
+    password: ${SPRING_R2DBC_PASSWORD:caltrek}
+  sql:
+    init:
+      mode: ${SPRING_SQL_INIT_MODE:never}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    display-request-duration: true
+    operations-sorter: method
+    tags-sorter: alpha
+
+server:
+  port: 8080
+
+caltrek:
+  integrations:
+    open-food-facts:
+      base-url: ${OPENFOODFACTS_BASE_URL:https://world.openfoodfacts.org}
+    nutridatabaze:
+      base-url: ${NUTRIDATABAZE_BASE_URL:}
