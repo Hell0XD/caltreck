@@ -1,0 +1,20 @@
+{
+  "name": "@caltrek/api-client",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "build": "tsc --noEmit",
+    "dev": "tsc --noEmit --watch",
+    "lint": "echo \"No api-client lint configured yet\"",
+    "typecheck": "tsc --noEmit",
+    "test": "echo \"No api-client tests configured yet\""
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.18",
+    "typescript": "^5.8.3"
+  }
+}

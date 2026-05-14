@@ -33,26 +33,26 @@ public class DailyLogController {
     }
 
     @GetMapping
-    @Operation(summary = "List daily log entries")
+    @Operation(summary = "List daily log entries", operationId = "listDailyLogs")
     public Flux<DailyLogResponse> list(@RequestParam UUID userId, @RequestParam LocalDate date) {
         return dailyLogService.list(userId, date);
     }
 
     @GetMapping("/summary")
-    @Operation(summary = "Get daily macro summary")
+    @Operation(summary = "Get daily macro summary", operationId = "getDailySummary")
     public Mono<DailySummaryResponse> summary(@RequestParam UUID userId, @RequestParam LocalDate date) {
         return dailyLogService.getDailySummary(userId, date);
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    @Operation(summary = "Create a daily log entry")
+    @Operation(summary = "Create a daily log entry", operationId = "createDailyLog")
     public Mono<DailyLogResponse> create(@Valid @RequestBody CreateDailyLogRequest request) {
         return dailyLogService.create(request);
     }
 
     @PutMapping("/{id}")
-    @Operation(summary = "Update a daily log entry")
+    @Operation(summary = "Update a daily log entry", operationId = "updateDailyLog")
     public Mono<DailyLogResponse> update(
             @PathVariable UUID id,
             @Valid @RequestBody UpdateDailyLogRequest request) {
@@ -61,7 +61,7 @@ public class DailyLogController {
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @Operation(summary = "Delete a daily log entry")
+    @Operation(summary = "Delete a daily log entry", operationId = "deleteDailyLog")
     public Mono<Void> delete(@PathVariable UUID id) {
         return dailyLogService.delete(id);
     }

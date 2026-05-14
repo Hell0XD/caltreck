@@ -29,13 +29,13 @@ public class UserController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    @Operation(summary = "Create a user")
+    @Operation(summary = "Create a user", operationId = "createUser")
     public Mono<UserResponse> create(@Valid @RequestBody CreateUserRequest request) {
         return userService.create(request);
     }
 
     @GetMapping("/{id}")
-    @Operation(summary = "Find a user by ID")
+    @Operation(summary = "Find a user by ID", operationId = "findUser")
     public Mono<UserResponse> find(@PathVariable UUID id) {
         return userService.find(id);
     }

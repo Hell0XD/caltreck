@@ -4,12 +4,14 @@
   "packageManager": "pnpm@10.11.0",
   "scripts": {
     "dev": "pnpm --parallel --filter @caltrek/web --filter @caltrek/shared-types dev",
+    "generate:api": "openapi-ts",
     "build": "pnpm -r build",
     "lint": "pnpm -r lint",
     "typecheck": "pnpm -r typecheck",
     "test": "pnpm -r test"
   },
   "devDependencies": {
+    "@hey-api/openapi-ts": "0.97.1",
     "prettier": "^3.5.3"
   }
 }

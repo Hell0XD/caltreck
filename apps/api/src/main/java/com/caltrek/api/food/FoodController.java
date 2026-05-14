@@ -29,7 +29,7 @@ public class FoodController {
     }
 
     @GetMapping("/search")
-    @Operation(summary = "Search local foods by name or brand")
+    @Operation(summary = "Search local foods by name or brand", operationId = "searchFoods")
     public Flux<FoodResponse> search(
             @RequestParam String query,
             @RequestParam(defaultValue = "20") int limit) {
@@ -37,14 +37,14 @@ public class FoodController {
     }
 
     @GetMapping("/barcode/{barcode}")
-    @Operation(summary = "Find a local food by barcode")
+    @Operation(summary = "Find a local food by barcode", operationId = "findFoodByBarcode")
     public Mono<FoodResponse> findByBarcode(@PathVariable String barcode) {
         return foodService.findByBarcode(barcode);
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    @Operation(summary = "Create a user-entered food")
+    @Operation(summary = "Create a user-entered food", operationId = "createFood")
     public Mono<FoodResponse> create(@Valid @RequestBody CreateFoodRequest request) {
         return foodService.create(request);
     }

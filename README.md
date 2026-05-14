@@ -101,6 +101,16 @@ OpenAPI and Swagger UI are available after the backend starts:
 - OpenAPI JSON: `http://localhost:8080/v3/api-docs`
 - Swagger UI: `http://localhost:8080/swagger-ui.html`
 
+Generate the `@caltrek/api-client` package from the OpenAPI definition after backend
+contract changes:
+
+```bash
+pnpm generate:api
+```
+
+The script reads `http://localhost:8080/v3/api-docs` by default. Override it with
+`CALTREK_OPENAPI_URL` when generating from another environment.
+
 Add a Gradle wrapper once Gradle is available locally:
 
 ```bash

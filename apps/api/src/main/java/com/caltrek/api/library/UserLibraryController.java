@@ -31,7 +31,7 @@ public class UserLibraryController {
     }
 
     @GetMapping
-    @Operation(summary = "List user library entries")
+    @Operation(summary = "List user library entries", operationId = "listUserLibraryEntries")
     public Flux<UserLibraryResponse> list(
             @RequestParam UUID userId,
             @RequestParam(defaultValue = "false") boolean favoritesOnly) {
@@ -40,14 +40,14 @@ public class UserLibraryController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    @Operation(summary = "Save or update a user library entry")
+    @Operation(summary = "Save or update a user library entry", operationId = "saveUserLibraryEntry")
     public Mono<UserLibraryResponse> save(@Valid @RequestBody SaveLibraryEntryRequest request) {
         return userLibraryService.save(request);
     }
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @Operation(summary = "Remove a user library entry")
+    @Operation(summary = "Remove a user library entry", operationId = "removeUserLibraryEntry")
     public Mono<Void> remove(@PathVariable UUID id) {
         return userLibraryService.remove(id);
     }
