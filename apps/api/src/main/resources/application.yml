@@ -35,5 +35,8 @@ caltrek:
   integrations:
     open-food-facts:
       base-url: ${OPENFOODFACTS_BASE_URL:https://world.openfoodfacts.org}
+      user-agent: ${OPENFOODFACTS_USER_AGENT:caltrek/0.1 (local-development)}
+      timeout: ${OPENFOODFACTS_TIMEOUT:PT2S}
+      max-retries: ${OPENFOODFACTS_MAX_RETRIES:1}
     nutridatabaze:
       base-url: ${NUTRIDATABAZE_BASE_URL:}

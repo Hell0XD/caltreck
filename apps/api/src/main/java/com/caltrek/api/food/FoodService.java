@@ -2,7 +2,10 @@ package com.caltrek.api.food;
 
 import com.caltrek.api.common.InputNormalizer;
 import com.caltrek.api.common.NotFoundException;
+import com.caltrek.api.food.provider.FoodProviderClient;
+import com.caltrek.api.food.provider.ProviderFoodCandidate;
 import java.time.OffsetDateTime;
+import java.util.List;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
@@ -13,9 +16,11 @@ public class FoodService {
 
     private static final int MAX_SEARCH_LIMIT = 50;
     private final FoodRepository foodRepository;
+    private final List<FoodProviderClient> providerClients;
 
-    public FoodService(FoodRepository foodRepository) {
+    public FoodService(FoodRepository foodRepository, List<FoodProviderClient> providerClients) {
         this.foodRepository = foodRepository;
+        this.providerClients = providerClients;
     }
 
     public Flux<FoodResponse> search(String query, int limit) {
@@ -31,6 +36,7 @@ public class FoodService {
             return Mono.error(new IllegalArgumentException("Barcode must contain 8 to 14 digits."));
         }
         return foodRepository.findFirstByBarcode(barcode)
+                .switchIfEmpty(findProviderFoodByBarcode(barcode))
                 .switchIfEmpty(Mono.error(new NotFoundException("Food was not found for barcode " + barcode + ".")))
                 .map(FoodResponse::from);
     }
@@ -62,5 +68,37 @@ public class FoodService {
 
     private java.math.BigDecimal zeroIfNull(java.math.BigDecimal value) {
         return value == null ? java.math.BigDecimal.ZERO : value;
+    }
+
+    private Mono<Food> findProviderFoodByBarcode(String barcode) {
+        return Flux.fromIterable(providerClients)
+                .concatMap(providerClient -> providerClient.findByBarcode(barcode, null))
+                .next()
+                .map(this::fromProviderCandidate)
+                .flatMap(foodRepository::save);
+    }
+
+    private Food fromProviderCandidate(ProviderFoodCandidate candidate) {
+        OffsetDateTime now = OffsetDateTime.now();
+        return new Food(
+                UUID.randomUUID(),
+                candidate.name().trim(),
+                InputNormalizer.blankToNull(candidate.brand()),
+                InputNormalizer.blankToNull(candidate.barcode()),
+                candidate.source(),
+                InputNormalizer.blankToNull(candidate.sourceId()),
+                InputNormalizer.blankToNull(candidate.locale()),
+                candidate.servingSize(),
+                InputNormalizer.blankToNull(candidate.servingUnit()),
+                candidate.caloriesPer100g(),
+                zeroIfNull(candidate.proteinPer100g()),
+                zeroIfNull(candidate.carbsPer100g()),
+                zeroIfNull(candidate.fatPer100g()),
+                zeroIfNull(candidate.fiberPer100g()),
+                zeroIfNull(candidate.sugarPer100g()),
+                zeroIfNull(candidate.saltPer100g()),
+                candidate.rawPayload(),
+                now,
+                now);
     }
 }

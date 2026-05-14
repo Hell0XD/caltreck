@@ -5,7 +5,7 @@ import type { Route } from "next";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { Heart, Home, Search } from "lucide-react";
+import { Heart, Home, ScanLine, Search } from "lucide-react";
 import { BrandBlock, MobileHeader } from "./ui";
 import { type AppRoute } from "./types";
 import { cn } from "@/lib/utils";
@@ -18,6 +18,7 @@ const navItems: Array<{
 }> = [
   { route: "today", href: "/today", label: "Today", icon: <Home /> },
   { route: "search", href: "/search", label: "Search", icon: <Search /> },
+  { route: "scan", href: "/scan", label: "Scan", icon: <ScanLine /> },
   { route: "library", href: "/library", label: "Library", icon: <Heart /> },
 ];
 
@@ -60,6 +61,9 @@ function routeFromPath(pathname: string): AppRoute {
   if (pathname.startsWith("/search")) {
     return "search";
   }
+  if (pathname.startsWith("/scan")) {
+    return "scan";
+  }
   if (pathname.startsWith("/library")) {
     return "library";
   }
@@ -69,7 +73,7 @@ function routeFromPath(pathname: string): AppRoute {
 function BottomNav({ activeRoute }: { activeRoute: AppRoute }) {
   return (
     <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-[var(--border)] bg-[color-mix(in_srgb,var(--card)_94%,transparent)] px-3 pb-[max(env(safe-area-inset-bottom),0.5rem)] pt-2 backdrop-blur lg:hidden">
-      <div className="mx-auto grid max-w-md grid-cols-3 gap-2">
+      <div className="mx-auto grid max-w-md grid-cols-4 gap-2">
         {navItems.map((item) => (
           <NavLink key={item.route} activeRoute={activeRoute} {...item} />
         ))}

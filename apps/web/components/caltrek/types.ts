@@ -1,7 +1,7 @@
 import { Apple, Beef, Sparkles, Utensils } from "lucide-react";
 
 export type MealType = "breakfast" | "lunch" | "dinner" | "snacks";
-export type AppRoute = "today" | "search" | "library";
+export type AppRoute = "today" | "search" | "scan" | "library";
 
 export type Food = {
   id: string;
