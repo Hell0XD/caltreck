@@ -2,7 +2,6 @@ package com.caltrek.api.common;
 
 import java.util.UUID;
 import org.slf4j.MDC;
-import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 import org.springframework.web.server.WebFilter;

@@ -1,11 +1,13 @@
 package com.caltrek.api.log;
 
+import com.caltrek.api.auth.AuthenticatedUser;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import java.time.LocalDate;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -34,35 +36,44 @@ public class DailyLogController {
 
     @GetMapping
     @Operation(summary = "List daily log entries", operationId = "listDailyLogs")
-    public Flux<DailyLogResponse> list(@RequestParam UUID userId, @RequestParam LocalDate date) {
-        return dailyLogService.list(userId, date);
+    public Flux<DailyLogResponse> list(
+            @AuthenticationPrincipal AuthenticatedUser user,
+            @RequestParam(required = false) UUID userId,
+            @RequestParam LocalDate date) {
+        return dailyLogService.list(user.id(), date);
     }
 
     @GetMapping("/summary")
     @Operation(summary = "Get daily macro summary", operationId = "getDailySummary")
-    public Mono<DailySummaryResponse> summary(@RequestParam UUID userId, @RequestParam LocalDate date) {
-        return dailyLogService.getDailySummary(userId, date);
+    public Mono<DailySummaryResponse> summary(
+            @AuthenticationPrincipal AuthenticatedUser user,
+            @RequestParam(required = false) UUID userId,
+            @RequestParam LocalDate date) {
+        return dailyLogService.getDailySummary(user.id(), date);
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "Create a daily log entry", operationId = "createDailyLog")
-    public Mono<DailyLogResponse> create(@Valid @RequestBody CreateDailyLogRequest request) {
-        return dailyLogService.create(request);
+    public Mono<DailyLogResponse> create(
+            @AuthenticationPrincipal AuthenticatedUser user,
+            @Valid @RequestBody CreateDailyLogRequest request) {
+        return dailyLogService.create(user.id(), request);
     }
 
     @PutMapping("/{id}")
     @Operation(summary = "Update a daily log entry", operationId = "updateDailyLog")
     public Mono<DailyLogResponse> update(
+            @AuthenticationPrincipal AuthenticatedUser user,
             @PathVariable UUID id,
             @Valid @RequestBody UpdateDailyLogRequest request) {
-        return dailyLogService.update(id, request);
+        return dailyLogService.update(user.id(), id, request);
     }
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Operation(summary = "Delete a daily log entry", operationId = "deleteDailyLog")
-    public Mono<Void> delete(@PathVariable UUID id) {
-        return dailyLogService.delete(id);
+    public Mono<Void> delete(@AuthenticationPrincipal AuthenticatedUser user, @PathVariable UUID id) {
+        return dailyLogService.delete(user.id(), id);
     }
 }

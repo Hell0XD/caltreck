@@ -20,6 +20,7 @@ public class UserService {
         User user = new User(
                 UUID.randomUUID(),
                 request.email().trim().toLowerCase(),
+                null,
                 blankToNull(request.displayName()),
                 request.timezone() == null || request.timezone().isBlank() ? "UTC" : request.timezone().trim(),
                 now,
@@ -37,4 +38,3 @@ public class UserService {
         return value == null || value.isBlank() ? null : value.trim();
     }
 }
-

@@ -1,10 +1,12 @@
 package com.caltrek.api.library;
 
+import com.caltrek.api.auth.AuthenticatedUser;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -33,22 +35,25 @@ public class UserLibraryController {
     @GetMapping
     @Operation(summary = "List user library entries", operationId = "listUserLibraryEntries")
     public Flux<UserLibraryResponse> list(
-            @RequestParam UUID userId,
+            @AuthenticationPrincipal AuthenticatedUser user,
+            @RequestParam(required = false) UUID userId,
             @RequestParam(defaultValue = "false") boolean favoritesOnly) {
-        return userLibraryService.list(userId, favoritesOnly);
+        return userLibraryService.list(user.id(), favoritesOnly);
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "Save or update a user library entry", operationId = "saveUserLibraryEntry")
-    public Mono<UserLibraryResponse> save(@Valid @RequestBody SaveLibraryEntryRequest request) {
-        return userLibraryService.save(request);
+    public Mono<UserLibraryResponse> save(
+            @AuthenticationPrincipal AuthenticatedUser user,
+            @Valid @RequestBody SaveLibraryEntryRequest request) {
+        return userLibraryService.save(user.id(), request);
     }
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Operation(summary = "Remove a user library entry", operationId = "removeUserLibraryEntry")
-    public Mono<Void> remove(@PathVariable UUID id) {
-        return userLibraryService.remove(id);
+    public Mono<Void> remove(@AuthenticationPrincipal AuthenticatedUser user, @PathVariable UUID id) {
+        return userLibraryService.remove(user.id(), id);
     }
 }

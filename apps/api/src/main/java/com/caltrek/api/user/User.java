@@ -10,9 +10,9 @@ import org.springframework.data.relational.core.mapping.Table;
 public record User(
         @Id UUID id,
         String email,
+        @Column("password_hash") String passwordHash,
         @Column("display_name") String displayName,
         String timezone,
         @Column("created_at") OffsetDateTime createdAt,
         @Column("updated_at") OffsetDateTime updatedAt) {
 }
-

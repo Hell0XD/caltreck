@@ -1,5 +1,6 @@
 package com.caltrek.api.library;
 
+import com.caltrek.api.auth.ForbiddenException;
 import com.caltrek.api.common.NotFoundException;
 import com.caltrek.api.food.FoodRepository;
 import java.time.OffsetDateTime;
@@ -26,31 +27,32 @@ public class UserLibraryService {
         return entries.map(UserLibraryResponse::from);
     }
 
-    public Mono<UserLibraryResponse> save(SaveLibraryEntryRequest request) {
+    public Mono<UserLibraryResponse> save(UUID userId, SaveLibraryEntryRequest request) {
         return foodRepository.existsById(request.foodId())
                 .flatMap(exists -> {
                     if (!exists) {
                         return Mono.error(new NotFoundException("Food was not found."));
                     }
-                    return userLibraryRepository.findByUserIdAndFoodId(request.userId(), request.foodId())
+                    return userLibraryRepository.findByUserIdAndFoodId(userId, request.foodId())
                             .map(existing -> update(existing, request))
-                            .switchIfEmpty(Mono.defer(() -> Mono.just(create(request))))
+                            .switchIfEmpty(Mono.defer(() -> Mono.just(create(userId, request))))
                             .flatMap(userLibraryRepository::save)
                             .map(UserLibraryResponse::from);
                 });
     }
 
-    public Mono<Void> remove(UUID id) {
+    public Mono<Void> remove(UUID userId, UUID id) {
         return userLibraryRepository.findById(id)
                 .switchIfEmpty(Mono.error(new NotFoundException("Library entry was not found.")))
+                .flatMap(entry -> requireOwner(entry, userId))
                 .flatMap(userLibraryRepository::delete);
     }
 
-    private UserLibraryEntry create(SaveLibraryEntryRequest request) {
+    private UserLibraryEntry create(UUID userId, SaveLibraryEntryRequest request) {
         OffsetDateTime now = OffsetDateTime.now();
         return new UserLibraryEntry(
                 UUID.randomUUID(),
-                request.userId(),
+                userId,
                 request.foodId(),
                 blankToNull(request.label()),
                 request.favorite(),
@@ -73,8 +75,14 @@ public class UserLibraryService {
                 OffsetDateTime.now());
     }
 
+    private Mono<UserLibraryEntry> requireOwner(UserLibraryEntry entry, UUID userId) {
+        if (!entry.userId().equals(userId)) {
+            return Mono.error(new ForbiddenException("Library entry belongs to another user."));
+        }
+        return Mono.just(entry);
+    }
+
     private String blankToNull(String value) {
         return value == null || value.isBlank() ? null : value.trim();
     }
 }
-

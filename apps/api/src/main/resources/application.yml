@@ -28,6 +28,10 @@ server:
   port: 8080
 
 caltrek:
+  security:
+    jwt-secret: ${CALTREK_JWT_SECRET:change-this-local-development-secret-with-at-least-32-bytes}
+    access-token-ttl: ${CALTREK_ACCESS_TOKEN_TTL:PT15M}
+    refresh-token-ttl: ${CALTREK_REFRESH_TOKEN_TTL:P30D}
   integrations:
     open-food-facts:
       base-url: ${OPENFOODFACTS_BASE_URL:https://world.openfoodfacts.org}

@@ -1,5 +1,7 @@
 package com.caltrek.api.common;
 
+import com.caltrek.api.auth.AuthException;
+import com.caltrek.api.auth.ForbiddenException;
 import java.time.Instant;
 import java.util.List;
 import org.springframework.http.HttpStatus;
@@ -19,6 +21,26 @@ public class GlobalErrorHandler {
                 .body(ApiError.of(
                         HttpStatus.NOT_FOUND.value(),
                         "not_found",
+                        exception.getMessage(),
+                        exchange.getRequest().getPath().value()));
+    }
+
+    @ExceptionHandler(AuthException.class)
+    public ResponseEntity<ApiError> handleUnauthorized(AuthException exception, ServerWebExchange exchange) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(ApiError.of(
+                        HttpStatus.UNAUTHORIZED.value(),
+                        "unauthorized",
+                        exception.getMessage(),
+                        exchange.getRequest().getPath().value()));
+    }
+
+    @ExceptionHandler(ForbiddenException.class)
+    public ResponseEntity<ApiError> handleForbidden(ForbiddenException exception, ServerWebExchange exchange) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(ApiError.of(
+                        HttpStatus.FORBIDDEN.value(),
+                        "forbidden",
                         exception.getMessage(),
                         exchange.getRequest().getPath().value()));
     }
@@ -54,4 +76,3 @@ public class GlobalErrorHandler {
         return new FieldViolation(error.getField(), error.getDefaultMessage());
     }
 }
-

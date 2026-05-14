@@ -1,5 +1,6 @@
 package com.caltrek.api.log;
 
+import com.caltrek.api.auth.ForbiddenException;
 import com.caltrek.api.common.NotFoundException;
 import com.caltrek.api.food.Food;
 import com.caltrek.api.food.FoodRepository;
@@ -32,16 +33,17 @@ public class DailyLogService {
                 .map(entries -> toSummary(userId, date, entries));
     }
 
-    public Mono<DailyLogResponse> create(CreateDailyLogRequest request) {
+    public Mono<DailyLogResponse> create(UUID userId, CreateDailyLogRequest request) {
         return foodRepository.findById(request.foodId())
                 .switchIfEmpty(Mono.error(new NotFoundException("Food was not found.")))
-                .flatMap(food -> dailyLogRepository.save(toLog(request, food)))
+                .flatMap(food -> dailyLogRepository.save(toLog(userId, request, food)))
                 .map(DailyLogResponse::from);
     }
 
-    public Mono<DailyLogResponse> update(UUID id, UpdateDailyLogRequest request) {
+    public Mono<DailyLogResponse> update(UUID userId, UUID id, UpdateDailyLogRequest request) {
         return dailyLogRepository.findById(id)
                 .switchIfEmpty(Mono.error(new NotFoundException("Daily log entry was not found.")))
+                .flatMap(existing -> requireOwner(existing, userId))
                 .flatMap(existing -> foodRepository.findById(existing.foodId())
                         .switchIfEmpty(Mono.error(new NotFoundException("Food was not found.")))
                         .map(food -> updateLog(existing, request, food)))
@@ -49,9 +51,10 @@ public class DailyLogService {
                 .map(DailyLogResponse::from);
     }
 
-    public Mono<Void> delete(UUID id) {
+    public Mono<Void> delete(UUID userId, UUID id) {
         return dailyLogRepository.findById(id)
                 .switchIfEmpty(Mono.error(new NotFoundException("Daily log entry was not found.")))
+                .flatMap(existing -> requireOwner(existing, userId))
                 .flatMap(dailyLogRepository::delete);
     }
 
@@ -60,12 +63,12 @@ public class DailyLogService {
                 .map(DailyLogResponse::from);
     }
 
-    private DailyLog toLog(CreateDailyLogRequest request, Food food) {
+    private DailyLog toLog(UUID userId, CreateDailyLogRequest request, Food food) {
         OffsetDateTime now = OffsetDateTime.now();
         Nutrition nutrition = calculate(food, request.quantity());
         return new DailyLog(
                 UUID.randomUUID(),
-                request.userId(),
+                userId,
                 request.foodId(),
                 request.logDate(),
                 request.mealType().name(),
@@ -77,6 +80,13 @@ public class DailyLogService {
                 nutrition.fat(),
                 now,
                 now);
+    }
+
+    private Mono<DailyLog> requireOwner(DailyLog dailyLog, UUID userId) {
+        if (!dailyLog.userId().equals(userId)) {
+            return Mono.error(new ForbiddenException("Daily log entry belongs to another user."));
+        }
+        return Mono.just(dailyLog);
     }
 
     private DailyLog updateLog(DailyLog existing, UpdateDailyLogRequest request, Food food) {
@@ -142,4 +152,3 @@ public class DailyLogService {
         BigDecimal value(DailyLogResponse response);
     }
 }
-
