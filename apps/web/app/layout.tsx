@@ -5,6 +5,7 @@ export const metadata: Metadata = {
   title: "caltrek",
   description: "Mobile-first calorie tracking PWA.",
   applicationName: "caltrek",
+  manifest: "/manifest.webmanifest",
 };
 
 export const viewport: Viewport = {
