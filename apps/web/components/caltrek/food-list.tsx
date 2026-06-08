@@ -3,8 +3,9 @@
 import { motion } from "framer-motion";
 import { Heart, Pencil, Plus } from "lucide-react";
 import type React from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { type Food } from "./types";
-import { IconButton } from "./ui";
 
 export function FoodList({
   title,
@@ -29,36 +30,60 @@ export function FoodList({
       </div>
       <div className="space-y-2">
         {foods.map((food) => (
-          <motion.article
-            layout
-            key={food.id}
-            className="grid grid-cols-[1fr_auto] items-center gap-3 rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--card)] p-4 shadow-sm shadow-slate-950/5"
-          >
-            <button className="min-w-0 text-left" onClick={() => onAdd(food)}>
-              <p className="truncate text-sm font-semibold">{food.name}</p>
-              <p className="mt-1 truncate text-xs text-[var(--muted-foreground)]">
-                {food.brand} - {food.serving}
-              </p>
-              <p className="mt-2 text-xs text-[var(--muted-foreground)]">
-                {food.calories} kcal | P {food.protein}g | C {food.carbs}g | F {food.fat}g
-              </p>
-            </button>
-            <div className="flex items-center gap-2">
-              {onEdit && (
-                <IconButton label={`Edit ${food.name}`} onClick={() => onEdit(food)}>
-                  <Pencil className="size-4" />
-                </IconButton>
-              )}
-              {onToggleFavorite && (
-                <IconButton label={`Favorite ${food.name}`} onClick={() => onToggleFavorite(food)}>
-                  <Heart className={food.favorite ? "size-4 fill-current" : "size-4"} />
-                </IconButton>
-              )}
-              <IconButton label={`Add ${food.name}`} onClick={() => onAdd(food)}>
-                <Plus className="size-4" />
-              </IconButton>
-            </div>
-          </motion.article>
+          <Card key={food.id} className="gap-0 py-0 shadow-sm shadow-slate-950/5">
+            <motion.article layout>
+              <CardContent className="grid grid-cols-[1fr_auto] items-center gap-3 p-4">
+                <Button
+                  variant="ghost"
+                  className="h-auto min-w-0 justify-start px-0 py-0 text-left hover:bg-transparent"
+                  onClick={() => onAdd(food)}
+                >
+                  <span className="min-w-0">
+                    <p className="truncate text-sm font-semibold">{food.name}</p>
+                    <p className="mt-1 truncate text-xs text-[var(--muted-foreground)]">
+                      {food.brand} - {food.serving}
+                    </p>
+                    <p className="mt-2 text-xs text-[var(--muted-foreground)]">
+                      {food.calories} kcal | P {food.protein}g | C {food.carbs}g | F {food.fat}g
+                    </p>
+                  </span>
+                </Button>
+                <div className="flex items-center gap-2">
+                  {onEdit && (
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      aria-label={`Edit ${food.name}`}
+                      title={`Edit ${food.name}`}
+                      onClick={() => onEdit(food)}
+                    >
+                      <Pencil className="size-4" />
+                    </Button>
+                  )}
+                  {onToggleFavorite && (
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      aria-label={`Favorite ${food.name}`}
+                      title={`Favorite ${food.name}`}
+                      onClick={() => onToggleFavorite(food)}
+                    >
+                      <Heart className={food.favorite ? "size-4 fill-current" : "size-4"} />
+                    </Button>
+                  )}
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    aria-label={`Add ${food.name}`}
+                    title={`Add ${food.name}`}
+                    onClick={() => onAdd(food)}
+                  >
+                    <Plus className="size-4" />
+                  </Button>
+                </div>
+              </CardContent>
+            </motion.article>
+          </Card>
         ))}
       </div>
     </section>

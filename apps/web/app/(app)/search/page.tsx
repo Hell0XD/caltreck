@@ -3,7 +3,10 @@
 import { Plus, Search, X } from "lucide-react";
 import { useCaltrek } from "@/components/caltrek/app-state";
 import { FoodList } from "@/components/caltrek/food-list";
-import { AppButton, EmptyState, Skeleton } from "@/components/caltrek/ui";
+import { EmptyState } from "@/components/caltrek/ui";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function SearchPage() {
   const {
@@ -24,25 +27,32 @@ export default function SearchPage() {
           <p className="text-sm font-medium text-[var(--muted-foreground)]">Food search</p>
           <h1 className="text-3xl font-semibold tracking-normal">Add food</h1>
         </div>
-        <AppButton variant="secondary" className="px-3" onClick={openCreateFood}>
+        <Button variant="outline" size="lg" className="px-3" onClick={openCreateFood}>
           <Plus className="size-4" />
           Manual
-        </AppButton>
+        </Button>
       </div>
-      <label className="flex min-h-12 items-center gap-3 rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--card)] px-4 focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-[var(--ring)]">
-        <Search className="size-5 text-[var(--muted-foreground)]" />
-        <input
+      <div className="relative">
+        <Search className="pointer-events-none absolute left-3 top-1/2 size-5 -translate-y-1/2 text-muted-foreground" />
+        <Input
           value={query}
           onChange={(event) => setQuery(event.target.value)}
           placeholder="Search foods or brands"
-          className="min-w-0 flex-1 bg-transparent text-base outline-none placeholder:text-[var(--muted-foreground)]"
+          aria-label="Search foods or brands"
+          className="h-12 pl-10 pr-10 text-base"
         />
         {query && (
-          <button aria-label="Clear search" onClick={() => setQuery("")}>
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            aria-label="Clear search"
+            className="absolute right-2 top-1/2 -translate-y-1/2"
+            onClick={() => setQuery("")}
+          >
             <X className="size-5 text-[var(--muted-foreground)]" />
-          </button>
+          </Button>
         )}
-      </label>
+      </div>
       {searchLoading ? (
         <FoodListSkeleton />
       ) : searchResults.length === 0 ? (

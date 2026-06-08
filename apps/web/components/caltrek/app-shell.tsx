@@ -6,8 +6,9 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { Heart, Home, LogOut, ScanLine, Search, UserRound } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { useCaltrek } from "./app-state";
-import { BrandBlock, IconButton, MobileHeader } from "./ui";
+import { BrandBlock, MobileHeader } from "./ui";
 import { type AppRoute } from "./types";
 import { cn } from "@/lib/utils";
 
@@ -41,9 +42,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
         <section className="mx-auto flex min-h-dvh w-full max-w-md flex-col pb-24 lg:max-w-none lg:pb-0">
           <MobileHeader>
-            <IconButton label="Sign out" onClick={logout} className="size-9">
+            <Button
+              variant="outline"
+              size="icon"
+              aria-label="Sign out"
+              title="Sign out"
+              onClick={logout}
+            >
               <LogOut className="size-4" />
-            </IconButton>
+            </Button>
           </MobileHeader>
           <div className="flex-1 px-4 py-4 sm:px-6 lg:px-8 lg:py-8">
             <AnimatePresence mode="wait">
@@ -72,9 +79,15 @@ function UserPanel({ email, onLogout }: { email: string; onLogout: () => void })
         <p className="truncate text-sm font-semibold">Signed in</p>
         <p className="mt-0.5 truncate text-xs text-[var(--muted-foreground)]">{email}</p>
       </div>
-      <IconButton label="Sign out" onClick={onLogout} className="size-9">
+      <Button
+        variant="outline"
+        size="icon"
+        aria-label="Sign out"
+        title="Sign out"
+        onClick={onLogout}
+      >
         <LogOut className="size-4" />
-      </IconButton>
+      </Button>
     </div>
   );
 }

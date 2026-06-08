@@ -31,7 +31,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { AppButton, IconButton } from "./ui";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { type Food, type LogEntry, type MealType, macroFor, mealMeta } from "./types";
 import { AuthScreen } from "./auth-screen";
 import { FoodEditor, type FoodEditorValue } from "./food-editor";
@@ -701,14 +702,14 @@ function FoodSheet({
               onClose={onClose}
               footer={
                 <div className="grid grid-cols-[auto_1fr] gap-3">
-                  <AppButton variant="secondary" onClick={() => onEdit(food)} className="px-3">
+                  <Button variant="outline" size="lg" onClick={() => onEdit(food)} className="px-3">
                     <Pencil className="size-4" />
                     Edit
-                  </AppButton>
-                  <AppButton onClick={onSave}>
+                  </Button>
+                  <Button size="lg" onClick={onSave}>
                     <Check className="size-4" />
                     Save food
-                  </AppButton>
+                  </Button>
                 </div>
               }
             >
@@ -764,13 +765,18 @@ function EditSheet({
               onClose={onClose}
               footer={
                 <div className="grid grid-cols-[auto_1fr] gap-3">
-                  <AppButton variant="danger" onClick={() => onDelete(entry)} className="px-3">
+                  <Button
+                    variant="destructive"
+                    size="lg"
+                    onClick={() => onDelete(entry)}
+                    className="px-3"
+                  >
                     <Trash2 className="size-4" />
-                  </AppButton>
-                  <AppButton onClick={onSave}>
+                  </Button>
+                  <Button size="lg" onClick={onSave}>
                     <Check className="size-4" />
                     Update entry
-                  </AppButton>
+                  </Button>
                 </div>
               }
             >
@@ -824,9 +830,9 @@ function SheetBody({
   return (
     <div className="space-y-5">
       <div className="flex items-start gap-3">
-        <IconButton label="Close" onClick={onClose} className="size-9">
+        <Button variant="outline" size="icon" aria-label="Close" title="Close" onClick={onClose}>
           <ChevronLeft className="size-4" />
-        </IconButton>
+        </Button>
         <div className="min-w-0 flex-1">
           <Drawer.Title className="truncate text-xl font-semibold">{title}</Drawer.Title>
           <Drawer.Description className="mt-1 truncate text-sm text-[var(--muted-foreground)]">
@@ -839,18 +845,15 @@ function SheetBody({
         <p className="mb-2 text-sm font-semibold">Meal</p>
         <div className="grid grid-cols-4 gap-2">
           {(Object.keys(mealMeta) as MealType[]).map((item) => (
-            <button
+            <Button
               key={item}
+              type="button"
+              variant={meal === item ? "secondary" : "outline"}
               onClick={() => onMeal(item)}
-              className={cn(
-                "min-h-11 rounded-[var(--radius)] border px-2 text-xs font-semibold transition",
-                meal === item
-                  ? "border-[var(--primary)] bg-[var(--primary-soft)] text-[var(--primary)]"
-                  : "border-[var(--border)] bg-[var(--surface)] text-[var(--muted-foreground)]",
-              )}
+              className={cn("h-11 px-2 text-xs", meal === item && "text-primary")}
             >
               {mealMeta[item].label}
-            </button>
+            </Button>
           ))}
         </div>
       </div>
@@ -870,41 +873,47 @@ function SheetBody({
                 supportsAmount && supportsPackage ? "grid-cols-3" : "grid-cols-2",
               )}
             >
-              <button
+              <Button
                 type="button"
+                size="sm"
+                variant={quantityMode === "servings" ? "secondary" : "ghost"}
                 onClick={() => onQuantityMode("servings", food)}
-                className={quantityModeClass(quantityMode === "servings")}
               >
                 Servings
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
+                size="sm"
+                variant={quantityMode === "amount" ? "secondary" : "ghost"}
                 onClick={() => onQuantityMode("amount", food)}
                 hidden={!supportsAmount}
-                className={quantityModeClass(quantityMode === "amount")}
               >
                 {food.servingUnit === "g" ? "Grams" : "Milliliters"}
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
+                size="sm"
+                variant={quantityMode === "package" ? "secondary" : "ghost"}
                 onClick={() => onQuantityMode("package", food)}
                 hidden={!supportsPackage}
-                className={quantityModeClass(quantityMode === "package")}
               >
                 Whole product
-              </button>
+              </Button>
             </div>
           )}
         </div>
         <div className="grid grid-cols-[auto_1fr_auto] items-center gap-3 rounded-[var(--radius-lg)] bg-[var(--surface)] p-3">
-          <IconButton
-            label={`Decrease ${quantityLabel.toLowerCase()}`}
+          <Button
+            variant="outline"
+            size="icon"
+            aria-label={`Decrease ${quantityLabel.toLowerCase()}`}
+            title={`Decrease ${quantityLabel.toLowerCase()}`}
             onClick={() => onQuantity(Math.max(minimum, Number((quantity - step).toFixed(2))))}
           >
             <Minus className="size-4" />
-          </IconButton>
+          </Button>
           <div className="relative min-w-0">
-            <input
+            <Input
               aria-label={quantityLabel}
               value={quantity}
               onChange={(event) => {
@@ -915,7 +924,7 @@ function SheetBody({
               }}
               inputMode="decimal"
               className={cn(
-                "h-11 w-full min-w-0 rounded-[var(--radius)] border border-[var(--border)] bg-[var(--card)] text-center text-lg font-semibold outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ring)]",
+                "h-11 text-center text-lg font-semibold",
                 quantityMode !== "servings" && "pr-10",
               )}
             />
@@ -925,12 +934,15 @@ function SheetBody({
               </span>
             )}
           </div>
-          <IconButton
-            label={`Increase ${quantityLabel.toLowerCase()}`}
+          <Button
+            variant="outline"
+            size="icon"
+            aria-label={`Increase ${quantityLabel.toLowerCase()}`}
+            title={`Increase ${quantityLabel.toLowerCase()}`}
             onClick={() => onQuantity(Number((quantity + step).toFixed(2)))}
           >
             <Plus className="size-4" />
-          </IconButton>
+          </Button>
         </div>
       </div>
       {footer}
@@ -1023,15 +1035,6 @@ function macroValues(food: Food) {
   };
 }
 
-function quantityModeClass(active: boolean) {
-  return cn(
-    "min-h-9 rounded-[var(--radius)] px-3 text-xs font-semibold transition",
-    active
-      ? "bg-[var(--card)] text-[var(--foreground)] shadow-sm"
-      : "text-[var(--muted-foreground)]",
-  );
-}
-
 function ConfirmDialog({
   entry,
   onCancel,
@@ -1052,13 +1055,9 @@ function ConfirmDialog({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel asChild>
-              <AppButton variant="secondary">Cancel</AppButton>
-            </AlertDialogCancel>
-            <AlertDialogAction asChild>
-              <AppButton variant="danger" onClick={() => onConfirm(entry)}>
-                Delete
-              </AppButton>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction variant="destructive" onClick={() => onConfirm(entry)}>
+              Delete
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

@@ -2,11 +2,12 @@
 
 import type { CreateFoodRequest } from "@caltrek/api-client";
 import { Check, ChevronLeft } from "lucide-react";
-import type React from "react";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Drawer } from "vaul";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import type { Food } from "./types";
-import { AppButton, IconButton } from "./ui";
 
 export type FoodEditorValue = CreateFoodRequest;
 
@@ -82,9 +83,16 @@ export function FoodEditor({
           <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-[var(--border)]" />
           <form className="space-y-5" onSubmit={submit}>
             <div className="flex items-start gap-3">
-              <IconButton type="button" label="Close" onClick={onClose} className="size-9">
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                aria-label="Close"
+                title="Close"
+                onClick={onClose}
+              >
                 <ChevronLeft className="size-4" />
-              </IconButton>
+              </Button>
               <div>
                 <Drawer.Title className="text-xl font-semibold">
                   {food ? "Edit food" : "Create food"}
@@ -194,10 +202,15 @@ export function FoodEditor({
               </div>
             </EditorSection>
 
-            <AppButton type="submit" disabled={saving || !value.name.trim()} className="w-full">
+            <Button
+              type="submit"
+              size="lg"
+              disabled={saving || !value.name.trim()}
+              className="w-full"
+            >
               <Check className="size-4" />
               {saving ? "Saving..." : food ? "Save changes" : "Create food"}
-            </AppButton>
+            </Button>
           </form>
         </Drawer.Content>
       </Drawer.Portal>
@@ -246,26 +259,23 @@ function Field({
   label: string;
   required?: boolean;
   className?: string;
-  children: React.ReactNode;
+  children: React.ReactElement<React.InputHTMLAttributes<HTMLInputElement>>;
 }) {
+  const id = React.useId();
+
   return (
-    <label className={className}>
-      <span className="mb-1.5 block text-xs font-semibold text-[var(--muted-foreground)]">
+    <div className={className}>
+      <Label htmlFor={id} className="mb-1.5 text-xs text-muted-foreground">
         {label}
         {required ? " *" : ""}
-      </span>
-      {children}
-    </label>
+      </Label>
+      {React.cloneElement(children, { id })}
+    </div>
   );
 }
 
 function TextInput(props: React.InputHTMLAttributes<HTMLInputElement>) {
-  return (
-    <input
-      {...props}
-      className="h-11 w-full rounded-[var(--radius)] border border-[var(--border)] bg-[var(--background)] px-3 outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ring)]"
-    />
-  );
+  return <Input {...props} className="h-11" />;
 }
 
 function NumberInput(props: React.InputHTMLAttributes<HTMLInputElement>) {

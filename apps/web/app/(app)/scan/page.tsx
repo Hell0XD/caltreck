@@ -6,7 +6,10 @@ import { AlertCircle, Camera, Check, Keyboard, RotateCcw, ScanLine } from "lucid
 import type React from "react";
 import { useEffect, useRef, useState } from "react";
 import { useCaltrek } from "@/components/caltrek/app-state";
-import { AppButton } from "@/components/caltrek/ui";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 
 type ScanState = "idle" | "requesting" | "scanning" | "resolving" | "success" | "failed";
@@ -15,7 +18,9 @@ export default function ScanPage() {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const controlsRef = useRef<IScannerControls | null>(null);
   const [scanState, setScanState] = useState<ScanState>("idle");
-  const [message, setMessage] = useState("Camera access is only used while this screen is scanning.");
+  const [message, setMessage] = useState(
+    "Camera access is only used while this screen is scanning.",
+  );
   const [manualBarcode, setManualBarcode] = useState("");
   const [lastBarcode, setLastBarcode] = useState<string | null>(null);
   const { openAddFood, findFoodByBarcode } = useCaltrek();
@@ -97,14 +102,11 @@ export default function ScanPage() {
         <h1 className="text-3xl font-semibold tracking-normal">Scan food</h1>
       </div>
 
-      <section className="overflow-hidden rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--card)]">
+      <Card className="gap-0 overflow-hidden py-0">
         <div className="relative aspect-[3/4] bg-slate-950">
           <video
             ref={videoRef}
-            className={cn(
-              "h-full w-full object-cover",
-              scanState === "idle" && "opacity-30",
-            )}
+            className={cn("h-full w-full object-cover", scanState === "idle" && "opacity-30")}
             muted
             playsInline
           />
@@ -138,44 +140,48 @@ export default function ScanPage() {
           </div>
 
           <div className="grid grid-cols-2 gap-3">
-            <AppButton
+            <Button
+              size="lg"
               onClick={scanState === "scanning" ? pauseScanner : startScanner}
               disabled={scanState === "requesting" || scanState === "resolving"}
             >
               <Camera className="size-4" />
               {scanState === "scanning" ? "Stop" : "Camera"}
-            </AppButton>
-            <AppButton variant="secondary" onClick={() => void resolveBarcode(lastBarcode ?? manualBarcode)}>
+            </Button>
+            <Button
+              variant="outline"
+              size="lg"
+              onClick={() => void resolveBarcode(lastBarcode ?? manualBarcode)}
+            >
               <RotateCcw className="size-4" />
               Retry
-            </AppButton>
+            </Button>
           </div>
         </div>
-      </section>
+      </Card>
 
-      <form
-        onSubmit={submitManualBarcode}
-        className="space-y-3 rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--card)] p-4"
-      >
-        <label className="text-sm font-semibold" htmlFor="manual-barcode">
-          Manual barcode
-        </label>
-        <div className="grid grid-cols-[1fr_auto] gap-3">
-          <input
-            id="manual-barcode"
-            value={manualBarcode}
-            onChange={(event) => setManualBarcode(event.target.value.replace(/\D/g, ""))}
-            inputMode="numeric"
-            pattern="[0-9]{8,14}"
-            placeholder="8 to 14 digits"
-            className="h-11 min-w-0 rounded-[var(--radius)] border border-[var(--border)] bg-[var(--background)] px-3 text-base outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ring)]"
-          />
-          <AppButton type="submit" variant="secondary">
-            <Keyboard className="size-4" />
-            Find
-          </AppButton>
-        </div>
-      </form>
+      <Card className="gap-0 py-0">
+        <CardContent className="p-4">
+          <form onSubmit={submitManualBarcode} className="space-y-3">
+            <Label htmlFor="manual-barcode">Manual barcode</Label>
+            <div className="grid grid-cols-[1fr_auto] gap-3">
+              <Input
+                id="manual-barcode"
+                value={manualBarcode}
+                onChange={(event) => setManualBarcode(event.target.value.replace(/\D/g, ""))}
+                inputMode="numeric"
+                pattern="[0-9]{8,14}"
+                placeholder="8 to 14 digits"
+                className="h-11 text-base"
+              />
+              <Button type="submit" variant="outline" size="lg">
+                <Keyboard className="size-4" />
+                Find
+              </Button>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
     </div>
   );
 }

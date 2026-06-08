@@ -1,10 +1,12 @@
 "use client";
 
 import { Check, LogOut } from "lucide-react";
-import type React from "react";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useCaltrek } from "@/components/caltrek/app-state";
-import { AppButton } from "@/components/caltrek/ui";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 type AccountForm = {
   displayName: string;
@@ -52,72 +54,78 @@ export default function AccountPage() {
         <h1 className="text-3xl font-semibold tracking-normal">Account</h1>
       </div>
 
-      <form
-        onSubmit={submit}
-        className="space-y-5 rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--card)] p-4 shadow-sm shadow-slate-950/5"
-      >
-        <section className="space-y-3">
-          <h2 className="text-base font-semibold">Profile</h2>
-          <AccountField label="Email">
-            <AccountInput value={user.email} disabled />
-          </AccountField>
-          <AccountField label="Display name">
-            <AccountInput
-              value={form.displayName}
-              onChange={(event) => setField("displayName", event.target.value)}
-            />
-          </AccountField>
-          <AccountField label="Timezone">
-            <AccountInput
-              required
-              value={form.timezone}
-              onChange={(event) => setField("timezone", event.target.value)}
-            />
-          </AccountField>
-        </section>
+      <Card className="gap-0 py-0 shadow-sm shadow-slate-950/5">
+        <CardContent className="p-4">
+          <form onSubmit={submit} className="space-y-5">
+            <section className="space-y-3">
+              <h2 className="text-base font-semibold">Profile</h2>
+              <AccountField label="Email">
+                <AccountInput value={user.email} disabled />
+              </AccountField>
+              <AccountField label="Display name">
+                <AccountInput
+                  value={form.displayName}
+                  onChange={(event) => setField("displayName", event.target.value)}
+                />
+              </AccountField>
+              <AccountField label="Timezone">
+                <AccountInput
+                  required
+                  value={form.timezone}
+                  onChange={(event) => setField("timezone", event.target.value)}
+                />
+              </AccountField>
+            </section>
 
-        <section className="space-y-3">
-          <div>
-            <h2 className="text-base font-semibold">Daily goals</h2>
-            <p className="mt-1 text-sm text-[var(--muted-foreground)]">
-              These targets drive the progress shown on Today.
-            </p>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <GoalField
-              label="Calories"
-              field="calorieGoal"
-              value={form.calorieGoal}
-              onChange={setField}
-            />
-            <GoalField
-              label="Protein (g)"
-              field="proteinGoal"
-              value={form.proteinGoal}
-              onChange={setField}
-            />
-            <GoalField
-              label="Carbs (g)"
-              field="carbsGoal"
-              value={form.carbsGoal}
-              onChange={setField}
-            />
-            <GoalField label="Fat (g)" field="fatGoal" value={form.fatGoal} onChange={setField} />
-          </div>
-        </section>
+            <section className="space-y-3">
+              <div>
+                <h2 className="text-base font-semibold">Daily goals</h2>
+                <p className="mt-1 text-sm text-[var(--muted-foreground)]">
+                  These targets drive the progress shown on Today.
+                </p>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <GoalField
+                  label="Calories"
+                  field="calorieGoal"
+                  value={form.calorieGoal}
+                  onChange={setField}
+                />
+                <GoalField
+                  label="Protein (g)"
+                  field="proteinGoal"
+                  value={form.proteinGoal}
+                  onChange={setField}
+                />
+                <GoalField
+                  label="Carbs (g)"
+                  field="carbsGoal"
+                  value={form.carbsGoal}
+                  onChange={setField}
+                />
+                <GoalField
+                  label="Fat (g)"
+                  field="fatGoal"
+                  value={form.fatGoal}
+                  onChange={setField}
+                />
+              </div>
+            </section>
 
-        {error && <p className="text-sm font-medium text-[var(--destructive)]">{error}</p>}
+            {error && <p className="text-sm font-medium text-[var(--destructive)]">{error}</p>}
 
-        <AppButton type="submit" disabled={saving} className="w-full">
-          <Check className="size-4" />
-          {saving ? "Saving..." : "Save account"}
-        </AppButton>
-      </form>
+            <Button type="submit" size="lg" disabled={saving} className="w-full">
+              <Check className="size-4" />
+              {saving ? "Saving..." : "Save account"}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
 
-      <AppButton variant="secondary" onClick={logout} className="w-full">
+      <Button variant="outline" size="lg" onClick={logout} className="w-full">
         <LogOut className="size-4" />
         Sign out
-      </AppButton>
+      </Button>
     </div>
   );
 
@@ -152,24 +160,27 @@ function GoalField({
   );
 }
 
-function AccountField({ label, children }: { label: string; children: React.ReactNode }) {
+function AccountField({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactElement<React.InputHTMLAttributes<HTMLInputElement>>;
+}) {
+  const id = React.useId();
+
   return (
-    <label>
-      <span className="mb-1.5 block text-xs font-semibold text-[var(--muted-foreground)]">
+    <div className="grid gap-1.5">
+      <Label htmlFor={id} className="text-xs text-muted-foreground">
         {label}
-      </span>
-      {children}
-    </label>
+      </Label>
+      {React.cloneElement(children, { id })}
+    </div>
   );
 }
 
 function AccountInput(props: React.InputHTMLAttributes<HTMLInputElement>) {
-  return (
-    <input
-      {...props}
-      className="h-11 w-full rounded-[var(--radius)] border border-[var(--border)] bg-[var(--background)] px-3 outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ring)] disabled:text-[var(--muted-foreground)]"
-    />
-  );
+  return <Input {...props} className="h-11 disabled:text-muted-foreground" />;
 }
 
 function userToForm(
