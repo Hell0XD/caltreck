@@ -59,7 +59,7 @@ export default function AccountPage() {
         <section className="space-y-3">
           <h2 className="text-base font-semibold">Profile</h2>
           <AccountField label="Email">
-            <AccountInput value={user.email ?? ""} disabled />
+            <AccountInput value={user.email} disabled />
           </AccountField>
           <AccountField label="Display name">
             <AccountInput
@@ -178,7 +178,7 @@ function userToForm(
 ): AccountForm {
   return {
     displayName: user.displayName ?? "",
-    timezone: user.timezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone,
+    timezone: user.timezone,
     calorieGoal: String(goals.calories),
     proteinGoal: String(goals.protein),
     carbsGoal: String(goals.carbs),

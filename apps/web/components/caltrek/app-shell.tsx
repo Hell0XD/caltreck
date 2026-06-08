@@ -36,7 +36,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <aside className="hidden border-r border-[var(--border)] bg-[var(--surface)] px-5 py-6 lg:flex lg:flex-col">
           <BrandBlock />
           <DesktopNav activeRoute={activeRoute} />
-          <UserPanel email={user.email ?? ""} onLogout={logout} />
+          <UserPanel email={user.email} onLogout={logout} />
         </aside>
 
         <section className="mx-auto flex min-h-dvh w-full max-w-md flex-col pb-24 lg:max-w-none lg:pb-0">

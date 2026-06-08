@@ -129,9 +129,6 @@ export function CaltrekProvider({ children }: { children: React.ReactNode }) {
 
   const saveAuthResponse = useCallback(
     (response: AuthResponse) => {
-      if (!response.accessToken || !response.refreshToken || !response.user?.id) {
-        throw new Error("The API returned an incomplete session.");
-      }
       persistSession({
         accessToken: response.accessToken,
         refreshToken: response.refreshToken,
@@ -197,9 +194,6 @@ export function CaltrekProvider({ children }: { children: React.ReactNode }) {
       let result = await request(current.accessToken);
       if (result.response?.status === 401) {
         const refreshedToken = await handleUnauthorized();
-        if (!refreshedToken) {
-          throw new Error("Please sign in again.");
-        }
         result = await request(refreshedToken);
       }
       if (result.error || (result.response && !result.response.ok)) {
@@ -217,7 +211,7 @@ export function CaltrekProvider({ children }: { children: React.ReactNode }) {
           ApiResult<UserLibraryResponse[]>
         >,
     );
-    setLibraryFoods(entries.map(mapLibraryEntry).filter(Boolean) as Food[]);
+    setLibraryFoods(entries.map(mapLibraryEntry));
   }, [runAuthed]);
 
   const loadProfile = useCallback(async () => {
@@ -569,12 +563,10 @@ export function CaltrekProvider({ children }: { children: React.ReactNode }) {
 
   const recentFoods = useMemo(() => libraryFoods, [libraryFoods]);
   const favoriteFoods = useMemo(() => libraryFoods.filter((food) => food.favorite), [libraryFoods]);
-  const goals = useMemo(() => userGoals(session?.user), [session?.user]);
-
-  const value: CaltrekState | null = session?.user
+  const value: CaltrekState | null = session
     ? {
         user: session.user,
-        goals,
+        goals: userGoals(session.user),
         logs,
         totals,
         query,
@@ -1108,17 +1100,17 @@ function toApiMeal(meal: MealType) {
   return meal === "snacks" ? "SNACK" : (meal.toUpperCase() as "BREAKFAST" | "LUNCH" | "DINNER");
 }
 
-function fromApiMeal(meal?: DailyLogResponse["mealType"]): MealType {
-  if (meal === "LUNCH") {
-    return "lunch";
+function fromApiMeal(meal: DailyLogResponse["mealType"]): MealType {
+  switch (meal) {
+    case "BREAKFAST":
+      return "breakfast";
+    case "LUNCH":
+      return "lunch";
+    case "DINNER":
+      return "dinner";
+    case "SNACK":
+      return "snacks";
   }
-  if (meal === "DINNER") {
-    return "dinner";
-  }
-  if (meal === "SNACK") {
-    return "snacks";
-  }
-  return "breakfast";
 }
 
 function toApiAmount(food: Food, quantity: number, mode: QuantityMode) {
@@ -1141,7 +1133,7 @@ function toApiAmount(food: Food, quantity: number, mode: QuantityMode) {
 }
 
 function quantityFromApi(log: DailyLogResponse, food: Food) {
-  const amount = Number(log.quantity ?? food.servingSize);
+  const amount = log.quantity;
   if (!food.servingSize) {
     return amount;
   }
@@ -1150,29 +1142,28 @@ function quantityFromApi(log: DailyLogResponse, food: Food) {
 
 function mapLogEntry(log: DailyLogResponse, fallbackFood?: Food): LogEntry {
   const food = fallbackFood ?? mapEmbeddedLogFood(log);
-  const amount = Number(log.quantity ?? food.servingSize);
   return {
-    id: log.id ?? crypto.randomUUID(),
+    id: log.id,
     food,
     meal: fromApiMeal(log.mealType),
     quantity: quantityFromApi(log, food),
-    amount,
+    amount: log.quantity,
   };
 }
 
 function mapEmbeddedLogFood(log: DailyLogResponse): Food {
   return mapFoodShape({
     id: log.foodId,
-    name: stringValue(extendedValue(log, "foodName")),
-    brand: stringValue(extendedValue(log, "foodBrand")),
-    servingSize: numberValue(extendedValue(log, "foodServingSize")),
-    servingUnit: stringValue(extendedValue(log, "foodServingUnit")),
-    packageQuantity: numberValue(extendedValue(log, "foodPackageQuantity")),
-    packageUnit: stringValue(extendedValue(log, "foodPackageUnit")),
-    caloriesPer100g: numberValue(extendedValue(log, "foodCaloriesPer100g")) ?? log.calories,
-    proteinPer100g: numberValue(extendedValue(log, "foodProteinPer100g")) ?? log.protein,
-    carbsPer100g: numberValue(extendedValue(log, "foodCarbsPer100g")) ?? log.carbs,
-    fatPer100g: numberValue(extendedValue(log, "foodFatPer100g")) ?? log.fat,
+    name: log.foodName,
+    brand: log.foodBrand,
+    servingSize: log.foodServingSize,
+    servingUnit: log.foodServingUnit,
+    packageQuantity: log.foodPackageQuantity,
+    packageUnit: log.foodPackageUnit,
+    caloriesPer100g: log.foodCaloriesPer100g,
+    proteinPer100g: log.foodProteinPer100g,
+    carbsPer100g: log.foodCarbsPer100g,
+    fatPer100g: log.foodFatPer100g,
   });
 }
 
@@ -1180,78 +1171,77 @@ function mapFoodResponse(food: FoodResponse): Food {
   return mapFoodShape(food);
 }
 
-function mapLibraryEntry(entry: UserLibraryResponse): Food | null {
-  if (!entry.foodId) {
-    return null;
-  }
+function mapLibraryEntry(entry: UserLibraryResponse): Food {
   const food = mapFoodShape({
     id: entry.foodId,
-    name: stringValue(extendedValue(entry, "foodName")) ?? entry.label,
-    brand: stringValue(extendedValue(entry, "foodBrand")),
-    servingSize: numberValue(extendedValue(entry, "foodServingSize")) ?? entry.defaultQuantity,
-    servingUnit: stringValue(extendedValue(entry, "foodServingUnit")) ?? entry.defaultUnit,
-    packageQuantity: numberValue(extendedValue(entry, "foodPackageQuantity")),
-    packageUnit: stringValue(extendedValue(entry, "foodPackageUnit")),
-    caloriesPer100g: numberValue(extendedValue(entry, "foodCaloriesPer100g")),
-    proteinPer100g: numberValue(extendedValue(entry, "foodProteinPer100g")),
-    carbsPer100g: numberValue(extendedValue(entry, "foodCarbsPer100g")),
-    fatPer100g: numberValue(extendedValue(entry, "foodFatPer100g")),
+    name: entry.foodName,
+    brand: entry.foodBrand,
+    servingSize: entry.foodServingSize ?? entry.defaultQuantity,
+    servingUnit: entry.foodServingUnit ?? entry.defaultUnit,
+    packageQuantity: entry.foodPackageQuantity,
+    packageUnit: entry.foodPackageUnit,
+    caloriesPer100g: entry.foodCaloriesPer100g,
+    proteinPer100g: entry.foodProteinPer100g,
+    carbsPer100g: entry.foodCarbsPer100g,
+    fatPer100g: entry.foodFatPer100g,
   });
   return {
     ...food,
     libraryEntryId: entry.id,
-    favorite: Boolean(entry.favorite),
+    favorite: entry.favorite,
     recent: true,
-    defaultServings: entry.defaultQuantity ? Number(entry.defaultQuantity) / food.servingSize : 1,
+    defaultServings: entry.defaultQuantity ? entry.defaultQuantity / food.servingSize : 1,
   };
 }
 
-function mapFoodShape(
-  food: Partial<FoodResponse> & {
-    id?: string;
-    name?: unknown;
-    brand?: unknown;
-    servingSize?: unknown;
-    servingUnit?: unknown;
-    packageQuantity?: unknown;
-    packageUnit?: unknown;
-    caloriesPer100g?: unknown;
-    proteinPer100g?: unknown;
-    carbsPer100g?: unknown;
-    fatPer100g?: unknown;
-  },
-): Food {
-  const servingSize = asNumber(food.servingSize, 100);
-  const servingUnit =
-    typeof food.servingUnit === "string" && food.servingUnit ? food.servingUnit : "g";
+type FoodShape = Pick<
+  FoodResponse,
+  "id" | "name" | "caloriesPer100g" | "proteinPer100g" | "carbsPer100g" | "fatPer100g"
+> &
+  Partial<
+    Pick<
+      FoodResponse,
+      | "brand"
+      | "barcode"
+      | "locale"
+      | "source"
+      | "servingSize"
+      | "servingUnit"
+      | "packageQuantity"
+      | "packageUnit"
+      | "fiberPer100g"
+      | "sugarPer100g"
+      | "saltPer100g"
+    >
+  >;
+
+function mapFoodShape(food: FoodShape): Food {
+  const servingSize = food.servingSize ?? 100;
+  const servingUnit = food.servingUnit ?? "g";
   const factor = servingUnit === "g" || servingUnit === "ml" ? servingSize / 100 : 1;
-  const caloriesPer100g = asNumber(food.caloriesPer100g, 0);
-  const proteinPer100g = asNumber(food.proteinPer100g, 0);
-  const carbsPer100g = asNumber(food.carbsPer100g, 0);
-  const fatPer100g = asNumber(food.fatPer100g, 0);
   return {
-    id: food.id ?? crypto.randomUUID(),
-    name: typeof food.name === "string" && food.name ? food.name : "Food",
-    brand: typeof food.brand === "string" && food.brand ? food.brand : "Caltrek",
-    calories: roundNutrition(caloriesPer100g * factor),
-    protein: roundNutrition(proteinPer100g * factor),
-    carbs: roundNutrition(carbsPer100g * factor),
-    fat: roundNutrition(fatPer100g * factor),
-    caloriesPer100g,
-    proteinPer100g,
-    carbsPer100g,
-    fatPer100g,
+    id: food.id,
+    name: food.name,
+    brand: food.brand ?? "Caltrek",
+    calories: roundNutrition(food.caloriesPer100g * factor),
+    protein: roundNutrition(food.proteinPer100g * factor),
+    carbs: roundNutrition(food.carbsPer100g * factor),
+    fat: roundNutrition(food.fatPer100g * factor),
+    caloriesPer100g: food.caloriesPer100g,
+    proteinPer100g: food.proteinPer100g,
+    carbsPer100g: food.carbsPer100g,
+    fatPer100g: food.fatPer100g,
     serving: `${formatAmount(servingSize)} ${servingUnit}`,
     servingSize,
     servingUnit,
-    packageQuantity: numberValue(food.packageQuantity),
-    packageUnit: stringValue(food.packageUnit),
-    barcode: stringValue(food.barcode),
-    locale: stringValue(food.locale),
-    source: stringValue(food.source),
-    fiberPer100g: numberValue(food.fiberPer100g),
-    sugarPer100g: numberValue(food.sugarPer100g),
-    saltPer100g: numberValue(food.saltPer100g),
+    packageQuantity: food.packageQuantity,
+    packageUnit: food.packageUnit,
+    barcode: food.barcode,
+    locale: food.locale,
+    source: food.source,
+    fiberPer100g: food.fiberPer100g,
+    sugarPer100g: food.sugarPer100g,
+    saltPer100g: food.saltPer100g,
   };
 }
 
@@ -1262,24 +1252,6 @@ function mergeFoodFlags(foods: Food[], libraryFoods: Food[]) {
       ? { ...food, favorite: libraryFood.favorite, libraryEntryId: libraryFood.libraryEntryId }
       : food;
   });
-}
-
-function extendedValue<T extends object>(source: T, key: string) {
-  return (source as Record<string, unknown>)[key];
-}
-
-function stringValue(value: unknown) {
-  return typeof value === "string" && value ? value : undefined;
-}
-
-function numberValue(value: unknown) {
-  const next = Number(value);
-  return Number.isFinite(next) ? next : undefined;
-}
-
-function asNumber(value: unknown, fallback: number) {
-  const next = Number(value);
-  return Number.isFinite(next) ? next : fallback;
 }
 
 function formatAmount(value: number) {
@@ -1294,12 +1266,12 @@ function formatNutrition(value: number) {
   return Number.isInteger(value) ? String(value) : value.toFixed(1).replace(/\.0$/, "");
 }
 
-function userGoals(user?: UserResponse): MacroGoals {
+function userGoals(user: UserResponse): MacroGoals {
   return {
-    calories: asNumber(user?.calorieGoal, 2000),
-    protein: asNumber(user?.proteinGoal, 150),
-    carbs: asNumber(user?.carbsGoal, 250),
-    fat: asNumber(user?.fatGoal, 70),
+    calories: user.calorieGoal,
+    protein: user.proteinGoal,
+    carbs: user.carbsGoal,
+    fat: user.fatGoal,
   };
 }
 
