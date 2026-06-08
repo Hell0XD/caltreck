@@ -2,7 +2,7 @@
 
 import type { Client, Options as Options2, TDataShape } from './client';
 import { client } from './client.gen';
-import type { DeleteApiLogsDailyByIdData, DeleteApiLogsDailyByIdResponses, DeleteApiUserLibraryByIdData, DeleteApiUserLibraryByIdResponses, GetApiFoodsBarcodeByBarcodeData, GetApiFoodsBarcodeByBarcodeResponses, GetApiFoodsSearchData, GetApiFoodsSearchResponses, GetApiLogsDailyData, GetApiLogsDailyResponses, GetApiLogsDailySummaryData, GetApiLogsDailySummaryResponses, GetApiUserLibraryData, GetApiUserLibraryResponses, GetApiUsersMeData, GetApiUsersMeResponses, PostApiAuthLoginData, PostApiAuthLoginResponses, PostApiAuthLogoutData, PostApiAuthLogoutResponses, PostApiAuthRefreshData, PostApiAuthRefreshResponses, PostApiAuthRegisterData, PostApiAuthRegisterResponses, PostApiFoodsData, PostApiFoodsResponses, PostApiLogsDailyData, PostApiLogsDailyResponses, PostApiUserLibraryData, PostApiUserLibraryResponses, PutApiLogsDailyByIdData, PutApiLogsDailyByIdResponses, PutApiUsersMeData, PutApiUsersMeResponses } from './types.gen';
+import type { DeleteApiLogsDailyByIdData, DeleteApiLogsDailyByIdResponses, DeleteApiUserLibraryByIdData, DeleteApiUserLibraryByIdResponses, GetApiFoodsBarcodeByBarcodeData, GetApiFoodsBarcodeByBarcodeResponses, GetApiFoodsSearchData, GetApiFoodsSearchResponses, GetApiLogsDailyData, GetApiLogsDailyResponses, GetApiLogsDailySummaryData, GetApiLogsDailySummaryResponses, GetApiUserLibraryData, GetApiUserLibraryResponses, GetApiUsersMeData, GetApiUsersMeResponses, PostApiAuthLoginData, PostApiAuthLoginResponses, PostApiAuthLogoutData, PostApiAuthLogoutResponses, PostApiAuthRefreshData, PostApiAuthRefreshResponses, PostApiAuthRegisterData, PostApiAuthRegisterResponses, PostApiFoodsData, PostApiFoodsResponses, PostApiLogsDailyData, PostApiLogsDailyResponses, PostApiUserLibraryData, PostApiUserLibraryResponses, PutApiFoodsByIdData, PutApiFoodsByIdResponses, PutApiLogsDailyByIdData, PutApiLogsDailyByIdResponses, PutApiUsersMeData, PutApiUsersMeResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -139,6 +139,60 @@ export class DailyLogs extends HeyApiClient {
     }
 }
 
+export class Foods extends HeyApiClient {
+    /**
+     * Update a food, including provider-loaded foods
+     */
+    public updateFood<ThrowOnError extends boolean = false>(options: Options<PutApiFoodsByIdData, ThrowOnError>) {
+        return (options.client ?? this.client).put<PutApiFoodsByIdResponses, unknown, ThrowOnError>({
+            security: [{ scheme: 'bearer', type: 'http' }],
+            url: '/api/foods/{id}',
+            ...options,
+            headers: {
+                'Content-Type': 'application/json',
+                ...options.headers
+            }
+        });
+    }
+    
+    /**
+     * Create a user-entered food
+     */
+    public createFood<ThrowOnError extends boolean = false>(options: Options<PostApiFoodsData, ThrowOnError>) {
+        return (options.client ?? this.client).post<PostApiFoodsResponses, unknown, ThrowOnError>({
+            security: [{ scheme: 'bearer', type: 'http' }],
+            url: '/api/foods',
+            ...options,
+            headers: {
+                'Content-Type': 'application/json',
+                ...options.headers
+            }
+        });
+    }
+    
+    /**
+     * Search local foods by name or brand
+     */
+    public searchFoods<ThrowOnError extends boolean = false>(options: Options<GetApiFoodsSearchData, ThrowOnError>) {
+        return (options.client ?? this.client).get<GetApiFoodsSearchResponses, unknown, ThrowOnError>({
+            security: [{ scheme: 'bearer', type: 'http' }],
+            url: '/api/foods/search',
+            ...options
+        });
+    }
+    
+    /**
+     * Find a local food by barcode
+     */
+    public findFoodByBarcode<ThrowOnError extends boolean = false>(options: Options<GetApiFoodsBarcodeByBarcodeData, ThrowOnError>) {
+        return (options.client ?? this.client).get<GetApiFoodsBarcodeByBarcodeResponses, unknown, ThrowOnError>({
+            security: [{ scheme: 'bearer', type: 'http' }],
+            url: '/api/foods/barcode/{barcode}',
+            ...options
+        });
+    }
+}
+
 export class UserLibrary extends HeyApiClient {
     /**
      * List user library entries
@@ -173,45 +227,6 @@ export class UserLibrary extends HeyApiClient {
         return (options.client ?? this.client).delete<DeleteApiUserLibraryByIdResponses, unknown, ThrowOnError>({
             security: [{ scheme: 'bearer', type: 'http' }],
             url: '/api/user-library/{id}',
-            ...options
-        });
-    }
-}
-
-export class Foods extends HeyApiClient {
-    /**
-     * Create a user-entered food
-     */
-    public createFood<ThrowOnError extends boolean = false>(options: Options<PostApiFoodsData, ThrowOnError>) {
-        return (options.client ?? this.client).post<PostApiFoodsResponses, unknown, ThrowOnError>({
-            security: [{ scheme: 'bearer', type: 'http' }],
-            url: '/api/foods',
-            ...options,
-            headers: {
-                'Content-Type': 'application/json',
-                ...options.headers
-            }
-        });
-    }
-    
-    /**
-     * Search local foods by name or brand
-     */
-    public searchFoods<ThrowOnError extends boolean = false>(options: Options<GetApiFoodsSearchData, ThrowOnError>) {
-        return (options.client ?? this.client).get<GetApiFoodsSearchResponses, unknown, ThrowOnError>({
-            security: [{ scheme: 'bearer', type: 'http' }],
-            url: '/api/foods/search',
-            ...options
-        });
-    }
-    
-    /**
-     * Find a local food by barcode
-     */
-    public findFoodByBarcode<ThrowOnError extends boolean = false>(options: Options<GetApiFoodsBarcodeByBarcodeData, ThrowOnError>) {
-        return (options.client ?? this.client).get<GetApiFoodsBarcodeByBarcodeResponses, unknown, ThrowOnError>({
-            security: [{ scheme: 'bearer', type: 'http' }],
-            url: '/api/foods/barcode/{barcode}',
             ...options
         });
     }
@@ -293,14 +308,14 @@ export class Api extends HeyApiClient {
         return this._dailyLogs ??= new DailyLogs({ client: this.client });
     }
     
-    private _userLibrary?: UserLibrary;
-    get userLibrary(): UserLibrary {
-        return this._userLibrary ??= new UserLibrary({ client: this.client });
-    }
-    
     private _foods?: Foods;
     get foods(): Foods {
         return this._foods ??= new Foods({ client: this.client });
+    }
+    
+    private _userLibrary?: UserLibrary;
+    get userLibrary(): UserLibrary {
+        return this._userLibrary ??= new UserLibrary({ client: this.client });
     }
     
     private _authentication?: Authentication;

@@ -13,6 +13,8 @@ public record FoodResponse(
         String locale,
         BigDecimal servingSize,
         String servingUnit,
+        BigDecimal packageQuantity,
+        String packageUnit,
         BigDecimal caloriesPer100g,
         BigDecimal proteinPer100g,
         BigDecimal carbsPer100g,
@@ -32,6 +34,8 @@ public record FoodResponse(
                 food.locale(),
                 food.servingSize(),
                 food.servingUnit(),
+                food.packageQuantity(),
+                food.packageUnit(),
                 food.caloriesPer100g(),
                 food.proteinPer100g(),
                 food.carbsPer100g(),
@@ -41,4 +45,3 @@ public record FoodResponse(
                 food.saltPer100g());
     }
 }
-

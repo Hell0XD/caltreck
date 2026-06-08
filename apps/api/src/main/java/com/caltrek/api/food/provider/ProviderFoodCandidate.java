@@ -11,6 +11,8 @@ public record ProviderFoodCandidate(
         String locale,
         BigDecimal servingSize,
         String servingUnit,
+        BigDecimal packageQuantity,
+        String packageUnit,
         BigDecimal caloriesPer100g,
         BigDecimal proteinPer100g,
         BigDecimal carbsPer100g,

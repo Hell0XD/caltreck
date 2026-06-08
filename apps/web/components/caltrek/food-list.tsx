@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Plus } from "lucide-react";
+import { Heart, Pencil, Plus } from "lucide-react";
 import type React from "react";
 import { type Food } from "./types";
 import { IconButton } from "./ui";
@@ -10,11 +10,15 @@ export function FoodList({
   title,
   foods,
   onAdd,
+  onEdit,
+  onToggleFavorite,
   icon,
 }: {
   title: string;
   foods: Food[];
   onAdd: (food: Food) => void;
+  onEdit?: (food: Food) => void;
+  onToggleFavorite?: (food: Food) => void;
   icon?: React.ReactNode;
 }) {
   return (
@@ -39,9 +43,21 @@ export function FoodList({
                 {food.calories} kcal | P {food.protein}g | C {food.carbs}g | F {food.fat}g
               </p>
             </button>
-            <IconButton label={`Add ${food.name}`} onClick={() => onAdd(food)}>
-              <Plus className="size-4" />
-            </IconButton>
+            <div className="flex items-center gap-2">
+              {onEdit && (
+                <IconButton label={`Edit ${food.name}`} onClick={() => onEdit(food)}>
+                  <Pencil className="size-4" />
+                </IconButton>
+              )}
+              {onToggleFavorite && (
+                <IconButton label={`Favorite ${food.name}`} onClick={() => onToggleFavorite(food)}>
+                  <Heart className={food.favorite ? "size-4 fill-current" : "size-4"} />
+                </IconButton>
+              )}
+              <IconButton label={`Add ${food.name}`} onClick={() => onAdd(food)}>
+                <Plus className="size-4" />
+              </IconButton>
+            </div>
           </motion.article>
         ))}
       </div>

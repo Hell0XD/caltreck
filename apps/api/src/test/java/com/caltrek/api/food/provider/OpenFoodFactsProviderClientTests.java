@@ -37,7 +37,10 @@ class OpenFoodFactsProviderClientTests {
                           "product": {
                             "product_name": "Peanut Butter",
                             "brands": "Example Foods, Other Brand",
-                            "serving_size": "32 g",
+                            "serving_size": "32 grams",
+                            "quantity": "0.5 kg",
+                            "product_quantity": 500,
+                            "product_quantity_unit": "g",
                             "nutriments": {
                               "energy-kcal_100g": 588,
                               "proteins_100g": 25,
@@ -63,10 +66,38 @@ class OpenFoodFactsProviderClientTests {
                     assertThat(candidate.locale()).isEqualTo("en-US");
                     assertThat(candidate.servingSize()).isEqualByComparingTo("32");
                     assertThat(candidate.servingUnit()).isEqualTo("g");
+                    assertThat(candidate.packageQuantity()).isEqualByComparingTo("500");
+                    assertThat(candidate.packageUnit()).isEqualTo("g");
                     assertThat(candidate.caloriesPer100g()).isEqualByComparingTo("588");
                     assertThat(candidate.proteinPer100g()).isEqualByComparingTo("25");
                     assertThat(candidate.carbsPer100g()).isEqualByComparingTo("20");
                     assertThat(candidate.fatPer100g()).isEqualByComparingTo("50");
+                })
+                .verifyComplete();
+    }
+
+    @Test
+    void fallsBackToTextQuantityWhenStructuredQuantityIsMissing() {
+        server.enqueue(new MockResponse()
+                .setHeader("Content-Type", "application/json")
+                .setBody("""
+                        {
+                          "status": 1,
+                          "code": "12345678",
+                          "product": {
+                            "product_name": "Milk",
+                            "quantity": "1.5 litres",
+                            "nutriments": {
+                              "energy-kcal_100g": 60
+                            }
+                          }
+                        }
+                        """));
+
+        StepVerifier.create(client().findByBarcode("12345678", null))
+                .assertNext(candidate -> {
+                    assertThat(candidate.packageQuantity()).isEqualByComparingTo("1.5");
+                    assertThat(candidate.packageUnit()).isEqualTo("l");
                 })
                 .verifyComplete();
     }

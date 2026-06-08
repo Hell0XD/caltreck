@@ -1,8 +1,25 @@
 "use client";
 
+import {
+  Api,
+  type AuthResponse,
+  type DailyLogResponse,
+  type FoodResponse,
+  type ProfileUpdateRequest,
+  type UserLibraryResponse,
+  type UserResponse,
+} from "@caltrek/api-client";
 import type React from "react";
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
-import { Check, ChevronLeft, Minus, Plus, Trash2 } from "lucide-react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import { Check, ChevronLeft, Minus, Pencil, Plus, Trash2 } from "lucide-react";
 import { Drawer } from "vaul";
 import {
   AlertDialog,
@@ -15,20 +32,30 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { AppButton, IconButton } from "./ui";
-import {
-  type Food,
-  type LogEntry,
-  type MealType,
-  foods,
-  initialLogs,
-  macroFor,
-  mealMeta,
-} from "./types";
+import { type Food, type LogEntry, type MealType, macroFor, mealMeta } from "./types";
+import { AuthScreen } from "./auth-screen";
+import { FoodEditor, type FoodEditorValue } from "./food-editor";
 import { cn } from "@/lib/utils";
 
+type ApiResult<T> = {
+  data?: T;
+  error?: unknown;
+  response?: Response;
+};
+
+type AuthSession = {
+  accessToken: string;
+  refreshToken: string;
+  user: UserResponse;
+};
+
 type MacroTotals = Record<"calories" | "protein" | "carbs" | "fat", number>;
+type QuantityMode = "servings" | "amount" | "package";
+export type MacroGoals = Record<"calories" | "protein" | "carbs" | "fat", number>;
 
 type CaltrekState = {
+  user: UserResponse;
+  goals: MacroGoals;
   logs: LogEntry[];
   totals: MacroTotals;
   query: string;
@@ -41,8 +68,16 @@ type CaltrekState = {
   openAddFood: (food: Food, meal?: MealType) => void;
   startEdit: (entry: LogEntry) => void;
   requestDelete: (entry: LogEntry) => void;
+  findFoodByBarcode: (barcode: string) => Promise<Food>;
+  toggleFavorite: (food: Food) => void;
+  openCreateFood: () => void;
+  openEditFood: (food: Food) => void;
+  updateProfile: (profile: ProfileUpdateRequest) => Promise<void>;
+  logout: () => void;
 };
 
+const SESSION_KEY = "caltrek.session.v1";
+const api = new Api();
 const CaltrekContext = createContext<CaltrekState | null>(null);
 
 export function useCaltrek() {
@@ -54,21 +89,177 @@ export function useCaltrek() {
 }
 
 export function CaltrekProvider({ children }: { children: React.ReactNode }) {
-  const [logs, setLogs] = useState(initialLogs);
+  const [session, setSession] = useState<AuthSession | null>(null);
+  const sessionRef = useRef<AuthSession | null>(null);
+  const [authLoading, setAuthLoading] = useState(true);
+  const [authError, setAuthError] = useState<string | null>(null);
+  const [logs, setLogs] = useState<LogEntry[]>([]);
   const [query, setQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<Food[]>([]);
+  const [libraryFoods, setLibraryFoods] = useState<Food[]>([]);
   const [selectedFood, setSelectedFood] = useState<Food | null>(null);
   const [editingEntry, setEditingEntry] = useState<LogEntry | null>(null);
   const [quantity, setQuantity] = useState(1);
+  const [quantityMode, setQuantityMode] = useState<QuantityMode>("servings");
   const [meal, setMeal] = useState<MealType>("breakfast");
   const [toast, setToast] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<LogEntry | null>(null);
   const [dashboardLoading, setDashboardLoading] = useState(true);
   const [searchLoading, setSearchLoading] = useState(false);
+  const [foodEditorOpen, setFoodEditorOpen] = useState(false);
+  const [foodEditorTarget, setFoodEditorTarget] = useState<Food | null>(null);
+  const [foodEditorSaving, setFoodEditorSaving] = useState(false);
 
   useEffect(() => {
-    const timeout = window.setTimeout(() => setDashboardLoading(false), 650);
-    return () => window.clearTimeout(timeout);
+    sessionRef.current = session;
+  }, [session]);
+
+  const persistSession = useCallback((nextSession: AuthSession | null) => {
+    sessionRef.current = nextSession;
+    setSession(nextSession);
+    if (nextSession) {
+      window.localStorage.setItem(SESSION_KEY, JSON.stringify(nextSession));
+    } else {
+      window.localStorage.removeItem(SESSION_KEY);
+      setLogs([]);
+      setLibraryFoods([]);
+      setSearchResults([]);
+    }
   }, []);
+
+  const saveAuthResponse = useCallback(
+    (response: AuthResponse) => {
+      if (!response.accessToken || !response.refreshToken || !response.user?.id) {
+        throw new Error("The API returned an incomplete session.");
+      }
+      persistSession({
+        accessToken: response.accessToken,
+        refreshToken: response.refreshToken,
+        user: response.user,
+      });
+    },
+    [persistSession],
+  );
+
+  const refreshStoredSession = useCallback(
+    async (stored: AuthSession) => {
+      setAuthLoading(true);
+      try {
+        const result = (await api.authentication.refreshSession({
+          body: { refreshToken: stored.refreshToken },
+        })) as ApiResult<AuthResponse>;
+        if (result.data) {
+          saveAuthResponse(result.data);
+        } else {
+          persistSession(null);
+        }
+      } catch {
+        persistSession(null);
+      } finally {
+        setAuthLoading(false);
+      }
+    },
+    [persistSession, saveAuthResponse],
+  );
+
+  useEffect(() => {
+    const stored = readStoredSession();
+    if (!stored) {
+      setAuthLoading(false);
+      setDashboardLoading(false);
+      return;
+    }
+    void refreshStoredSession(stored);
+  }, [refreshStoredSession]);
+
+  const handleUnauthorized = useCallback(async () => {
+    const current = sessionRef.current;
+    if (!current?.refreshToken) {
+      throw new Error("Please sign in again.");
+    }
+    const result = (await api.authentication.refreshSession({
+      body: { refreshToken: current.refreshToken },
+    })) as ApiResult<AuthResponse>;
+    if (result.error || !result.data) {
+      persistSession(null);
+      throw new Error("Please sign in again.");
+    }
+    saveAuthResponse(result.data);
+    return result.data.accessToken;
+  }, [persistSession, saveAuthResponse]);
+
+  const runAuthed = useCallback(
+    async <T,>(request: (token: string) => Promise<ApiResult<T>>) => {
+      const current = sessionRef.current;
+      if (!current?.accessToken) {
+        throw new Error("Please sign in first.");
+      }
+      let result = await request(current.accessToken);
+      if (result.response?.status === 401) {
+        const refreshedToken = await handleUnauthorized();
+        if (!refreshedToken) {
+          throw new Error("Please sign in again.");
+        }
+        result = await request(refreshedToken);
+      }
+      if (result.error || (result.response && !result.response.ok)) {
+        throw new Error(errorMessage(result.error));
+      }
+      return result.data as T;
+    },
+    [handleUnauthorized],
+  );
+
+  const loadLibrary = useCallback(async () => {
+    const entries = await runAuthed(
+      (token) =>
+        api.userLibrary.listUserLibraryEntries({ auth: token }) as Promise<
+          ApiResult<UserLibraryResponse[]>
+        >,
+    );
+    setLibraryFoods(entries.map(mapLibraryEntry).filter(Boolean) as Food[]);
+  }, [runAuthed]);
+
+  const loadProfile = useCallback(async () => {
+    const user = await runAuthed(
+      (token) => api.users.getCurrentUser({ auth: token }) as Promise<ApiResult<UserResponse>>,
+    );
+    const current = sessionRef.current;
+    if (current) {
+      persistSession({ ...current, user });
+    }
+  }, [persistSession, runAuthed]);
+
+  const loadLogs = useCallback(async () => {
+    const entries = await runAuthed(
+      (token) =>
+        api.dailyLogs.listDailyLogs({
+          auth: token,
+          query: { date: todayIsoDate() },
+        }) as Promise<ApiResult<DailyLogResponse[]>>,
+    );
+    setLogs(entries.map((entry) => mapLogEntry(entry)));
+  }, [runAuthed]);
+
+  const loadAppData = useCallback(async () => {
+    setDashboardLoading(true);
+    try {
+      await Promise.all([loadProfile(), loadLogs(), loadLibrary()]);
+    } catch (error) {
+      setToast(errorMessage(error));
+    } finally {
+      setDashboardLoading(false);
+    }
+  }, [loadLibrary, loadLogs, loadProfile]);
+
+  const accessToken = session?.accessToken;
+
+  useEffect(() => {
+    if (!accessToken) {
+      return;
+    }
+    void loadAppData();
+  }, [accessToken, loadAppData]);
 
   useEffect(() => {
     if (!toast) {
@@ -79,14 +270,27 @@ export function CaltrekProvider({ children }: { children: React.ReactNode }) {
   }, [toast]);
 
   useEffect(() => {
-    if (!query.trim()) {
+    const term = query.trim();
+    if (!session || !term) {
+      setSearchResults([]);
       setSearchLoading(false);
       return;
     }
     setSearchLoading(true);
-    const timeout = window.setTimeout(() => setSearchLoading(false), 450);
+    const timeout = window.setTimeout(() => {
+      void runAuthed(
+        (token) =>
+          api.foods.searchFoods({
+            auth: token,
+            query: { query: term, limit: 25 },
+          }) as Promise<ApiResult<FoodResponse[]>>,
+      )
+        .then((foods) => setSearchResults(foods.map(mapFoodResponse)))
+        .catch((error) => setToast(errorMessage(error)))
+        .finally(() => setSearchLoading(false));
+    }, 300);
     return () => window.clearTimeout(timeout);
-  }, [query]);
+  }, [query, runAuthed, session]);
 
   const totals = useMemo(
     () => ({
@@ -98,84 +302,322 @@ export function CaltrekProvider({ children }: { children: React.ReactNode }) {
     [logs],
   );
 
-  const searchResults = useMemo(() => {
-    const term = query.trim().toLowerCase();
-    if (!term) {
-      return foods.filter((food) => food.recent);
+  async function login(email: string, password: string) {
+    setAuthError(null);
+    const result = (await api.authentication.loginUser({
+      body: { email, password },
+    })) as ApiResult<AuthResponse>;
+    if (result.error || !result.data) {
+      throw new Error(errorMessage(result.error));
     }
-    return foods.filter(
-      (food) =>
-        food.name.toLowerCase().includes(term) ||
-        food.brand.toLowerCase().includes(term),
+    saveAuthResponse(result.data);
+  }
+
+  async function register(email: string, password: string, displayName: string) {
+    setAuthError(null);
+    const result = (await api.authentication.registerUser({
+      body: {
+        email,
+        password,
+        displayName: displayName || undefined,
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      },
+    })) as ApiResult<AuthResponse>;
+    if (result.error || !result.data) {
+      throw new Error(errorMessage(result.error));
+    }
+    saveAuthResponse(result.data);
+  }
+
+  async function logout() {
+    const current = sessionRef.current;
+    persistSession(null);
+    setDashboardLoading(false);
+    if (current?.accessToken) {
+      await api.authentication.logoutUser({ auth: current.accessToken });
+    }
+  }
+
+  async function updateProfile(profile: ProfileUpdateRequest) {
+    const user = await runAuthed(
+      (token) =>
+        api.users.updateCurrentUser({
+          auth: token,
+          body: profile,
+        }) as Promise<ApiResult<UserResponse>>,
     );
-  }, [query]);
+    const current = sessionRef.current;
+    if (current) {
+      persistSession({ ...current, user });
+    }
+    setToast("Account goals updated.");
+  }
 
   function openAddFood(food: Food, nextMeal: MealType = "breakfast") {
     setSelectedFood(food);
-    setQuantity(1);
+    setQuantity(food.defaultServings ?? 1);
+    setQuantityMode("servings");
     setMeal(nextMeal);
   }
 
-  function saveSelectedFood() {
+  async function saveSelectedFood() {
     if (!selectedFood) {
       return;
     }
-    setLogs((current) => [
-      ...current,
-      {
-        id: `log-${Date.now()}`,
-        food: selectedFood,
-        meal,
-        quantity,
-      },
-    ]);
-    setSelectedFood(null);
-    setToast(`${selectedFood.name} saved to ${mealMeta[meal].label.toLowerCase()}.`);
+    try {
+      const amount = toApiAmount(selectedFood, quantity, quantityMode);
+      const response = await runAuthed(
+        (token) =>
+          api.dailyLogs.createDailyLog({
+            auth: token,
+            body: {
+              foodId: selectedFood.id,
+              logDate: todayIsoDate(),
+              mealType: toApiMeal(meal),
+              quantity: amount.quantity,
+              unit: amount.unit,
+            },
+          }) as Promise<ApiResult<DailyLogResponse>>,
+      );
+      setLogs((current) => [...current, mapLogEntry(response, selectedFood)]);
+      setSelectedFood(null);
+      setToast(`${selectedFood.name} saved to ${mealMeta[meal].label.toLowerCase()}.`);
+      await saveLibraryFood(selectedFood, selectedFood.favorite ?? false);
+    } catch (error) {
+      setToast(errorMessage(error));
+    }
   }
 
   function startEdit(entry: LogEntry) {
     setEditingEntry(entry);
     setMeal(entry.meal);
     setQuantity(entry.quantity);
+    setQuantityMode("servings");
   }
 
-  function saveEdit() {
+  async function saveEdit() {
     if (!editingEntry) {
       return;
     }
-    setLogs((current) =>
-      current.map((entry) =>
-        entry.id === editingEntry.id ? { ...entry, meal, quantity } : entry,
+    try {
+      const amount = toApiAmount(editingEntry.food, quantity, quantityMode);
+      const response = await runAuthed(
+        (token) =>
+          api.dailyLogs.updateDailyLog({
+            auth: token,
+            path: { id: editingEntry.id },
+            body: {
+              logDate: todayIsoDate(),
+              mealType: toApiMeal(meal),
+              quantity: amount.quantity,
+              unit: amount.unit,
+            },
+          }) as Promise<ApiResult<DailyLogResponse>>,
+      );
+      setLogs((current) =>
+        current.map((entry) =>
+          entry.id === editingEntry.id ? mapLogEntry(response, editingEntry.food) : entry,
+        ),
+      );
+      setEditingEntry(null);
+      setToast("Log entry updated.");
+    } catch (error) {
+      setToast(errorMessage(error));
+    }
+  }
+
+  async function removeEntry(entry: LogEntry) {
+    try {
+      await runAuthed(
+        (token) =>
+          api.dailyLogs.deleteDailyLog({
+            auth: token,
+            path: { id: entry.id },
+          }) as Promise<ApiResult<Record<string, never>>>,
+      );
+      setLogs((current) => current.filter((item) => item.id !== entry.id));
+      setDeleteTarget(null);
+      setEditingEntry(null);
+      setToast(`${entry.food.name} removed.`);
+    } catch (error) {
+      setToast(errorMessage(error));
+    }
+  }
+
+  async function saveLibraryFood(food: Food, favorite: boolean) {
+    const entry = await runAuthed(
+      (token) =>
+        api.userLibrary.saveUserLibraryEntry({
+          auth: token,
+          body: {
+            foodId: food.id,
+            label: food.name,
+            favorite,
+            defaultQuantity: food.servingSize,
+            defaultUnit: food.servingUnit,
+          },
+        }) as Promise<ApiResult<UserLibraryResponse>>,
+    );
+    const nextFood = mapLibraryEntry(entry);
+    if (!nextFood) {
+      return;
+    }
+    setLibraryFoods((current) => [nextFood, ...current.filter((item) => item.id !== nextFood.id)]);
+  }
+
+  async function findFoodByBarcode(barcode: string) {
+    const food = await runAuthed(
+      (token) =>
+        api.foods.findFoodByBarcode({
+          auth: token,
+          path: { barcode },
+        }) as Promise<ApiResult<FoodResponse>>,
+    );
+    return mapFoodResponse(food);
+  }
+
+  function toggleFavorite(food: Food) {
+    void saveLibraryFood(food, !food.favorite)
+      .then(() =>
+        setToast(`${food.name} ${food.favorite ? "removed from" : "added to"} favorites.`),
+      )
+      .catch((error) => setToast(errorMessage(error)));
+  }
+
+  function openCreateFood() {
+    setFoodEditorTarget(null);
+    setFoodEditorOpen(true);
+  }
+
+  function openEditFood(food: Food) {
+    setFoodEditorTarget(food);
+    setFoodEditorOpen(true);
+  }
+
+  async function saveFoodEditor(value: FoodEditorValue) {
+    setFoodEditorSaving(true);
+    try {
+      const response = foodEditorTarget
+        ? await runAuthed(
+            (token) =>
+              api.foods.updateFood({
+                auth: token,
+                path: { id: foodEditorTarget.id },
+                body: value,
+              }) as Promise<ApiResult<FoodResponse>>,
+          )
+        : await runAuthed(
+            (token) =>
+              api.foods.createFood({
+                auth: token,
+                body: value,
+              }) as Promise<ApiResult<FoodResponse>>,
+          );
+      const savedFood = mapFoodResponse(response);
+      replaceFood(savedFood);
+      setFoodEditorOpen(false);
+      setFoodEditorTarget(null);
+      if (foodEditorTarget) {
+        setToast(`${savedFood.name} updated.`);
+      } else {
+        await saveLibraryFood(savedFood, false);
+        openAddFood(savedFood);
+        setToast(`${savedFood.name} created.`);
+      }
+    } catch (error) {
+      setToast(errorMessage(error));
+    } finally {
+      setFoodEditorSaving(false);
+    }
+  }
+
+  function replaceFood(food: Food) {
+    setSearchResults((current) =>
+      current.map((item) => (item.id === food.id ? { ...food, favorite: item.favorite } : item)),
+    );
+    setLibraryFoods((current) =>
+      current.map((item) =>
+        item.id === food.id
+          ? { ...food, favorite: item.favorite, recent: true, libraryEntryId: item.libraryEntryId }
+          : item,
       ),
     );
-    setEditingEntry(null);
-    setToast("Log entry updated.");
+    setLogs((current) =>
+      current.map((entry) =>
+        entry.food.id === food.id
+          ? { ...entry, food: { ...food, favorite: entry.food.favorite } }
+          : entry,
+      ),
+    );
+    setSelectedFood((current) => (current?.id === food.id ? food : current));
   }
 
-  function removeEntry(entry: LogEntry) {
-    setLogs((current) => current.filter((item) => item.id !== entry.id));
-    setDeleteTarget(null);
-    setEditingEntry(null);
-    setToast(`${entry.food.name} removed.`);
+  function changeQuantityMode(nextMode: QuantityMode, food: Food) {
+    if (nextMode === quantityMode || food.servingSize <= 0) {
+      return;
+    }
+    const currentAmount = toApiAmount(food, quantity, quantityMode).quantity;
+    setQuantity(
+      nextMode === "amount"
+        ? currentAmount
+        : nextMode === "package"
+          ? Number((currentAmount / (food.packageQuantity ?? currentAmount)).toFixed(2))
+          : Number((currentAmount / food.servingSize).toFixed(2)),
+    );
+    setQuantityMode(nextMode);
   }
 
-  const value = useMemo<CaltrekState>(
-    () => ({
-      logs,
-      totals,
-      query,
-      setQuery,
-      searchResults,
-      recentFoods: foods.filter((food) => food.recent),
-      favoriteFoods: foods.filter((food) => food.favorite),
-      dashboardLoading,
-      searchLoading,
-      openAddFood,
-      startEdit,
-      requestDelete: setDeleteTarget,
-    }),
-    [dashboardLoading, logs, query, searchLoading, searchResults, totals],
-  );
+  const recentFoods = useMemo(() => libraryFoods, [libraryFoods]);
+  const favoriteFoods = useMemo(() => libraryFoods.filter((food) => food.favorite), [libraryFoods]);
+  const goals = useMemo(() => userGoals(session?.user), [session?.user]);
+
+  const value: CaltrekState | null = session?.user
+    ? {
+        user: session.user,
+        goals,
+        logs,
+        totals,
+        query,
+        setQuery,
+        searchResults: query.trim() ? mergeFoodFlags(searchResults, libraryFoods) : libraryFoods,
+        recentFoods,
+        favoriteFoods,
+        dashboardLoading,
+        searchLoading,
+        openAddFood,
+        startEdit,
+        requestDelete: setDeleteTarget,
+        findFoodByBarcode,
+        toggleFavorite,
+        openCreateFood,
+        openEditFood,
+        updateProfile,
+        logout,
+      }
+    : null;
+
+  if (authLoading) {
+    return <AuthScreen loading />;
+  }
+
+  if (!value) {
+    return (
+      <AuthScreen
+        error={authError}
+        onSubmit={async (mode, email, password, displayName) => {
+          try {
+            if (mode === "login") {
+              await login(email, password);
+            } else {
+              await register(email, password, displayName);
+            }
+          } catch (error) {
+            setAuthError(errorMessage(error));
+          }
+        }}
+      />
+    );
+  }
 
   return (
     <CaltrekContext.Provider value={value}>
@@ -184,17 +626,25 @@ export function CaltrekProvider({ children }: { children: React.ReactNode }) {
         food={selectedFood}
         meal={meal}
         quantity={quantity}
+        quantityMode={quantityMode}
         onMeal={setMeal}
         onQuantity={setQuantity}
+        onQuantityMode={changeQuantityMode}
         onClose={() => setSelectedFood(null)}
+        onEdit={(food) => {
+          setSelectedFood(null);
+          openEditFood(food);
+        }}
         onSave={saveSelectedFood}
       />
       <EditSheet
         entry={editingEntry}
         meal={meal}
         quantity={quantity}
+        quantityMode={quantityMode}
         onMeal={setMeal}
         onQuantity={setQuantity}
+        onQuantityMode={changeQuantityMode}
         onClose={() => setEditingEntry(null)}
         onSave={saveEdit}
         onDelete={setDeleteTarget}
@@ -203,6 +653,13 @@ export function CaltrekProvider({ children }: { children: React.ReactNode }) {
         entry={deleteTarget}
         onCancel={() => setDeleteTarget(null)}
         onConfirm={removeEntry}
+      />
+      <FoodEditor
+        open={foodEditorOpen}
+        food={foodEditorTarget}
+        saving={foodEditorSaving}
+        onClose={() => setFoodEditorOpen(false)}
+        onSubmit={saveFoodEditor}
       />
       <Toast message={toast} />
     </CaltrekContext.Provider>
@@ -213,24 +670,30 @@ function FoodSheet({
   food,
   meal,
   quantity,
+  quantityMode,
   onMeal,
   onQuantity,
+  onQuantityMode,
   onClose,
+  onEdit,
   onSave,
 }: {
   food: Food | null;
   meal: MealType;
   quantity: number;
+  quantityMode: QuantityMode;
   onMeal: (meal: MealType) => void;
   onQuantity: (quantity: number) => void;
+  onQuantityMode: (mode: QuantityMode, food: Food) => void;
   onClose: () => void;
+  onEdit: (food: Food) => void;
   onSave: () => void;
 }) {
   return (
     <Drawer.Root open={Boolean(food)} onOpenChange={(open) => !open && onClose()}>
       <Drawer.Portal>
         <Drawer.Overlay className="fixed inset-0 z-40 bg-slate-950/35" />
-        <Drawer.Content className="fixed inset-x-0 bottom-0 z-50 mx-auto max-w-md rounded-t-[1.25rem] border border-[var(--border)] bg-[var(--card)] p-4 shadow-2xl outline-none lg:max-w-lg">
+        <Drawer.Content className="fixed inset-x-0 bottom-0 z-50 mx-auto max-h-[92dvh] max-w-md overflow-y-auto rounded-t-[1.25rem] border border-[var(--border)] bg-[var(--card)] p-4 shadow-2xl outline-none lg:max-w-lg">
           <SheetHandle />
           {food && (
             <SheetBody
@@ -238,17 +701,26 @@ function FoodSheet({
               subtitle={`${food.brand} - ${food.serving}`}
               meal={meal}
               quantity={quantity}
+              quantityMode={quantityMode}
+              food={food}
               onMeal={onMeal}
               onQuantity={onQuantity}
+              onQuantityMode={onQuantityMode}
               onClose={onClose}
               footer={
-                <AppButton onClick={onSave} className="w-full">
-                  <Check className="size-4" />
-                  Save food
-                </AppButton>
+                <div className="grid grid-cols-[auto_1fr] gap-3">
+                  <AppButton variant="secondary" onClick={() => onEdit(food)} className="px-3">
+                    <Pencil className="size-4" />
+                    Edit
+                  </AppButton>
+                  <AppButton onClick={onSave}>
+                    <Check className="size-4" />
+                    Save food
+                  </AppButton>
+                </div>
               }
             >
-              <MacroPreview food={food} quantity={quantity} />
+              <NutritionDetails food={food} quantity={quantity} quantityMode={quantityMode} />
             </SheetBody>
           )}
         </Drawer.Content>
@@ -261,8 +733,10 @@ function EditSheet({
   entry,
   meal,
   quantity,
+  quantityMode,
   onMeal,
   onQuantity,
+  onQuantityMode,
   onClose,
   onSave,
   onDelete,
@@ -270,8 +744,10 @@ function EditSheet({
   entry: LogEntry | null;
   meal: MealType;
   quantity: number;
+  quantityMode: QuantityMode;
   onMeal: (meal: MealType) => void;
   onQuantity: (quantity: number) => void;
+  onQuantityMode: (mode: QuantityMode, food: Food) => void;
   onClose: () => void;
   onSave: () => void;
   onDelete: (entry: LogEntry) => void;
@@ -280,7 +756,7 @@ function EditSheet({
     <Drawer.Root open={Boolean(entry)} onOpenChange={(open) => !open && onClose()}>
       <Drawer.Portal>
         <Drawer.Overlay className="fixed inset-0 z-40 bg-slate-950/35" />
-        <Drawer.Content className="fixed inset-x-0 bottom-0 z-50 mx-auto max-w-md rounded-t-[1.25rem] border border-[var(--border)] bg-[var(--card)] p-4 shadow-2xl outline-none lg:max-w-lg">
+        <Drawer.Content className="fixed inset-x-0 bottom-0 z-50 mx-auto max-h-[92dvh] max-w-md overflow-y-auto rounded-t-[1.25rem] border border-[var(--border)] bg-[var(--card)] p-4 shadow-2xl outline-none lg:max-w-lg">
           <SheetHandle />
           {entry && (
             <SheetBody
@@ -288,8 +764,11 @@ function EditSheet({
               subtitle="Edit log entry"
               meal={meal}
               quantity={quantity}
+              quantityMode={quantityMode}
+              food={entry.food}
               onMeal={onMeal}
               onQuantity={onQuantity}
+              onQuantityMode={onQuantityMode}
               onClose={onClose}
               footer={
                 <div className="grid grid-cols-[auto_1fr] gap-3">
@@ -303,7 +782,7 @@ function EditSheet({
                 </div>
               }
             >
-              <MacroPreview food={entry.food} quantity={quantity} />
+              <NutritionDetails food={entry.food} quantity={quantity} quantityMode={quantityMode} />
             </SheetBody>
           )}
         </Drawer.Content>
@@ -315,24 +794,41 @@ function EditSheet({
 function SheetBody({
   title,
   subtitle,
+  food,
   meal,
   quantity,
+  quantityMode,
   children,
   footer,
   onMeal,
   onQuantity,
+  onQuantityMode,
   onClose,
 }: {
   title: string;
   subtitle: string;
+  food: Food;
   meal: MealType;
   quantity: number;
+  quantityMode: QuantityMode;
   children: React.ReactNode;
   footer: React.ReactNode;
   onMeal: (meal: MealType) => void;
   onQuantity: (quantity: number) => void;
+  onQuantityMode: (mode: QuantityMode, food: Food) => void;
   onClose: () => void;
 }) {
+  const supportsAmount = food.servingUnit === "g" || food.servingUnit === "ml";
+  const supportsPackage = Boolean(food.packageQuantity && food.packageUnit);
+  const step = quantityMode === "servings" ? 0.25 : quantityMode === "package" ? 0.25 : 1;
+  const minimum = quantityMode === "servings" || quantityMode === "package" ? 0.25 : 0.01;
+  const quantityLabel =
+    quantityMode === "servings"
+      ? "Serving quantity"
+      : quantityMode === "package"
+        ? "Whole product quantity"
+        : `Amount in ${food.servingUnit}`;
+
   return (
     <div className="space-y-5">
       <div className="flex items-start gap-3">
@@ -367,29 +863,79 @@ function SheetBody({
         </div>
       </div>
       <div>
-        <p className="mb-2 text-sm font-semibold">Servings</p>
+        <div className="mb-2 flex items-center justify-between gap-3">
+          <p className="text-sm font-semibold">
+            {quantityMode === "servings"
+              ? "Servings"
+              : quantityMode === "package"
+                ? "Whole product"
+                : "Amount"}
+          </p>
+          {(supportsAmount || supportsPackage) && (
+            <div
+              className={cn(
+                "grid rounded-[var(--radius)] bg-[var(--surface)] p-1",
+                supportsAmount && supportsPackage ? "grid-cols-3" : "grid-cols-2",
+              )}
+            >
+              <button
+                type="button"
+                onClick={() => onQuantityMode("servings", food)}
+                className={quantityModeClass(quantityMode === "servings")}
+              >
+                Servings
+              </button>
+              <button
+                type="button"
+                onClick={() => onQuantityMode("amount", food)}
+                hidden={!supportsAmount}
+                className={quantityModeClass(quantityMode === "amount")}
+              >
+                {food.servingUnit === "g" ? "Grams" : "Milliliters"}
+              </button>
+              <button
+                type="button"
+                onClick={() => onQuantityMode("package", food)}
+                hidden={!supportsPackage}
+                className={quantityModeClass(quantityMode === "package")}
+              >
+                Whole product
+              </button>
+            </div>
+          )}
+        </div>
         <div className="grid grid-cols-[auto_1fr_auto] items-center gap-3 rounded-[var(--radius-lg)] bg-[var(--surface)] p-3">
           <IconButton
-            label="Decrease servings"
-            onClick={() => onQuantity(Math.max(0.25, Number((quantity - 0.25).toFixed(2))))}
+            label={`Decrease ${quantityLabel.toLowerCase()}`}
+            onClick={() => onQuantity(Math.max(minimum, Number((quantity - step).toFixed(2))))}
           >
             <Minus className="size-4" />
           </IconButton>
-          <input
-            aria-label="Serving quantity"
-            value={quantity}
-            onChange={(event) => {
-              const next = Number(event.target.value);
-              if (!Number.isNaN(next) && next > 0) {
-                onQuantity(next);
-              }
-            }}
-            inputMode="decimal"
-            className="h-11 min-w-0 rounded-[var(--radius)] border border-[var(--border)] bg-[var(--card)] text-center text-lg font-semibold outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ring)]"
-          />
+          <div className="relative min-w-0">
+            <input
+              aria-label={quantityLabel}
+              value={quantity}
+              onChange={(event) => {
+                const next = Number(event.target.value);
+                if (!Number.isNaN(next) && next > 0) {
+                  onQuantity(next);
+                }
+              }}
+              inputMode="decimal"
+              className={cn(
+                "h-11 w-full min-w-0 rounded-[var(--radius)] border border-[var(--border)] bg-[var(--card)] text-center text-lg font-semibold outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ring)]",
+                quantityMode !== "servings" && "pr-10",
+              )}
+            />
+            {quantityMode !== "servings" && (
+              <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-sm font-semibold text-[var(--muted-foreground)]">
+                {quantityMode === "package" ? "x" : food.servingUnit}
+              </span>
+            )}
+          </div>
           <IconButton
-            label="Increase servings"
-            onClick={() => onQuantity(Number((quantity + 0.25).toFixed(2)))}
+            label={`Increase ${quantityLabel.toLowerCase()}`}
+            onClick={() => onQuantity(Number((quantity + step).toFixed(2)))}
           >
             <Plus className="size-4" />
           </IconButton>
@@ -404,18 +950,93 @@ function SheetHandle() {
   return <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-[var(--border)]" />;
 }
 
-function MacroPreview({ food, quantity }: { food: Food; quantity: number }) {
+function NutritionDetails({
+  food,
+  quantity,
+  quantityMode,
+}: {
+  food: Food;
+  quantity: number;
+  quantityMode: QuantityMode;
+}) {
+  const servingMultiplier = toApiAmount(food, quantity, quantityMode).quantity / food.servingSize;
+  const perHundredLabel = food.servingUnit === "ml" ? "Per 100 ml" : "Per 100 g";
+
   return (
-    <div className="grid grid-cols-4 gap-2 rounded-[var(--radius-lg)] bg-[var(--surface)] p-3">
-      {(["calories", "protein", "carbs", "fat"] as const).map((key) => (
-        <div key={key} className="text-center">
-          <p className="text-xs capitalize text-[var(--muted-foreground)]">
-            {key === "calories" ? "kcal" : key}
-          </p>
-          <p className="mt-1 text-sm font-semibold">{Math.round(food[key] * quantity)}</p>
-        </div>
-      ))}
+    <div className="space-y-2">
+      <NutritionRow label={`Per serving (${food.serving})`} values={macroValues(food)} />
+      <NutritionRow
+        label={perHundredLabel}
+        values={{
+          calories: food.caloriesPer100g,
+          protein: food.proteinPer100g,
+          carbs: food.carbsPer100g,
+          fat: food.fatPer100g,
+        }}
+      />
+      <NutritionRow
+        label="Selected total"
+        values={{
+          calories: food.calories * servingMultiplier,
+          protein: food.protein * servingMultiplier,
+          carbs: food.carbs * servingMultiplier,
+          fat: food.fat * servingMultiplier,
+        }}
+        selected
+      />
     </div>
+  );
+}
+
+function NutritionRow({
+  label,
+  values,
+  selected,
+}: {
+  label: string;
+  values: Record<"calories" | "protein" | "carbs" | "fat", number>;
+  selected?: boolean;
+}) {
+  return (
+    <div
+      className={cn(
+        "rounded-[var(--radius-lg)] bg-[var(--surface)] p-3",
+        selected && "bg-[var(--primary-soft)]",
+      )}
+    >
+      <p className="mb-2 text-xs font-semibold text-[var(--muted-foreground)]">{label}</p>
+      <div className="grid grid-cols-4 gap-2">
+        {(["calories", "protein", "carbs", "fat"] as const).map((key) => (
+          <div key={key} className="min-w-0 text-center">
+            <p className="truncate text-xs capitalize text-[var(--muted-foreground)]">
+              {key === "calories" ? "kcal" : key}
+            </p>
+            <p className="mt-1 text-sm font-semibold">
+              {formatNutrition(values[key])}
+              {key === "calories" ? "" : "g"}
+            </p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function macroValues(food: Food) {
+  return {
+    calories: food.calories,
+    protein: food.protein,
+    carbs: food.carbs,
+    fat: food.fat,
+  };
+}
+
+function quantityModeClass(active: boolean) {
+  return cn(
+    "min-h-9 rounded-[var(--radius)] px-3 text-xs font-semibold transition",
+    active
+      ? "bg-[var(--card)] text-[var(--foreground)] shadow-sm"
+      : "text-[var(--muted-foreground)]",
   );
 }
 
@@ -468,4 +1089,232 @@ function Toast({ message }: { message: string | null }) {
       )}
     </div>
   );
+}
+
+function readStoredSession() {
+  try {
+    const raw = window.localStorage.getItem(SESSION_KEY);
+    return raw ? (JSON.parse(raw) as AuthSession) : null;
+  } catch {
+    return null;
+  }
+}
+
+function todayIsoDate() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function toApiMeal(meal: MealType) {
+  return meal === "snacks" ? "SNACK" : (meal.toUpperCase() as "BREAKFAST" | "LUNCH" | "DINNER");
+}
+
+function fromApiMeal(meal?: DailyLogResponse["mealType"]): MealType {
+  if (meal === "LUNCH") {
+    return "lunch";
+  }
+  if (meal === "DINNER") {
+    return "dinner";
+  }
+  if (meal === "SNACK") {
+    return "snacks";
+  }
+  return "breakfast";
+}
+
+function toApiAmount(food: Food, quantity: number, mode: QuantityMode) {
+  if (mode === "amount") {
+    return {
+      quantity: Number(quantity.toFixed(2)),
+      unit: food.servingUnit,
+    };
+  }
+  if (mode === "package") {
+    return {
+      quantity: Number(((food.packageQuantity ?? food.servingSize) * quantity).toFixed(2)),
+      unit: food.packageUnit ?? food.servingUnit,
+    };
+  }
+  return {
+    quantity: Number((food.servingSize * quantity).toFixed(2)),
+    unit: food.servingUnit,
+  };
+}
+
+function quantityFromApi(log: DailyLogResponse, food: Food) {
+  const amount = Number(log.quantity ?? food.servingSize);
+  if (!food.servingSize) {
+    return amount;
+  }
+  return Number((amount / food.servingSize).toFixed(2));
+}
+
+function mapLogEntry(log: DailyLogResponse, fallbackFood?: Food): LogEntry {
+  const food = fallbackFood ?? mapEmbeddedLogFood(log);
+  const amount = Number(log.quantity ?? food.servingSize);
+  return {
+    id: log.id ?? crypto.randomUUID(),
+    food,
+    meal: fromApiMeal(log.mealType),
+    quantity: quantityFromApi(log, food),
+    amount,
+  };
+}
+
+function mapEmbeddedLogFood(log: DailyLogResponse): Food {
+  return mapFoodShape({
+    id: log.foodId,
+    name: stringValue(extendedValue(log, "foodName")),
+    brand: stringValue(extendedValue(log, "foodBrand")),
+    servingSize: numberValue(extendedValue(log, "foodServingSize")),
+    servingUnit: stringValue(extendedValue(log, "foodServingUnit")),
+    packageQuantity: numberValue(extendedValue(log, "foodPackageQuantity")),
+    packageUnit: stringValue(extendedValue(log, "foodPackageUnit")),
+    caloriesPer100g: numberValue(extendedValue(log, "foodCaloriesPer100g")) ?? log.calories,
+    proteinPer100g: numberValue(extendedValue(log, "foodProteinPer100g")) ?? log.protein,
+    carbsPer100g: numberValue(extendedValue(log, "foodCarbsPer100g")) ?? log.carbs,
+    fatPer100g: numberValue(extendedValue(log, "foodFatPer100g")) ?? log.fat,
+  });
+}
+
+function mapFoodResponse(food: FoodResponse): Food {
+  return mapFoodShape(food);
+}
+
+function mapLibraryEntry(entry: UserLibraryResponse): Food | null {
+  if (!entry.foodId) {
+    return null;
+  }
+  const food = mapFoodShape({
+    id: entry.foodId,
+    name: stringValue(extendedValue(entry, "foodName")) ?? entry.label,
+    brand: stringValue(extendedValue(entry, "foodBrand")),
+    servingSize: numberValue(extendedValue(entry, "foodServingSize")) ?? entry.defaultQuantity,
+    servingUnit: stringValue(extendedValue(entry, "foodServingUnit")) ?? entry.defaultUnit,
+    packageQuantity: numberValue(extendedValue(entry, "foodPackageQuantity")),
+    packageUnit: stringValue(extendedValue(entry, "foodPackageUnit")),
+    caloriesPer100g: numberValue(extendedValue(entry, "foodCaloriesPer100g")),
+    proteinPer100g: numberValue(extendedValue(entry, "foodProteinPer100g")),
+    carbsPer100g: numberValue(extendedValue(entry, "foodCarbsPer100g")),
+    fatPer100g: numberValue(extendedValue(entry, "foodFatPer100g")),
+  });
+  return {
+    ...food,
+    libraryEntryId: entry.id,
+    favorite: Boolean(entry.favorite),
+    recent: true,
+    defaultServings: entry.defaultQuantity ? Number(entry.defaultQuantity) / food.servingSize : 1,
+  };
+}
+
+function mapFoodShape(
+  food: Partial<FoodResponse> & {
+    id?: string;
+    name?: unknown;
+    brand?: unknown;
+    servingSize?: unknown;
+    servingUnit?: unknown;
+    packageQuantity?: unknown;
+    packageUnit?: unknown;
+    caloriesPer100g?: unknown;
+    proteinPer100g?: unknown;
+    carbsPer100g?: unknown;
+    fatPer100g?: unknown;
+  },
+): Food {
+  const servingSize = asNumber(food.servingSize, 100);
+  const servingUnit =
+    typeof food.servingUnit === "string" && food.servingUnit ? food.servingUnit : "g";
+  const factor = servingUnit === "g" || servingUnit === "ml" ? servingSize / 100 : 1;
+  const caloriesPer100g = asNumber(food.caloriesPer100g, 0);
+  const proteinPer100g = asNumber(food.proteinPer100g, 0);
+  const carbsPer100g = asNumber(food.carbsPer100g, 0);
+  const fatPer100g = asNumber(food.fatPer100g, 0);
+  return {
+    id: food.id ?? crypto.randomUUID(),
+    name: typeof food.name === "string" && food.name ? food.name : "Food",
+    brand: typeof food.brand === "string" && food.brand ? food.brand : "Caltrek",
+    calories: roundNutrition(caloriesPer100g * factor),
+    protein: roundNutrition(proteinPer100g * factor),
+    carbs: roundNutrition(carbsPer100g * factor),
+    fat: roundNutrition(fatPer100g * factor),
+    caloriesPer100g,
+    proteinPer100g,
+    carbsPer100g,
+    fatPer100g,
+    serving: `${formatAmount(servingSize)} ${servingUnit}`,
+    servingSize,
+    servingUnit,
+    packageQuantity: numberValue(food.packageQuantity),
+    packageUnit: stringValue(food.packageUnit),
+    barcode: stringValue(food.barcode),
+    locale: stringValue(food.locale),
+    source: stringValue(food.source),
+    fiberPer100g: numberValue(food.fiberPer100g),
+    sugarPer100g: numberValue(food.sugarPer100g),
+    saltPer100g: numberValue(food.saltPer100g),
+  };
+}
+
+function mergeFoodFlags(foods: Food[], libraryFoods: Food[]) {
+  return foods.map((food) => {
+    const libraryFood = libraryFoods.find((item) => item.id === food.id);
+    return libraryFood
+      ? { ...food, favorite: libraryFood.favorite, libraryEntryId: libraryFood.libraryEntryId }
+      : food;
+  });
+}
+
+function extendedValue<T extends object>(source: T, key: string) {
+  return (source as Record<string, unknown>)[key];
+}
+
+function stringValue(value: unknown) {
+  return typeof value === "string" && value ? value : undefined;
+}
+
+function numberValue(value: unknown) {
+  const next = Number(value);
+  return Number.isFinite(next) ? next : undefined;
+}
+
+function asNumber(value: unknown, fallback: number) {
+  const next = Number(value);
+  return Number.isFinite(next) ? next : fallback;
+}
+
+function formatAmount(value: number) {
+  return Number.isInteger(value) ? String(value) : value.toFixed(2).replace(/\.?0+$/, "");
+}
+
+function roundNutrition(value: number) {
+  return Number(value.toFixed(2));
+}
+
+function formatNutrition(value: number) {
+  return Number.isInteger(value) ? String(value) : value.toFixed(1).replace(/\.0$/, "");
+}
+
+function userGoals(user?: UserResponse): MacroGoals {
+  return {
+    calories: asNumber(user?.calorieGoal, 2000),
+    protein: asNumber(user?.proteinGoal, 150),
+    carbs: asNumber(user?.carbsGoal, 250),
+    fat: asNumber(user?.fatGoal, 70),
+  };
+}
+
+function errorMessage(error: unknown) {
+  if (error instanceof Error) {
+    return error.message;
+  }
+  if (error && typeof error === "object") {
+    const record = error as Record<string, unknown>;
+    if (typeof record.message === "string") {
+      return record.message;
+    }
+    if (typeof record.error === "string") {
+      return record.error;
+    }
+  }
+  return "Something went wrong. Please try again.";
 }

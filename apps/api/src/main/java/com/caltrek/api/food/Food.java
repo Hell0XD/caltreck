@@ -18,6 +18,8 @@ public record Food(
         String locale,
         @Column("serving_size") BigDecimal servingSize,
         @Column("serving_unit") String servingUnit,
+        @Column("package_quantity") BigDecimal packageQuantity,
+        @Column("package_unit") String packageUnit,
         @Column("calories_per_100g") BigDecimal caloriesPer100g,
         @Column("protein_per_100g") BigDecimal proteinPer100g,
         @Column("carbs_per_100g") BigDecimal carbsPer100g,
@@ -29,4 +31,3 @@ public record Food(
         @Column("created_at") OffsetDateTime createdAt,
         @Column("updated_at") OffsetDateTime updatedAt) {
 }
-

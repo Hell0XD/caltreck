@@ -6,7 +6,7 @@ import { FoodList } from "@/components/caltrek/food-list";
 import { EmptyState } from "@/components/caltrek/ui";
 
 export default function LibraryPage() {
-  const { favoriteFoods, recentFoods, openAddFood } = useCaltrek();
+  const { favoriteFoods, recentFoods, openAddFood, toggleFavorite } = useCaltrek();
 
   return (
     <div className="space-y-5">
@@ -21,15 +21,24 @@ export default function LibraryPage() {
           title="Favorites"
           foods={favoriteFoods}
           onAdd={openAddFood}
+          onToggleFavorite={toggleFavorite}
           icon={<Heart className="size-4" />}
         />
       )}
-      <FoodList
-        title="Recent"
-        foods={recentFoods}
-        onAdd={openAddFood}
-        icon={<Clock3 className="size-4" />}
-      />
+      {recentFoods.length === 0 ? (
+        <EmptyState
+          title="No saved foods"
+          body="Foods you log will be saved here for faster reuse."
+        />
+      ) : (
+        <FoodList
+          title="Recent"
+          foods={recentFoods}
+          onAdd={openAddFood}
+          onToggleFavorite={toggleFavorite}
+          icon={<Clock3 className="size-4" />}
+        />
+      )}
     </div>
   );
 }

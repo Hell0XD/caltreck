@@ -34,7 +34,10 @@ public class OpenFoodFactsProviderClient implements FoodProviderClient {
         return webClient.get()
                 .uri(uriBuilder -> uriBuilder
                         .path("/api/v2/product/{barcode}.json")
-                        .queryParam("fields", "code,status,product_name,brands,serving_size,quantity,nutriments")
+                        .queryParam(
+                                "fields",
+                                "code,status,product_name,brands,serving_size,quantity,"
+                                        + "product_quantity,product_quantity_unit,nutriments")
                         .build(barcode))
                 .exchangeToMono(response -> {
                     if (response.statusCode().value() == 404) {
@@ -80,6 +83,7 @@ public class OpenFoodFactsProviderClient implements FoodProviderClient {
         }
 
         Serving serving = parseServing(product.servingSize());
+        Serving packageMeasurement = packageMeasurement(product);
         return Mono.just(new ProviderFoodCandidate(
                 PROVIDER_NAME,
                 firstNonBlank(response.code(), barcode),
@@ -89,6 +93,8 @@ public class OpenFoodFactsProviderClient implements FoodProviderClient {
                 locale,
                 serving.size(),
                 serving.unit(),
+                packageMeasurement.size(),
+                packageMeasurement.unit(),
                 calories,
                 valueOrZero(nutriments == null ? null : nutriments.protein100g()),
                 valueOrZero(nutriments == null ? null : nutriments.carbs100g()),
@@ -139,7 +145,30 @@ public class OpenFoodFactsProviderClient implements FoodProviderClient {
         if (!matcher.find()) {
             return new Serving(null, servingSize.trim());
         }
-        return new Serving(new BigDecimal(matcher.group(1).replace(',', '.')), matcher.group(2).toLowerCase());
+        return new Serving(
+                new BigDecimal(matcher.group(1).replace(',', '.')),
+                normalizeServingUnit(matcher.group(2)));
+    }
+
+    private Serving packageMeasurement(OpenFoodFactsProduct product) {
+        if (product.productQuantity() != null && !isBlank(product.productQuantityUnit())) {
+            return new Serving(
+                    product.productQuantity(),
+                    normalizeServingUnit(product.productQuantityUnit()));
+        }
+        return parseServing(product.quantity());
+    }
+
+    private String normalizeServingUnit(String unit) {
+        return switch (unit.toLowerCase()) {
+            case "gram", "grams", "gr" -> "g";
+            case "kilogram", "kilograms" -> "kg";
+            case "milligram", "milligrams" -> "mg";
+            case "milliliter", "milliliters", "millilitre", "millilitres" -> "ml";
+            case "centiliter", "centiliters", "centilitre", "centilitres" -> "cl";
+            case "liter", "liters", "litre", "litres" -> "l";
+            default -> unit.toLowerCase();
+        };
     }
 
     record OpenFoodFactsResponse(
@@ -153,6 +182,8 @@ public class OpenFoodFactsProviderClient implements FoodProviderClient {
             String brands,
             @JsonProperty("serving_size") String servingSize,
             String quantity,
+            @JsonProperty("product_quantity") BigDecimal productQuantity,
+            @JsonProperty("product_quantity_unit") String productQuantityUnit,
             OpenFoodFactsNutriments nutriments) {
     }
 

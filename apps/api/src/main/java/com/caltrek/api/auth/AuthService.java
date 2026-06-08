@@ -11,7 +11,6 @@ import java.security.SecureRandom;
 import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.util.Base64;
-import java.util.UUID;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -45,11 +44,15 @@ public class AuthService {
     public Mono<AuthResponse> register(RegisterRequest request) {
         OffsetDateTime now = OffsetDateTime.now();
         User user = new User(
-                UUID.randomUUID(),
+                null,
                 InputNormalizer.normalizeEmail(request.email()),
                 passwordEncoder.encode(request.password()),
                 InputNormalizer.blankToNull(request.displayName()),
                 InputNormalizer.normalizeTimezone(request.timezone()),
+                User.DEFAULT_CALORIE_GOAL,
+                User.DEFAULT_PROTEIN_GOAL,
+                User.DEFAULT_CARBS_GOAL,
+                User.DEFAULT_FAT_GOAL,
                 now,
                 now);
         return userRepository.save(user)
@@ -105,6 +108,10 @@ public class AuthService {
                         user.passwordHash(),
                         InputNormalizer.blankToNull(request.displayName()),
                         InputNormalizer.normalizeTimezone(request.timezone()),
+                        valueOrExisting(request.calorieGoal(), user.calorieGoal()),
+                        valueOrExisting(request.proteinGoal(), user.proteinGoal()),
+                        valueOrExisting(request.carbsGoal(), user.carbsGoal()),
+                        valueOrExisting(request.fatGoal(), user.fatGoal()),
                         user.createdAt(),
                         OffsetDateTime.now()))
                 .flatMap(userRepository::save)
@@ -117,7 +124,7 @@ public class AuthService {
         String refreshTokenValue = randomToken();
         OffsetDateTime expiresAt = OffsetDateTime.now().plus(refreshTokenTtl);
         RefreshToken refreshToken = new RefreshToken(
-                UUID.randomUUID(),
+                null,
                 user.id(),
                 hash(refreshTokenValue),
                 expiresAt,
@@ -157,6 +164,12 @@ public class AuthService {
         } catch (NoSuchAlgorithmException exception) {
             throw new IllegalStateException("SHA-256 is not available.", exception);
         }
+    }
+
+    private java.math.BigDecimal valueOrExisting(
+            java.math.BigDecimal requested,
+            java.math.BigDecimal existing) {
+        return requested == null ? existing : requested;
     }
 
 }

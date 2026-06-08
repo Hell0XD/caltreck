@@ -19,11 +19,15 @@ public class UserService {
     public Mono<UserResponse> create(CreateUserRequest request) {
         OffsetDateTime now = OffsetDateTime.now();
         User user = new User(
-                UUID.randomUUID(),
+                null,
                 InputNormalizer.normalizeEmail(request.email()),
                 null,
                 InputNormalizer.blankToNull(request.displayName()),
                 InputNormalizer.normalizeTimezone(request.timezone()),
+                User.DEFAULT_CALORIE_GOAL,
+                User.DEFAULT_PROTEIN_GOAL,
+                User.DEFAULT_CARBS_GOAL,
+                User.DEFAULT_FAT_GOAL,
                 now,
                 now);
         return userRepository.save(user).map(UserResponse::from);

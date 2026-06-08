@@ -7,24 +7,9 @@ import type React from "react";
 import { useEffect, useRef, useState } from "react";
 import { useCaltrek } from "@/components/caltrek/app-state";
 import { AppButton } from "@/components/caltrek/ui";
-import type { Food } from "@/components/caltrek/types";
 import { cn } from "@/lib/utils";
 
 type ScanState = "idle" | "requesting" | "scanning" | "resolving" | "success" | "failed";
-
-type ApiFood = {
-  id: string;
-  name: string;
-  brand?: string | null;
-  servingSize?: number | null;
-  servingUnit?: string | null;
-  caloriesPer100g: number;
-  proteinPer100g?: number | null;
-  carbsPer100g?: number | null;
-  fatPer100g?: number | null;
-};
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080";
 
 export default function ScanPage() {
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -33,7 +18,7 @@ export default function ScanPage() {
   const [message, setMessage] = useState("Camera access is only used while this screen is scanning.");
   const [manualBarcode, setManualBarcode] = useState("");
   const [lastBarcode, setLastBarcode] = useState<string | null>(null);
-  const { openAddFood } = useCaltrek();
+  const { openAddFood, findFoodByBarcode } = useCaltrek();
 
   useEffect(() => () => stopScanner(), []);
 
@@ -89,13 +74,7 @@ export default function ScanPage() {
     setScanState("resolving");
     setMessage("Looking up barcode.");
     try {
-      const response = await fetch(`${API_BASE_URL}/api/foods/barcode/${normalizedBarcode}`, {
-        headers: { Accept: "application/json" },
-      });
-      if (!response.ok) {
-        throw new Error("Lookup failed");
-      }
-      const food = mapFood(await response.json() as ApiFood);
+      const food = await findFoodByBarcode(normalizedBarcode);
       setScanState("success");
       setMessage("Food found.");
       window.setTimeout(() => openAddFood(food), 450);
@@ -226,22 +205,4 @@ function statusTitle(state: ScanState) {
     default:
       return "Ready";
   }
-}
-
-function mapFood(food: ApiFood): Food {
-  const servingAmount = food.servingSize ?? 100;
-  const servingUnit = food.servingUnit ?? "g";
-  const multiplier = servingUnit === "g" ? servingAmount / 100 : 1;
-
-  return {
-    id: food.id,
-    name: food.name,
-    brand: food.brand ?? "Scanned food",
-    serving: `${servingAmount} ${servingUnit}`,
-    calories: Math.round(food.caloriesPer100g * multiplier),
-    protein: Math.round((food.proteinPer100g ?? 0) * multiplier),
-    carbs: Math.round((food.carbsPer100g ?? 0) * multiplier),
-    fat: Math.round((food.fatPer100g ?? 0) * multiplier),
-    recent: true,
-  };
 }

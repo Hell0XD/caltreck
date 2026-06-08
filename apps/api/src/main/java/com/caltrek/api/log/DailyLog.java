@@ -24,4 +24,3 @@ public record DailyLog(
         @Column("created_at") OffsetDateTime createdAt,
         @Column("updated_at") OffsetDateTime updatedAt) {
 }
-

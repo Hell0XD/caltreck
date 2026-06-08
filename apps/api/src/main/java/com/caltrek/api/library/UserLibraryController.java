@@ -36,7 +36,6 @@ public class UserLibraryController {
     @Operation(summary = "List user library entries", operationId = "listUserLibraryEntries")
     public Flux<UserLibraryResponse> list(
             @AuthenticationPrincipal AuthenticatedUser user,
-            @RequestParam(required = false) UUID userId,
             @RequestParam(defaultValue = "false") boolean favoritesOnly) {
         return userLibraryService.list(user.id(), favoritesOnly);
     }

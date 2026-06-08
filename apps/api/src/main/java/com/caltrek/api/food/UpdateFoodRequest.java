@@ -5,7 +5,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import java.math.BigDecimal;
 
-public record CreateFoodRequest(
+public record UpdateFoodRequest(
         @NotBlank String name,
         String brand,
         String barcode,

@@ -38,7 +38,6 @@ public class DailyLogController {
     @Operation(summary = "List daily log entries", operationId = "listDailyLogs")
     public Flux<DailyLogResponse> list(
             @AuthenticationPrincipal AuthenticatedUser user,
-            @RequestParam(required = false) UUID userId,
             @RequestParam LocalDate date) {
         return dailyLogService.list(user.id(), date);
     }
@@ -47,7 +46,6 @@ public class DailyLogController {
     @Operation(summary = "Get daily macro summary", operationId = "getDailySummary")
     public Mono<DailySummaryResponse> summary(
             @AuthenticationPrincipal AuthenticatedUser user,
-            @RequestParam(required = false) UUID userId,
             @RequestParam LocalDate date) {
         return dailyLogService.getDailySummary(user.id(), date);
     }

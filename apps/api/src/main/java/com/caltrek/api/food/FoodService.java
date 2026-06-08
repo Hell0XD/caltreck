@@ -43,16 +43,22 @@ public class FoodService {
 
     public Mono<FoodResponse> create(CreateFoodRequest request) {
         OffsetDateTime now = OffsetDateTime.now();
+        ServingMeasurement serving = ServingMeasurement.normalize(request.servingSize(), request.servingUnit());
+        ServingMeasurement packageMeasurement = ServingMeasurement.normalize(
+                request.packageQuantity(),
+                request.packageUnit());
         Food food = new Food(
-                UUID.randomUUID(),
+                null,
                 request.name().trim(),
                 InputNormalizer.blankToNull(request.brand()),
                 InputNormalizer.blankToNull(request.barcode()),
                 "USER",
                 null,
                 InputNormalizer.blankToNull(request.locale()),
-                request.servingSize(),
-                InputNormalizer.blankToNull(request.servingUnit()),
+                serving.size(),
+                serving.unit(),
+                packageMeasurement.size(),
+                packageMeasurement.unit(),
                 request.caloriesPer100g(),
                 zeroIfNull(request.proteinPer100g()),
                 zeroIfNull(request.carbsPer100g()),
@@ -66,8 +72,12 @@ public class FoodService {
         return foodRepository.save(food).map(FoodResponse::from);
     }
 
-    private java.math.BigDecimal zeroIfNull(java.math.BigDecimal value) {
-        return value == null ? java.math.BigDecimal.ZERO : value;
+    public Mono<FoodResponse> update(UUID id, UpdateFoodRequest request) {
+        return foodRepository.findById(id)
+                .switchIfEmpty(Mono.error(new NotFoundException("Food was not found.")))
+                .map(existing -> updateFood(existing, request))
+                .flatMap(foodRepository::save)
+                .map(FoodResponse::from);
     }
 
     private Mono<Food> findProviderFoodByBarcode(String barcode) {
@@ -80,16 +90,24 @@ public class FoodService {
 
     private Food fromProviderCandidate(ProviderFoodCandidate candidate) {
         OffsetDateTime now = OffsetDateTime.now();
+        ServingMeasurement serving = ServingMeasurement.normalize(
+                candidate.servingSize(),
+                candidate.servingUnit());
+        ServingMeasurement packageMeasurement = ServingMeasurement.normalize(
+                candidate.packageQuantity(),
+                candidate.packageUnit());
         return new Food(
-                UUID.randomUUID(),
+                null,
                 candidate.name().trim(),
                 InputNormalizer.blankToNull(candidate.brand()),
                 InputNormalizer.blankToNull(candidate.barcode()),
                 candidate.source(),
                 InputNormalizer.blankToNull(candidate.sourceId()),
                 InputNormalizer.blankToNull(candidate.locale()),
-                candidate.servingSize(),
-                InputNormalizer.blankToNull(candidate.servingUnit()),
+                serving.size(),
+                serving.unit(),
+                packageMeasurement.size(),
+                packageMeasurement.unit(),
                 candidate.caloriesPer100g(),
                 zeroIfNull(candidate.proteinPer100g()),
                 zeroIfNull(candidate.carbsPer100g()),
@@ -100,5 +118,38 @@ public class FoodService {
                 candidate.rawPayload(),
                 now,
                 now);
+    }
+
+    private Food updateFood(Food existing, UpdateFoodRequest request) {
+        ServingMeasurement serving = ServingMeasurement.normalize(request.servingSize(), request.servingUnit());
+        ServingMeasurement packageMeasurement = ServingMeasurement.normalize(
+                request.packageQuantity(),
+                request.packageUnit());
+        return new Food(
+                existing.id(),
+                request.name().trim(),
+                InputNormalizer.blankToNull(request.brand()),
+                InputNormalizer.blankToNull(request.barcode()),
+                existing.source(),
+                existing.sourceId(),
+                InputNormalizer.blankToNull(request.locale()),
+                serving.size(),
+                serving.unit(),
+                packageMeasurement.size(),
+                packageMeasurement.unit(),
+                request.caloriesPer100g(),
+                zeroIfNull(request.proteinPer100g()),
+                zeroIfNull(request.carbsPer100g()),
+                zeroIfNull(request.fatPer100g()),
+                zeroIfNull(request.fiberPer100g()),
+                zeroIfNull(request.sugarPer100g()),
+                zeroIfNull(request.saltPer100g()),
+                existing.rawPayload(),
+                existing.createdAt(),
+                OffsetDateTime.now());
+    }
+
+    private java.math.BigDecimal zeroIfNull(java.math.BigDecimal value) {
+        return value == null ? java.math.BigDecimal.ZERO : value;
     }
 }

@@ -5,8 +5,9 @@ import type { Route } from "next";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { Heart, Home, ScanLine, Search } from "lucide-react";
-import { BrandBlock, MobileHeader } from "./ui";
+import { Heart, Home, LogOut, ScanLine, Search, UserRound } from "lucide-react";
+import { useCaltrek } from "./app-state";
+import { BrandBlock, IconButton, MobileHeader } from "./ui";
 import { type AppRoute } from "./types";
 import { cn } from "@/lib/utils";
 
@@ -20,23 +21,30 @@ const navItems: Array<{
   { route: "search", href: "/search", label: "Search", icon: <Search /> },
   { route: "scan", href: "/scan", label: "Scan", icon: <ScanLine /> },
   { route: "library", href: "/library", label: "Library", icon: <Heart /> },
+  { route: "account", href: "/account" as Route, label: "Account", icon: <UserRound /> },
 ];
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const reduceMotion = useReducedMotion();
   const activeRoute = routeFromPath(pathname);
+  const { user, logout } = useCaltrek();
 
   return (
     <main className="min-h-dvh bg-[var(--background)] text-[var(--foreground)]">
       <div className="mx-auto grid min-h-dvh w-full max-w-6xl grid-cols-1 lg:grid-cols-[18rem_minmax(0,1fr)]">
-        <aside className="hidden border-r border-[var(--border)] bg-[var(--surface)] px-5 py-6 lg:block">
+        <aside className="hidden border-r border-[var(--border)] bg-[var(--surface)] px-5 py-6 lg:flex lg:flex-col">
           <BrandBlock />
           <DesktopNav activeRoute={activeRoute} />
+          <UserPanel email={user.email ?? ""} onLogout={logout} />
         </aside>
 
         <section className="mx-auto flex min-h-dvh w-full max-w-md flex-col pb-24 lg:max-w-none lg:pb-0">
-          <MobileHeader />
+          <MobileHeader>
+            <IconButton label="Sign out" onClick={logout} className="size-9">
+              <LogOut className="size-4" />
+            </IconButton>
+          </MobileHeader>
           <div className="flex-1 px-4 py-4 sm:px-6 lg:px-8 lg:py-8">
             <AnimatePresence mode="wait">
               <motion.div
@@ -57,6 +65,20 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   );
 }
 
+function UserPanel({ email, onLogout }: { email: string; onLogout: () => void }) {
+  return (
+    <div className="mt-auto flex items-center gap-3 rounded-[var(--radius)] border border-[var(--border)] bg-[var(--card)] p-3">
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-sm font-semibold">Signed in</p>
+        <p className="mt-0.5 truncate text-xs text-[var(--muted-foreground)]">{email}</p>
+      </div>
+      <IconButton label="Sign out" onClick={onLogout} className="size-9">
+        <LogOut className="size-4" />
+      </IconButton>
+    </div>
+  );
+}
+
 function routeFromPath(pathname: string): AppRoute {
   if (pathname.startsWith("/search")) {
     return "search";
@@ -67,13 +89,16 @@ function routeFromPath(pathname: string): AppRoute {
   if (pathname.startsWith("/library")) {
     return "library";
   }
+  if (pathname.startsWith("/account")) {
+    return "account";
+  }
   return "today";
 }
 
 function BottomNav({ activeRoute }: { activeRoute: AppRoute }) {
   return (
     <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-[var(--border)] bg-[color-mix(in_srgb,var(--card)_94%,transparent)] px-3 pb-[max(env(safe-area-inset-bottom),0.5rem)] pt-2 backdrop-blur lg:hidden">
-      <div className="mx-auto grid max-w-md grid-cols-4 gap-2">
+      <div className="mx-auto grid max-w-md grid-cols-5 gap-1">
         {navItems.map((item) => (
           <NavLink key={item.route} activeRoute={activeRoute} {...item} />
         ))}

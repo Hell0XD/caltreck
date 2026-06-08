@@ -29,16 +29,16 @@ public class DailyLogService {
 
     public Mono<DailySummaryResponse> getDailySummary(UUID userId, LocalDate date) {
         return dailyLogRepository.findByUserIdAndLogDateOrderByCreatedAtAsc(userId, date)
-                .map(DailyLogResponse::from)
+                .flatMap(this::toResponse)
                 .collectList()
-                .map(entries -> toSummary(userId, date, entries));
+                .map(entries -> toSummary(date, entries));
     }
 
     public Mono<DailyLogResponse> create(UUID userId, CreateDailyLogRequest request) {
         return foodRepository.findById(request.foodId())
                 .switchIfEmpty(Mono.error(new NotFoundException("Food was not found.")))
                 .flatMap(food -> dailyLogRepository.save(toLog(userId, request, food)))
-                .map(DailyLogResponse::from);
+                .flatMap(this::toResponse);
     }
 
     public Mono<DailyLogResponse> update(UUID userId, UUID id, UpdateDailyLogRequest request) {
@@ -49,7 +49,7 @@ public class DailyLogService {
                         .switchIfEmpty(Mono.error(new NotFoundException("Food was not found.")))
                         .map(food -> updateLog(existing, request, food)))
                 .flatMap(dailyLogRepository::save)
-                .map(DailyLogResponse::from);
+                .flatMap(this::toResponse);
     }
 
     public Mono<Void> delete(UUID userId, UUID id) {
@@ -61,14 +61,20 @@ public class DailyLogService {
 
     public Flux<DailyLogResponse> list(UUID userId, LocalDate date) {
         return dailyLogRepository.findByUserIdAndLogDateOrderByCreatedAtAsc(userId, date)
-                .map(DailyLogResponse::from);
+                .flatMap(this::toResponse);
+    }
+
+    private Mono<DailyLogResponse> toResponse(DailyLog log) {
+        return foodRepository.findById(log.foodId())
+                .map(food -> DailyLogResponse.from(log, food))
+                .switchIfEmpty(Mono.just(DailyLogResponse.from(log)));
     }
 
     private DailyLog toLog(UUID userId, CreateDailyLogRequest request, Food food) {
         OffsetDateTime now = OffsetDateTime.now();
         Nutrition nutrition = calculate(food, request.quantity());
         return new DailyLog(
-                UUID.randomUUID(),
+                null,
                 userId,
                 request.foodId(),
                 request.logDate(),
@@ -108,9 +114,8 @@ public class DailyLogService {
                 OffsetDateTime.now());
     }
 
-    private DailySummaryResponse toSummary(UUID userId, LocalDate date, List<DailyLogResponse> entries) {
+    private DailySummaryResponse toSummary(LocalDate date, List<DailyLogResponse> entries) {
         return new DailySummaryResponse(
-                userId,
                 date,
                 sum(entries, DailyLogResponse::calories),
                 sum(entries, DailyLogResponse::protein),

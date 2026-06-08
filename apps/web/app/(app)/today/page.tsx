@@ -8,20 +8,13 @@ import {
   type LogEntry,
   type MealType,
   macroFor,
-  macroGoal,
   mealMeta,
   formatQuantity,
 } from "@/components/caltrek/types";
-import {
-  AppButton,
-  EmptyState,
-  IconButton,
-  Progress,
-  Skeleton,
-} from "@/components/caltrek/ui";
+import { AppButton, EmptyState, IconButton, Progress, Skeleton } from "@/components/caltrek/ui";
 
 export default function TodayPage() {
-  const { dashboardLoading, logs, totals, startEdit, requestDelete } = useCaltrek();
+  const { dashboardLoading, goals, logs, totals, startEdit, requestDelete } = useCaltrek();
 
   return (
     <div className="space-y-5">
@@ -42,7 +35,7 @@ export default function TodayPage() {
         <DashboardSkeleton />
       ) : (
         <>
-          <MacroSummary totals={totals} />
+          <MacroSummary totals={totals} goals={goals} />
           <LayoutGroup>
             <div className="space-y-4">
               {(Object.keys(mealMeta) as MealType[]).map((meal) => (
@@ -64,8 +57,10 @@ export default function TodayPage() {
 
 function MacroSummary({
   totals,
+  goals,
 }: {
   totals: Record<"calories" | "protein" | "carbs" | "fat", number>;
+  goals: Record<"calories" | "protein" | "carbs" | "fat", number>;
 }) {
   return (
     <section className="rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--card)] p-4 shadow-sm shadow-slate-950/5">
@@ -75,14 +70,14 @@ function MacroSummary({
           <p className="mt-1 text-4xl font-semibold tracking-normal">{totals.calories}</p>
         </div>
         <p className="pb-1 text-sm text-[var(--muted-foreground)]">
-          {Math.max(macroGoal.calories - totals.calories, 0)} kcal left
+          {Math.max(goals.calories - totals.calories, 0)} kcal left
         </p>
       </div>
-      <Progress value={totals.calories} max={macroGoal.calories} className="mt-4 h-3" />
+      <Progress value={totals.calories} max={goals.calories} className="mt-4 h-3" />
       <div className="mt-4 grid grid-cols-3 gap-3">
-        <MacroPill label="Protein" value={totals.protein} goal={macroGoal.protein} unit="g" />
-        <MacroPill label="Carbs" value={totals.carbs} goal={macroGoal.carbs} unit="g" />
-        <MacroPill label="Fat" value={totals.fat} goal={macroGoal.fat} unit="g" />
+        <MacroPill label="Protein" value={totals.protein} goal={goals.protein} unit="g" />
+        <MacroPill label="Carbs" value={totals.carbs} goal={goals.carbs} unit="g" />
+        <MacroPill label="Fat" value={totals.fat} goal={goals.fat} unit="g" />
       </div>
     </section>
   );
@@ -184,7 +179,8 @@ function FoodLogCard({
       <button className="min-w-0 text-left" onClick={onEdit}>
         <p className="truncate text-sm font-semibold">{entry.food.name}</p>
         <p className="mt-1 truncate text-xs text-[var(--muted-foreground)]">
-          {formatQuantity(entry.quantity)} x {entry.food.serving}
+          {formatQuantity(entry.amount)} {entry.food.servingUnit} | {formatQuantity(entry.quantity)}{" "}
+          {entry.quantity === 1 ? "serving" : "servings"}
         </p>
       </button>
       <div className="flex items-center gap-2">

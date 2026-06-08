@@ -43,11 +43,7 @@ export function AppButton({
   }
 
   return (
-    <motion.button
-      whileTap={{ scale: 0.97 }}
-      className={classNames}
-      {...props}
-    >
+    <motion.button whileTap={{ scale: 0.97 }} className={classNames} {...props}>
       {children}
     </motion.button>
   );
@@ -106,10 +102,13 @@ export function BrandBlock() {
   );
 }
 
-export function MobileHeader() {
+export function MobileHeader({ children }: { children?: React.ReactNode }) {
   return (
     <header className="sticky top-0 z-20 border-b border-[var(--border)] bg-[color-mix(in_srgb,var(--background)_92%,transparent)] px-4 py-3 backdrop-blur lg:hidden">
-      <BrandBlock />
+      <div className="flex items-center justify-between gap-3">
+        <BrandBlock />
+        {children}
+      </div>
     </header>
   );
 }
@@ -123,7 +122,7 @@ export function Progress({
   max: number;
   className?: string;
 }) {
-  const percentage = Math.min(Math.round((value / max) * 100), 100);
+  const percentage = max > 0 ? Math.min(Math.round((value / max) * 100), 100) : 0;
   return (
     <div
       className={cn("overflow-hidden rounded-full bg-[var(--muted)]", className)}

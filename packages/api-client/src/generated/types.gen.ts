@@ -7,6 +7,10 @@ export type ClientOptions = {
 export type ProfileUpdateRequest = {
     displayName?: string;
     timezone: string;
+    calorieGoal?: number;
+    proteinGoal?: number;
+    carbsGoal?: number;
+    fatGoal?: number;
 };
 
 export type UserResponse = {
@@ -14,6 +18,10 @@ export type UserResponse = {
     email?: string;
     displayName?: string;
     timezone?: string;
+    calorieGoal?: number;
+    proteinGoal?: number;
+    carbsGoal?: number;
+    fatGoal?: number;
 };
 
 export type UpdateDailyLogRequest = {
@@ -25,7 +33,6 @@ export type UpdateDailyLogRequest = {
 
 export type DailyLogResponse = {
     id?: string;
-    userId?: string;
     foodId?: string;
     logDate?: string;
     mealType?: 'BREAKFAST' | 'LUNCH' | 'DINNER' | 'SNACK';
@@ -35,44 +42,28 @@ export type DailyLogResponse = {
     protein?: number;
     carbs?: number;
     fat?: number;
+    foodName?: string;
+    foodBrand?: string;
+    foodServingSize?: number;
+    foodServingUnit?: string;
+    foodPackageQuantity?: number;
+    foodPackageUnit?: string;
+    foodCaloriesPer100g?: number;
+    foodProteinPer100g?: number;
+    foodCarbsPer100g?: number;
+    foodFatPer100g?: number;
 };
 
-export type SaveLibraryEntryRequest = {
-    userId: string;
-    foodId: string;
-    label?: string;
-    favorite?: boolean;
-    defaultQuantity?: number;
-    defaultUnit?: string;
-};
-
-export type UserLibraryResponse = {
-    id?: string;
-    userId?: string;
-    foodId?: string;
-    label?: string;
-    favorite?: boolean;
-    defaultQuantity?: number;
-    defaultUnit?: string;
-};
-
-export type CreateDailyLogRequest = {
-    userId: string;
-    foodId: string;
-    logDate: string;
-    mealType: 'BREAKFAST' | 'LUNCH' | 'DINNER' | 'SNACK';
-    quantity: number;
-    unit?: string;
-};
-
-export type CreateFoodRequest = {
+export type UpdateFoodRequest = {
     name: string;
     brand?: string;
     barcode?: string;
     locale?: string;
     servingSize?: number;
     servingUnit?: string;
-    caloriesPer100g?: number;
+    packageQuantity?: number;
+    packageUnit?: string;
+    caloriesPer100g: number;
     proteinPer100g?: number;
     carbsPer100g?: number;
     fatPer100g?: number;
@@ -91,7 +82,62 @@ export type FoodResponse = {
     locale?: string;
     servingSize?: number;
     servingUnit?: string;
+    packageQuantity?: number;
+    packageUnit?: string;
     caloriesPer100g?: number;
+    proteinPer100g?: number;
+    carbsPer100g?: number;
+    fatPer100g?: number;
+    fiberPer100g?: number;
+    sugarPer100g?: number;
+    saltPer100g?: number;
+};
+
+export type SaveLibraryEntryRequest = {
+    foodId: string;
+    label?: string;
+    favorite?: boolean;
+    defaultQuantity?: number;
+    defaultUnit?: string;
+};
+
+export type UserLibraryResponse = {
+    id?: string;
+    foodId?: string;
+    label?: string;
+    favorite?: boolean;
+    defaultQuantity?: number;
+    defaultUnit?: string;
+    foodName?: string;
+    foodBrand?: string;
+    foodServingSize?: number;
+    foodServingUnit?: string;
+    foodPackageQuantity?: number;
+    foodPackageUnit?: string;
+    foodCaloriesPer100g?: number;
+    foodProteinPer100g?: number;
+    foodCarbsPer100g?: number;
+    foodFatPer100g?: number;
+};
+
+export type CreateDailyLogRequest = {
+    foodId: string;
+    logDate: string;
+    mealType: 'BREAKFAST' | 'LUNCH' | 'DINNER' | 'SNACK';
+    quantity: number;
+    unit?: string;
+};
+
+export type CreateFoodRequest = {
+    name: string;
+    brand?: string;
+    barcode?: string;
+    locale?: string;
+    servingSize?: number;
+    servingUnit?: string;
+    packageQuantity?: number;
+    packageUnit?: string;
+    caloriesPer100g: number;
     proteinPer100g?: number;
     carbsPer100g?: number;
     fatPer100g?: number;
@@ -125,7 +171,6 @@ export type LoginRequest = {
 };
 
 export type DailySummaryResponse = {
-    userId?: string;
     logDate?: string;
     calories?: number;
     protein?: number;
@@ -202,11 +247,28 @@ export type PutApiLogsDailyByIdResponses = {
 
 export type PutApiLogsDailyByIdResponse = PutApiLogsDailyByIdResponses[keyof PutApiLogsDailyByIdResponses];
 
+export type PutApiFoodsByIdData = {
+    body: UpdateFoodRequest;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/foods/{id}';
+};
+
+export type PutApiFoodsByIdResponses = {
+    /**
+     * OK
+     */
+    200: FoodResponse;
+};
+
+export type PutApiFoodsByIdResponse = PutApiFoodsByIdResponses[keyof PutApiFoodsByIdResponses];
+
 export type GetApiUserLibraryData = {
     body?: never;
     path?: never;
     query?: {
-        userId?: string;
         favoritesOnly?: boolean;
     };
     url: '/api/user-library';
@@ -241,7 +303,6 @@ export type GetApiLogsDailyData = {
     body?: never;
     path?: never;
     query: {
-        userId?: string;
         date: string;
     };
     url: '/api/logs/daily';
@@ -356,7 +417,6 @@ export type GetApiLogsDailySummaryData = {
     body?: never;
     path?: never;
     query: {
-        userId?: string;
         date: string;
     };
     url: '/api/logs/daily/summary';

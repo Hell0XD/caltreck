@@ -28,6 +28,8 @@ server:
   port: 8080
 
 caltrek:
+  cors:
+    allowed-origins: http://localhost:3000,http://127.0.0.1:3000
   security:
     jwt-secret: ${CALTREK_JWT_SECRET:change-this-local-development-secret-with-at-least-32-bytes}
     access-token-ttl: ${CALTREK_ACCESS_TOKEN_TTL:PT15M}

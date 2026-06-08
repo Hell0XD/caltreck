@@ -3,11 +3,13 @@ package com.caltrek.api.food;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -47,5 +49,13 @@ public class FoodController {
     @Operation(summary = "Create a user-entered food", operationId = "createFood")
     public Mono<FoodResponse> create(@Valid @RequestBody CreateFoodRequest request) {
         return foodService.create(request);
+    }
+
+    @PutMapping("/{id}")
+    @Operation(summary = "Update a food, including provider-loaded foods", operationId = "updateFood")
+    public Mono<FoodResponse> update(
+            @PathVariable UUID id,
+            @Valid @RequestBody UpdateFoodRequest request) {
+        return foodService.update(id, request);
     }
 }

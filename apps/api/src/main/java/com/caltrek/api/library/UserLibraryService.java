@@ -25,7 +25,7 @@ public class UserLibraryService {
         Flux<UserLibraryEntry> entries = favoritesOnly
                 ? userLibraryRepository.findByUserIdAndFavoriteTrueOrderByCreatedAtDesc(userId)
                 : userLibraryRepository.findByUserIdOrderByCreatedAtDesc(userId);
-        return entries.map(UserLibraryResponse::from);
+        return entries.flatMap(this::toResponse);
     }
 
     public Mono<UserLibraryResponse> save(UUID userId, SaveLibraryEntryRequest request) {
@@ -38,8 +38,14 @@ public class UserLibraryService {
                             .map(existing -> update(existing, request))
                             .switchIfEmpty(Mono.defer(() -> Mono.just(create(userId, request))))
                             .flatMap(userLibraryRepository::save)
-                            .map(UserLibraryResponse::from);
+                            .flatMap(this::toResponse);
                 });
+    }
+
+    private Mono<UserLibraryResponse> toResponse(UserLibraryEntry entry) {
+        return foodRepository.findById(entry.foodId())
+                .map(food -> UserLibraryResponse.from(entry, food))
+                .switchIfEmpty(Mono.just(UserLibraryResponse.from(entry)));
     }
 
     public Mono<Void> remove(UUID userId, UUID id) {
@@ -52,7 +58,7 @@ public class UserLibraryService {
     private UserLibraryEntry create(UUID userId, SaveLibraryEntryRequest request) {
         OffsetDateTime now = OffsetDateTime.now();
         return new UserLibraryEntry(
-                UUID.randomUUID(),
+                null,
                 userId,
                 request.foodId(),
                 InputNormalizer.blankToNull(request.label()),

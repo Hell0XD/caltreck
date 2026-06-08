@@ -3,10 +3,8 @@ package com.caltrek.api.log;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
-import java.util.UUID;
 
 public record DailySummaryResponse(
-        UUID userId,
         LocalDate logDate,
         BigDecimal calories,
         BigDecimal protein,
@@ -14,4 +12,3 @@ public record DailySummaryResponse(
         BigDecimal fat,
         List<DailyLogResponse> entries) {
 }
-
