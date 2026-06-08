@@ -1,17 +1,18 @@
 package com.caltrek.api.user;
 
+import jakarta.validation.constraints.NotNull;
 import java.math.BigDecimal;
 import java.util.UUID;
 
 public record UserResponse(
-        UUID id,
-        String email,
+        @NotNull UUID id,
+        @NotNull String email,
         String displayName,
-        String timezone,
-        BigDecimal calorieGoal,
-        BigDecimal proteinGoal,
-        BigDecimal carbsGoal,
-        BigDecimal fatGoal) {
+        @NotNull String timezone,
+        @NotNull BigDecimal calorieGoal,
+        @NotNull BigDecimal proteinGoal,
+        @NotNull BigDecimal carbsGoal,
+        @NotNull BigDecimal fatGoal) {
 
     public static UserResponse from(User user) {
         return new UserResponse(

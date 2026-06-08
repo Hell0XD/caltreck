@@ -45,7 +45,7 @@ public class UserLibraryService {
     private Mono<UserLibraryResponse> toResponse(UserLibraryEntry entry) {
         return foodRepository.findById(entry.foodId())
                 .map(food -> UserLibraryResponse.from(entry, food))
-                .switchIfEmpty(Mono.just(UserLibraryResponse.from(entry)));
+                .switchIfEmpty(Mono.error(new NotFoundException("Food was not found.")));
     }
 
     public Mono<Void> remove(UUID userId, UUID id) {

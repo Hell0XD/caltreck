@@ -67,7 +67,7 @@ public class DailyLogService {
     private Mono<DailyLogResponse> toResponse(DailyLog log) {
         return foodRepository.findById(log.foodId())
                 .map(food -> DailyLogResponse.from(log, food))
-                .switchIfEmpty(Mono.just(DailyLogResponse.from(log)));
+                .switchIfEmpty(Mono.error(new NotFoundException("Food was not found.")));
     }
 
     private DailyLog toLog(UUID userId, CreateDailyLogRequest request, Food food) {

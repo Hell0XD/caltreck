@@ -1,5 +1,6 @@
 package com.caltrek.api.common;
 
-public record FieldViolation(String field, String message) {
-}
+import jakarta.validation.constraints.NotNull;
 
+public record FieldViolation(@NotNull String field, @NotNull String message) {
+}

@@ -1,27 +1,28 @@
 package com.caltrek.api.food;
 
+import jakarta.validation.constraints.NotNull;
 import java.math.BigDecimal;
 import java.util.UUID;
 
 public record FoodResponse(
-        UUID id,
-        String name,
+        @NotNull UUID id,
+        @NotNull String name,
         String brand,
         String barcode,
-        String source,
+        @NotNull String source,
         String sourceId,
         String locale,
         BigDecimal servingSize,
         String servingUnit,
         BigDecimal packageQuantity,
         String packageUnit,
-        BigDecimal caloriesPer100g,
-        BigDecimal proteinPer100g,
-        BigDecimal carbsPer100g,
-        BigDecimal fatPer100g,
-        BigDecimal fiberPer100g,
-        BigDecimal sugarPer100g,
-        BigDecimal saltPer100g) {
+        @NotNull BigDecimal caloriesPer100g,
+        @NotNull BigDecimal proteinPer100g,
+        @NotNull BigDecimal carbsPer100g,
+        @NotNull BigDecimal fatPer100g,
+        @NotNull BigDecimal fiberPer100g,
+        @NotNull BigDecimal sugarPer100g,
+        @NotNull BigDecimal saltPer100g) {
 
     public static FoodResponse from(Food food) {
         return new FoodResponse(

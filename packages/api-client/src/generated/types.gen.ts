@@ -14,14 +14,14 @@ export type ProfileUpdateRequest = {
 };
 
 export type UserResponse = {
-    id?: string;
-    email?: string;
+    id: string;
+    email: string;
     displayName?: string;
-    timezone?: string;
-    calorieGoal?: number;
-    proteinGoal?: number;
-    carbsGoal?: number;
-    fatGoal?: number;
+    timezone: string;
+    calorieGoal: number;
+    proteinGoal: number;
+    carbsGoal: number;
+    fatGoal: number;
 };
 
 export type UpdateDailyLogRequest = {
@@ -32,26 +32,26 @@ export type UpdateDailyLogRequest = {
 };
 
 export type DailyLogResponse = {
-    id?: string;
-    foodId?: string;
-    logDate?: string;
-    mealType?: 'BREAKFAST' | 'LUNCH' | 'DINNER' | 'SNACK';
-    quantity?: number;
-    unit?: string;
-    calories?: number;
-    protein?: number;
-    carbs?: number;
-    fat?: number;
-    foodName?: string;
+    id: string;
+    foodId: string;
+    logDate: string;
+    mealType: 'BREAKFAST' | 'LUNCH' | 'DINNER' | 'SNACK';
+    quantity: number;
+    unit: string;
+    calories: number;
+    protein: number;
+    carbs: number;
+    fat: number;
+    foodName: string;
     foodBrand?: string;
     foodServingSize?: number;
     foodServingUnit?: string;
     foodPackageQuantity?: number;
     foodPackageUnit?: string;
-    foodCaloriesPer100g?: number;
-    foodProteinPer100g?: number;
-    foodCarbsPer100g?: number;
-    foodFatPer100g?: number;
+    foodCaloriesPer100g: number;
+    foodProteinPer100g: number;
+    foodCarbsPer100g: number;
+    foodFatPer100g: number;
 };
 
 export type UpdateFoodRequest = {
@@ -73,24 +73,24 @@ export type UpdateFoodRequest = {
 };
 
 export type FoodResponse = {
-    id?: string;
-    name?: string;
+    id: string;
+    name: string;
     brand?: string;
     barcode?: string;
-    source?: string;
+    source: string;
     sourceId?: string;
     locale?: string;
     servingSize?: number;
     servingUnit?: string;
     packageQuantity?: number;
     packageUnit?: string;
-    caloriesPer100g?: number;
-    proteinPer100g?: number;
-    carbsPer100g?: number;
-    fatPer100g?: number;
-    fiberPer100g?: number;
-    sugarPer100g?: number;
-    saltPer100g?: number;
+    caloriesPer100g: number;
+    proteinPer100g: number;
+    carbsPer100g: number;
+    fatPer100g: number;
+    fiberPer100g: number;
+    sugarPer100g: number;
+    saltPer100g: number;
 };
 
 export type SaveLibraryEntryRequest = {
@@ -102,22 +102,22 @@ export type SaveLibraryEntryRequest = {
 };
 
 export type UserLibraryResponse = {
-    id?: string;
-    foodId?: string;
+    id: string;
+    foodId: string;
     label?: string;
-    favorite?: boolean;
+    favorite: boolean;
     defaultQuantity?: number;
     defaultUnit?: string;
-    foodName?: string;
+    foodName: string;
     foodBrand?: string;
     foodServingSize?: number;
     foodServingUnit?: string;
     foodPackageQuantity?: number;
     foodPackageUnit?: string;
-    foodCaloriesPer100g?: number;
-    foodProteinPer100g?: number;
-    foodCarbsPer100g?: number;
-    foodFatPer100g?: number;
+    foodCaloriesPer100g: number;
+    foodProteinPer100g: number;
+    foodCarbsPer100g: number;
+    foodFatPer100g: number;
 };
 
 export type CreateDailyLogRequest = {
@@ -154,11 +154,11 @@ export type RegisterRequest = {
 };
 
 export type AuthResponse = {
-    accessToken?: string;
-    accessTokenExpiresAt?: string;
-    refreshToken?: string;
-    refreshTokenExpiresAt?: string;
-    user?: UserResponse;
+    accessToken: string;
+    accessTokenExpiresAt: string;
+    refreshToken: string;
+    refreshTokenExpiresAt: string;
+    user: UserResponse;
 };
 
 export type RefreshTokenRequest = {
@@ -171,12 +171,12 @@ export type LoginRequest = {
 };
 
 export type DailySummaryResponse = {
-    logDate?: string;
-    calories?: number;
-    protein?: number;
-    carbs?: number;
-    fat?: number;
-    entries?: Array<DailyLogResponse>;
+    logDate: string;
+    calories: number;
+    protein: number;
+    carbs: number;
+    fat: number;
+    entries: Array<DailyLogResponse>;
 };
 
 export type GetApiUsersMeData = {

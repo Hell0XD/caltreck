@@ -1,14 +1,15 @@
 package com.caltrek.api.log;
 
+import jakarta.validation.constraints.NotNull;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
 public record DailySummaryResponse(
-        LocalDate logDate,
-        BigDecimal calories,
-        BigDecimal protein,
-        BigDecimal carbs,
-        BigDecimal fat,
-        List<DailyLogResponse> entries) {
+        @NotNull LocalDate logDate,
+        @NotNull BigDecimal calories,
+        @NotNull BigDecimal protein,
+        @NotNull BigDecimal carbs,
+        @NotNull BigDecimal fat,
+        @NotNull List<DailyLogResponse> entries) {
 }
