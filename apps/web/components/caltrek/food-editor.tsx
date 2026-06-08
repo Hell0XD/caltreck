@@ -79,9 +79,9 @@ export function FoodEditor({
     <Drawer.Root open={open} onOpenChange={(nextOpen) => !nextOpen && onClose()}>
       <Drawer.Portal>
         <Drawer.Overlay className="fixed inset-0 z-40 bg-slate-950/35" />
-        <Drawer.Content className="fixed inset-x-0 bottom-0 z-50 mx-auto max-h-[94dvh] max-w-md overflow-y-auto rounded-t-[1.25rem] border border-[var(--border)] bg-[var(--card)] p-4 shadow-2xl outline-none lg:max-w-lg">
+        <Drawer.Content className="fixed inset-x-0 bottom-0 z-50 mx-auto max-h-[94dvh] max-w-md overflow-hidden rounded-t-[1.25rem] border border-[var(--border)] bg-[var(--card)] p-4 shadow-2xl outline-none lg:max-w-lg">
           <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-[var(--border)]" />
-          <form className="space-y-5" onSubmit={submit}>
+          <form className="max-h-[calc(94dvh-3.5rem)] space-y-5 overflow-y-auto" onSubmit={submit}>
             <div className="flex items-start gap-3">
               <Button
                 type="button"

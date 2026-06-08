@@ -686,7 +686,7 @@ function FoodSheet({
     <Drawer.Root open={Boolean(food)} onOpenChange={(open) => !open && onClose()}>
       <Drawer.Portal>
         <Drawer.Overlay className="fixed inset-0 z-40 bg-slate-950/35" />
-        <Drawer.Content className="fixed inset-x-0 bottom-0 z-50 mx-auto max-h-[92dvh] max-w-md overflow-y-auto rounded-t-[1.25rem] border border-[var(--border)] bg-[var(--card)] p-4 shadow-2xl outline-none lg:max-w-lg">
+        <Drawer.Content className="fixed inset-x-0 bottom-0 z-50 mx-auto max-h-[92dvh] max-w-md overflow-hidden rounded-t-[1.25rem] border border-[var(--border)] bg-[var(--card)] p-4 shadow-2xl outline-none lg:max-w-lg">
           <SheetHandle />
           {food && (
             <SheetBody
@@ -749,7 +749,7 @@ function EditSheet({
     <Drawer.Root open={Boolean(entry)} onOpenChange={(open) => !open && onClose()}>
       <Drawer.Portal>
         <Drawer.Overlay className="fixed inset-0 z-40 bg-slate-950/35" />
-        <Drawer.Content className="fixed inset-x-0 bottom-0 z-50 mx-auto max-h-[92dvh] max-w-md overflow-y-auto rounded-t-[1.25rem] border border-[var(--border)] bg-[var(--card)] p-4 shadow-2xl outline-none lg:max-w-lg">
+        <Drawer.Content className="fixed inset-x-0 bottom-0 z-50 mx-auto max-h-[92dvh] max-w-md overflow-hidden rounded-t-[1.25rem] border border-[var(--border)] bg-[var(--card)] p-4 shadow-2xl outline-none lg:max-w-lg">
           <SheetHandle />
           {entry && (
             <SheetBody
@@ -828,7 +828,7 @@ function SheetBody({
         : `Amount in ${food.servingUnit}`;
 
   return (
-    <div className="space-y-5">
+    <div className="max-h-[calc(92dvh-3.5rem)] space-y-5 overflow-y-auto">
       <div className="flex items-start gap-3">
         <Button variant="outline" size="icon" aria-label="Close" title="Close" onClick={onClose}>
           <ChevronLeft className="size-4" />
