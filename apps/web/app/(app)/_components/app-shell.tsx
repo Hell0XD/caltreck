@@ -5,7 +5,7 @@ import type { Route } from "next";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { ChevronRight, Heart, Home, LogOut, ScanLine, Search } from "lucide-react";
+import { ChevronRight, Heart, Home, ScanLine, Search, UserRound } from "lucide-react";
 import { BrandBlock } from "@/components/caltrek/brand-block";
 import { MobileHeader } from "@/components/caltrek/mobile-header";
 import { Button } from "@/components/ui/button";
@@ -30,7 +30,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const reduceMotion = useReducedMotion();
   const activeRoute = routeFromPath(pathname);
-  const { user, logout } = useCaltrek();
+  const { user } = useCaltrek();
 
   return (
     <main className="min-h-dvh bg-[var(--background)] text-[var(--foreground)]">
@@ -43,14 +43,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
         <section className="mx-auto flex min-h-dvh w-full max-w-md flex-col pb-24 lg:max-w-none lg:pb-0">
           <MobileHeader>
-            <Button
-              variant="outline"
-              size="icon"
-              aria-label="Sign out"
-              title="Sign out"
-              onClick={logout}
-            >
-              <LogOut className="size-4" />
+            <Button asChild variant="outline" size="icon">
+              <Link href="/account" aria-label="Open profile" title="Open profile">
+                <UserRound className="size-4" />
+              </Link>
             </Button>
           </MobileHeader>
           <div className="flex-1 px-4 py-4 sm:px-6 lg:px-8 lg:py-8">
