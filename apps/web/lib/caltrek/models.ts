@@ -1,7 +1,10 @@
-import { Apple, Beef, Sparkles, Utensils } from "lucide-react";
+import type { UserResponse } from "@caltrek/api-client";
 
 export type MealType = "breakfast" | "lunch" | "dinner" | "snacks";
-export type AppRoute = "today" | "search" | "scan" | "library" | "account";
+export type MacroKey = "calories" | "protein" | "carbs" | "fat";
+export type MacroTotals = Record<MacroKey, number>;
+export type MacroGoals = MacroTotals;
+export type QuantityMode = "servings" | "amount" | "package";
 
 export type Food = {
   id: string;
@@ -40,17 +43,8 @@ export type LogEntry = {
   amount: number;
 };
 
-export const mealMeta: Record<MealType, { label: string; icon: typeof Apple }> = {
-  breakfast: { label: "Breakfast", icon: Apple },
-  lunch: { label: "Lunch", icon: Utensils },
-  dinner: { label: "Dinner", icon: Beef },
-  snacks: { label: "Snacks", icon: Sparkles },
+export type AuthSession = {
+  accessToken: string;
+  refreshToken: string;
+  user: UserResponse;
 };
-
-export function macroFor(logs: LogEntry[], key: "calories" | "protein" | "carbs" | "fat") {
-  return Math.round(logs.reduce((sum, entry) => sum + entry.food[key] * entry.quantity, 0));
-}
-
-export function formatQuantity(quantity: number) {
-  return Number.isInteger(quantity) ? String(quantity) : quantity.toFixed(2).replace(/0$/, "");
-}

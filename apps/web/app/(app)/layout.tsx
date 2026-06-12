@@ -1,11 +1,14 @@
 import type React from "react";
-import { AppShell } from "@/components/caltrek/app-shell";
-import { CaltrekProvider } from "@/components/caltrek/app-state";
+import { QueryProvider } from "@/components/providers/query-provider";
+import { CaltrekProvider } from "@/components/caltrek/caltrek-provider";
+import { AppShell } from "./_components/app-shell";
 
 export default function CaltrekAppLayout({ children }: { children: React.ReactNode }) {
   return (
-    <CaltrekProvider>
-      <AppShell>{children}</AppShell>
-    </CaltrekProvider>
+    <QueryProvider>
+      <CaltrekProvider>
+        <AppShell>{children}</AppShell>
+      </CaltrekProvider>
+    </QueryProvider>
   );
 }

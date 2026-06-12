@@ -5,7 +5,7 @@ import { Heart, Pencil, Plus } from "lucide-react";
 import type React from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { type Food } from "./types";
+import type { Food } from "@/lib/caltrek/models";
 
 export function FoodList({
   title,

@@ -1,9 +1,9 @@
 "use client";
 
 import { Plus, Search, X } from "lucide-react";
-import { useCaltrek } from "@/components/caltrek/app-state";
+import { useCaltrek } from "@/hooks/use-caltrek";
 import { FoodList } from "@/components/caltrek/food-list";
-import { EmptyState } from "@/components/caltrek/ui";
+import { EmptyState } from "@/components/caltrek/empty-state";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";

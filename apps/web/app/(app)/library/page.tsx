@@ -1,9 +1,9 @@
 "use client";
 
 import { Clock3, Heart } from "lucide-react";
-import { useCaltrek } from "@/components/caltrek/app-state";
+import { useCaltrek } from "@/hooks/use-caltrek";
 import { FoodList } from "@/components/caltrek/food-list";
-import { EmptyState } from "@/components/caltrek/ui";
+import { EmptyState } from "@/components/caltrek/empty-state";
 
 export default function LibraryPage() {
   const { favoriteFoods, recentFoods, openAddFood, toggleFavorite } = useCaltrek();

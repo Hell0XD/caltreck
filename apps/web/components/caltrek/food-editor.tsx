@@ -17,7 +17,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import type { Food } from "./types";
+import type { Food } from "@/lib/caltrek/models";
 
 export type FoodEditorValue = CreateFoodRequest;
 

@@ -6,11 +6,13 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { ChevronRight, Heart, Home, LogOut, ScanLine, Search } from "lucide-react";
+import { BrandBlock } from "@/components/caltrek/brand-block";
+import { MobileHeader } from "@/components/caltrek/mobile-header";
 import { Button } from "@/components/ui/button";
-import { useCaltrek } from "./app-state";
-import { BrandBlock, MobileHeader } from "./ui";
-import { type AppRoute } from "./types";
+import { useCaltrek } from "@/hooks/use-caltrek";
 import { cn } from "@/lib/utils";
+
+type AppRoute = "today" | "search" | "scan" | "library" | "account";
 
 const navItems: Array<{
   route: AppRoute;
