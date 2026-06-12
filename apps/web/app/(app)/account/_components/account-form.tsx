@@ -19,7 +19,7 @@ import {
 import { Input } from "@/components/ui/input";
 
 const accountSchema = z.object({
-  email: z.string().email(),
+  email: z.email(),
   displayName: z.string().trim().max(80, "Display name must be 80 characters or fewer."),
   timezone: z.string().trim().min(1, "Timezone is required."),
   calorieGoal: goalSchema("Calories", 1),
