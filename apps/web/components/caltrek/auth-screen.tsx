@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
+import {BrandBlock} from "@/components/caltrek/brand-block";
 
 type AuthMode = "login" | "register";
 
@@ -80,15 +81,7 @@ export function AuthScreen({
   return (
     <main className="grid min-h-dvh bg-[var(--background)] px-4 py-8 text-[var(--foreground)]">
       <section className="mx-auto flex w-full max-w-sm flex-col justify-center">
-        <div className="mb-8 flex items-center gap-3">
-          <div className="grid size-11 place-items-center rounded-[var(--radius)] bg-[var(--primary)] text-white">
-            <Utensils className="size-5" />
-          </div>
-          <div>
-            <p className="text-base font-semibold">caltrek</p>
-            <p className="text-sm text-[var(--muted-foreground)]">Daily nutrition</p>
-          </div>
-        </div>
+        <BrandBlock className="mb-8" />
 
         <Card className="gap-0 py-0 shadow-sm shadow-slate-950/5">
           <CardContent className="p-5">

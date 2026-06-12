@@ -1,8 +1,12 @@
 import { Utensils } from "lucide-react";
+import {cn} from "@/lib/utils";
+import React from "react";
 
-export function BrandBlock() {
+interface BrandBlockProps extends React.HTMLAttributes<HTMLDivElement> {}
+
+export function BrandBlock({className, ...props}: BrandBlockProps) {
   return (
-    <div className="flex items-center gap-3">
+    <div {...props} className={cn(className, "flex items-center gap-3")}>
       <div className="grid size-11 place-items-center rounded-[var(--radius)] bg-[var(--primary)] text-white">
         <Utensils className="size-5" />
       </div>
