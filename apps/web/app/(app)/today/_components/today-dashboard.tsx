@@ -3,9 +3,11 @@
 import Link from "next/link";
 import { LayoutGroup, motion } from "framer-motion";
 import { Apple, Beef, Plus, Sparkles, Trash2, Utensils } from "lucide-react";
+import { ContentCard } from "@/components/caltrek/content-card";
 import { EmptyState } from "@/components/caltrek/empty-state";
+import { PageHeader } from "@/components/caltrek/page-header";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCaltrek } from "@/hooks/use-caltrek";
@@ -26,18 +28,18 @@ export function TodayDashboard() {
 
   return (
     <div className="space-y-5">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <p className="text-sm font-medium text-[var(--muted-foreground)]">Today</p>
-          <h1 className="text-3xl font-semibold tracking-normal">Macro dashboard</h1>
-        </div>
-        <Button asChild size="lg" className="px-3">
-          <Link href="/search">
-            <Plus className="size-4" />
-            Add
-          </Link>
-        </Button>
-      </div>
+      <PageHeader
+        eyebrow="Today"
+        title="Macro dashboard"
+        action={
+          <Button asChild size="lg" className="px-3">
+            <Link href="/search">
+              <Plus className="size-4" />
+              Add
+            </Link>
+          </Button>
+        }
+      />
 
       {dashboardLoading ? (
         <DashboardSkeleton />
@@ -71,7 +73,7 @@ function MacroSummary({
   goals: Record<"calories" | "protein" | "carbs" | "fat", number>;
 }) {
   return (
-    <Card className="gap-0 py-0 shadow-sm shadow-slate-950/5">
+    <ContentCard>
       <CardContent className="p-4">
         <div className="flex items-end justify-between gap-4">
           <div>
@@ -89,7 +91,7 @@ function MacroSummary({
           <MacroPill label="Fat" value={totals.fat} goal={goals.fat} unit="g" />
         </div>
       </CardContent>
-    </Card>
+    </ContentCard>
   );
 }
 
@@ -133,7 +135,7 @@ function MealSection({
   const calories = NutritionUtils.macroFor(entries, "calories");
 
   return (
-    <Card className="gap-0 py-0 shadow-sm shadow-slate-950/5">
+    <ContentCard>
       <CardContent className="p-4">
         <div className="flex items-center justify-between gap-3">
           <div className="flex min-w-0 items-center gap-3">
@@ -176,7 +178,7 @@ function MealSection({
           )}
         </div>
       </CardContent>
-    </Card>
+    </ContentCard>
   );
 }
 

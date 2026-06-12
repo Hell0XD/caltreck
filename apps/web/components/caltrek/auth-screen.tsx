@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { LogIn, Sparkles, Utensils } from "lucide-react";
+import { LogIn, Sparkles } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import {BrandBlock} from "@/components/caltrek/brand-block";
+import { BrandBlock } from "@/components/caltrek/brand-block";
 
 type AuthMode = "login" | "register";
 

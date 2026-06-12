@@ -6,8 +6,10 @@ import { useEffect, useState } from "react";
 import { useForm, type Control } from "react-hook-form";
 import { z } from "zod";
 import { useCaltrek } from "@/hooks/use-caltrek";
+import { ContentCard } from "@/components/caltrek/content-card";
+import { PageHeader } from "@/components/caltrek/page-header";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { CardContent } from "@/components/ui/card";
 import {
   Form,
   FormControl,
@@ -61,12 +63,9 @@ export function AccountForm() {
 
   return (
     <div className="space-y-5">
-      <div>
-        <p className="text-sm font-medium text-[var(--muted-foreground)]">Profile and targets</p>
-        <h1 className="text-3xl font-semibold tracking-normal">Account</h1>
-      </div>
+      <PageHeader eyebrow="Profile and targets" title="Account" />
 
-      <Card className="gap-0 py-0 shadow-sm shadow-slate-950/5">
+      <ContentCard>
         <CardContent className="p-4">
           <Form {...form}>
             <form onSubmit={form.handleSubmit(submit)} className="space-y-5">
@@ -151,7 +150,7 @@ export function AccountForm() {
             </form>
           </Form>
         </CardContent>
-      </Card>
+      </ContentCard>
 
       <Button variant="outline" size="lg" onClick={logout} className="w-full">
         <LogOut className="size-4" />

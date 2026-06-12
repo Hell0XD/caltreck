@@ -8,6 +8,7 @@ import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { useCaltrek } from "@/hooks/use-caltrek";
+import { PageHeader } from "@/components/caltrek/page-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -115,10 +116,7 @@ export function BarcodeScanner() {
 
   return (
     <div className="space-y-5">
-      <div>
-        <p className="text-sm font-medium text-[var(--muted-foreground)]">Barcode scanner</p>
-        <h1 className="text-3xl font-semibold tracking-normal">Scan food</h1>
-      </div>
+      <PageHeader eyebrow="Barcode scanner" title="Scan food" />
 
       <Card className="gap-0 overflow-hidden py-0">
         <div className="relative aspect-[3/4] bg-slate-950">

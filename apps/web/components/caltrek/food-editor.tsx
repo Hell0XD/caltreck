@@ -2,11 +2,15 @@
 
 import type { CreateFoodRequest } from "@caltrek/api-client";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Check, ChevronLeft } from "lucide-react";
+import { Check } from "lucide-react";
 import { useEffect, type ComponentProps, type ReactNode } from "react";
 import { useForm, type Control } from "react-hook-form";
-import { Drawer } from "vaul";
 import { z } from "zod";
+import {
+  BottomSheet,
+  BottomSheetHeader,
+  BottomSheetScrollArea,
+} from "@/components/caltrek/bottom-sheet";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -119,146 +123,119 @@ export function FoodEditor({
   }
 
   return (
-    <Drawer.Root open={open} onOpenChange={(nextOpen) => !nextOpen && onClose()}>
-      <Drawer.Portal>
-        <Drawer.Overlay className="fixed inset-0 z-40 bg-slate-950/35" />
-        <Drawer.Content className="fixed inset-x-0 bottom-0 z-50 mx-auto max-h-[94dvh] max-w-md overflow-hidden rounded-t-[1.25rem] border border-[var(--border)] bg-[var(--card)] p-4 shadow-2xl outline-none lg:max-w-lg">
-          <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-[var(--border)]" />
-          <Form {...form}>
-            <form
-              className="max-h-[calc(94dvh-3.5rem)] space-y-5 overflow-y-auto"
-              onSubmit={form.handleSubmit(submit)}
+    <BottomSheet open={open} onClose={onClose}>
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(submit)}>
+          <BottomSheetScrollArea>
+            <BottomSheetHeader
+              title={food ? "Edit food" : "Create food"}
+              description="Nutrition values are entered per 100 g or 100 ml."
+              onClose={onClose}
+            />
+
+            <div className="grid gap-3 sm:grid-cols-2">
+              <FoodTextField
+                control={form.control}
+                name="name"
+                label="Name"
+                required
+                className="sm:col-span-2"
+              />
+              <FoodTextField control={form.control} name="brand" label="Brand" />
+              <FoodTextField
+                control={form.control}
+                name="barcode"
+                label="Barcode"
+                inputMode="numeric"
+                digitsOnly
+              />
+            </div>
+
+            <EditorSection title="Serving">
+              <div className="grid grid-cols-2 gap-3">
+                <FoodNumberField
+                  control={form.control}
+                  name="servingSize"
+                  label="Serving size"
+                  min="0.01"
+                />
+                <FoodTextField
+                  control={form.control}
+                  name="servingUnit"
+                  label="Unit"
+                  placeholder="g"
+                />
+                <FoodNumberField
+                  control={form.control}
+                  name="packageQuantity"
+                  label="Whole product"
+                  min="0.01"
+                  placeholder="Optional"
+                />
+                <FoodTextField
+                  control={form.control}
+                  name="packageUnit"
+                  label="Package unit"
+                  placeholder="g"
+                />
+              </div>
+            </EditorSection>
+
+            <EditorSection title="Nutrition per 100">
+              <div className="grid grid-cols-2 gap-3">
+                <FoodNumberField
+                  control={form.control}
+                  name="caloriesPer100g"
+                  label="Calories"
+                  min="0"
+                />
+                <FoodNumberField
+                  control={form.control}
+                  name="proteinPer100g"
+                  label="Protein (g)"
+                  min="0"
+                />
+                <FoodNumberField
+                  control={form.control}
+                  name="carbsPer100g"
+                  label="Carbs (g)"
+                  min="0"
+                />
+                <FoodNumberField control={form.control} name="fatPer100g" label="Fat (g)" min="0" />
+                <FoodNumberField
+                  control={form.control}
+                  name="fiberPer100g"
+                  label="Fiber (g)"
+                  min="0"
+                />
+                <FoodNumberField
+                  control={form.control}
+                  name="sugarPer100g"
+                  label="Sugar (g)"
+                  min="0"
+                />
+                <FoodNumberField
+                  control={form.control}
+                  name="saltPer100g"
+                  label="Salt (g)"
+                  min="0"
+                />
+              </div>
+            </EditorSection>
+
+            <Button
+              type="submit"
+              size="lg"
+              disabled={saving || form.formState.isSubmitting}
+              className="w-full"
             >
-              <div className="flex items-start gap-3">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="icon"
-                  aria-label="Close"
-                  title="Close"
-                  onClick={onClose}
-                >
-                  <ChevronLeft className="size-4" />
-                </Button>
-                <div>
-                  <Drawer.Title className="text-xl font-semibold">
-                    {food ? "Edit food" : "Create food"}
-                  </Drawer.Title>
-                  <Drawer.Description className="mt-1 text-sm text-[var(--muted-foreground)]">
-                    Nutrition values are entered per 100 g or 100 ml.
-                  </Drawer.Description>
-                </div>
-              </div>
-
-              <div className="grid gap-3 sm:grid-cols-2">
-                <FoodTextField
-                  control={form.control}
-                  name="name"
-                  label="Name"
-                  required
-                  className="sm:col-span-2"
-                />
-                <FoodTextField control={form.control} name="brand" label="Brand" />
-                <FoodTextField
-                  control={form.control}
-                  name="barcode"
-                  label="Barcode"
-                  inputMode="numeric"
-                  digitsOnly
-                />
-              </div>
-
-              <EditorSection title="Serving">
-                <div className="grid grid-cols-2 gap-3">
-                  <FoodNumberField
-                    control={form.control}
-                    name="servingSize"
-                    label="Serving size"
-                    min="0.01"
-                  />
-                  <FoodTextField
-                    control={form.control}
-                    name="servingUnit"
-                    label="Unit"
-                    placeholder="g"
-                  />
-                  <FoodNumberField
-                    control={form.control}
-                    name="packageQuantity"
-                    label="Whole product"
-                    min="0.01"
-                    placeholder="Optional"
-                  />
-                  <FoodTextField
-                    control={form.control}
-                    name="packageUnit"
-                    label="Package unit"
-                    placeholder="g"
-                  />
-                </div>
-              </EditorSection>
-
-              <EditorSection title="Nutrition per 100">
-                <div className="grid grid-cols-2 gap-3">
-                  <FoodNumberField
-                    control={form.control}
-                    name="caloriesPer100g"
-                    label="Calories"
-                    min="0"
-                  />
-                  <FoodNumberField
-                    control={form.control}
-                    name="proteinPer100g"
-                    label="Protein (g)"
-                    min="0"
-                  />
-                  <FoodNumberField
-                    control={form.control}
-                    name="carbsPer100g"
-                    label="Carbs (g)"
-                    min="0"
-                  />
-                  <FoodNumberField
-                    control={form.control}
-                    name="fatPer100g"
-                    label="Fat (g)"
-                    min="0"
-                  />
-                  <FoodNumberField
-                    control={form.control}
-                    name="fiberPer100g"
-                    label="Fiber (g)"
-                    min="0"
-                  />
-                  <FoodNumberField
-                    control={form.control}
-                    name="sugarPer100g"
-                    label="Sugar (g)"
-                    min="0"
-                  />
-                  <FoodNumberField
-                    control={form.control}
-                    name="saltPer100g"
-                    label="Salt (g)"
-                    min="0"
-                  />
-                </div>
-              </EditorSection>
-
-              <Button
-                type="submit"
-                size="lg"
-                disabled={saving || form.formState.isSubmitting}
-                className="w-full"
-              >
-                <Check className="size-4" />
-                {saving ? "Saving..." : food ? "Save changes" : "Create food"}
-              </Button>
-            </form>
-          </Form>
-        </Drawer.Content>
-      </Drawer.Portal>
-    </Drawer.Root>
+              <Check className="size-4" />
+              {saving ? "Saving..." : food ? "Save changes" : "Create food"}
+            </Button>
+          </BottomSheetScrollArea>
+        </form>
+      </Form>
+    </BottomSheet>
   );
 }
 

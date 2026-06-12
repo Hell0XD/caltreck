@@ -3,8 +3,9 @@
 import { motion } from "framer-motion";
 import { Heart, Pencil, Plus } from "lucide-react";
 import type React from "react";
+import { ContentCard } from "@/components/caltrek/content-card";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { CardContent } from "@/components/ui/card";
 import type { Food } from "@/lib/caltrek/models";
 
 export function FoodList({
@@ -30,7 +31,7 @@ export function FoodList({
       </div>
       <div className="space-y-2">
         {foods.map((food) => (
-          <Card key={food.id} className="gap-0 py-0 shadow-sm shadow-slate-950/5">
+          <ContentCard key={food.id}>
             <motion.article layout>
               <CardContent className="grid grid-cols-[1fr_auto] items-center gap-3 p-4">
                 <Button
@@ -83,7 +84,7 @@ export function FoodList({
                 </div>
               </CardContent>
             </motion.article>
-          </Card>
+          </ContentCard>
         ))}
       </div>
     </section>
