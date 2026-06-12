@@ -10,7 +10,7 @@ export function PageHeader({
   action?: ReactNode;
 }) {
   return (
-    <header className="flex items-start justify-between gap-4">
+    <header className="flex items-end justify-between gap-4">
       <div>
         <p className="text-sm font-medium text-[var(--muted-foreground)]">{eyebrow}</p>
         <h1 className="text-3xl font-semibold tracking-normal">{title}</h1>
