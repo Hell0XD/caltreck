@@ -1,18 +1,33 @@
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
 import { BrowserMultiFormatReader, type IScannerControls } from "@zxing/browser";
 import { motion } from "framer-motion";
 import { AlertCircle, Camera, Check, Keyboard, RotateCcw, ScanLine } from "lucide-react";
-import type React from "react";
 import { useEffect, useRef, useState } from "react";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
 import { useCaltrek } from "@/components/caltrek/app-state";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 
 type ScanState = "idle" | "requesting" | "scanning" | "resolving" | "success" | "failed";
+
+const barcodeSchema = z.object({
+  barcode: z.string().regex(/^\d{8,14}$/, "Barcode must contain 8 to 14 digits."),
+});
+
+type BarcodeFormValues = z.infer<typeof barcodeSchema>;
 
 export default function ScanPage() {
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -21,9 +36,13 @@ export default function ScanPage() {
   const [message, setMessage] = useState(
     "Camera access is only used while this screen is scanning.",
   );
-  const [manualBarcode, setManualBarcode] = useState("");
   const [lastBarcode, setLastBarcode] = useState<string | null>(null);
   const { openAddFood, findFoodByBarcode } = useCaltrek();
+  const form = useForm<BarcodeFormValues>({
+    resolver: zodResolver(barcodeSchema),
+    defaultValues: { barcode: "" },
+  });
+  const manualBarcode = form.watch("barcode");
 
   useEffect(() => () => stopScanner(), []);
 
@@ -89,10 +108,9 @@ export default function ScanPage() {
     }
   }
 
-  function submitManualBarcode(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  function submitManualBarcode(value: BarcodeFormValues) {
     stopScanner();
-    void resolveBarcode(manualBarcode);
+    void resolveBarcode(value.barcode);
   }
 
   return (
@@ -162,24 +180,39 @@ export default function ScanPage() {
 
       <Card className="gap-0 py-0">
         <CardContent className="p-4">
-          <form onSubmit={submitManualBarcode} className="space-y-3">
-            <Label htmlFor="manual-barcode">Manual barcode</Label>
-            <div className="grid grid-cols-[1fr_auto] gap-3">
-              <Input
-                id="manual-barcode"
-                value={manualBarcode}
-                onChange={(event) => setManualBarcode(event.target.value.replace(/\D/g, ""))}
-                inputMode="numeric"
-                pattern="[0-9]{8,14}"
-                placeholder="8 to 14 digits"
-                className="h-11 text-base"
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(submitManualBarcode)} className="space-y-3">
+              <FormField
+                control={form.control}
+                name="barcode"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Manual barcode</FormLabel>
+                    <div className="grid grid-cols-[1fr_auto] items-start gap-3">
+                      <div>
+                        <FormControl>
+                          <Input
+                            inputMode="numeric"
+                            placeholder="8 to 14 digits"
+                            className="h-11 text-base"
+                            {...field}
+                            onChange={(event) =>
+                              field.onChange(event.target.value.replace(/\D/g, ""))
+                            }
+                          />
+                        </FormControl>
+                        <FormMessage className="mt-2" />
+                      </div>
+                      <Button type="submit" variant="outline" size="lg">
+                        <Keyboard className="size-4" />
+                        Find
+                      </Button>
+                    </div>
+                  </FormItem>
+                )}
               />
-              <Button type="submit" variant="outline" size="lg">
-                <Keyboard className="size-4" />
-                Find
-              </Button>
-            </div>
-          </form>
+            </form>
+          </Form>
         </CardContent>
       </Card>
     </div>
