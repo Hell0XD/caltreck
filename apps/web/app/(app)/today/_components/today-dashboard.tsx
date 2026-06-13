@@ -2,19 +2,41 @@
 
 import Link from "next/link";
 import { LayoutGroup, motion } from "framer-motion";
-import { Apple, Beef, Plus, Sparkles, Trash2, Utensils } from "lucide-react";
+import { useState } from "react";
+import {
+  Apple,
+  Beef,
+  CalendarDays,
+  Check,
+  ChevronLeft,
+  ChevronRight,
+  Flame,
+  Info,
+  Plus,
+  Sparkles,
+  Trash2,
+  Utensils,
+} from "lucide-react";
 import { ContentCard } from "@/components/caltrek/content-card";
+import {
+  BottomSheet,
+  BottomSheetHeader,
+  BottomSheetScrollArea,
+} from "@/components/caltrek/bottom-sheet";
 import { EmptyState } from "@/components/caltrek/empty-state";
-import { PageHeader } from "@/components/caltrek/page-header";
 import { Button } from "@/components/ui/button";
 import { CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCaltrek } from "@/hooks/use-caltrek";
+import { DateUtils } from "@/lib/caltrek/date-utils";
 import { FormatUtils } from "@/lib/caltrek/format-utils";
+import { GoalStatusUtils, type GoalStatus } from "@/lib/caltrek/goal-status";
 import { MealUtils } from "@/lib/caltrek/meal-utils";
-import type { LogEntry, MealType } from "@/lib/caltrek/models";
+import type { LogEntry, MacroGoals, MacroTotals, MealType } from "@/lib/caltrek/models";
 import { NutritionUtils } from "@/lib/caltrek/nutrition-utils";
+import { cn } from "@/lib/utils";
+import { GoalCalendar } from "./goal-calendar";
 
 const mealIcons = {
   breakfast: Apple,
@@ -24,42 +46,196 @@ const mealIcons = {
 };
 
 export function TodayDashboard() {
-  const { dashboardLoading, goals, logs, totals, startEdit, requestDelete } = useCaltrek();
+  const [calendarOpen, setCalendarOpen] = useState(false);
+  const {
+    dashboardLoading,
+    goals,
+    logs,
+    totals,
+    selectedDate,
+    selectDate,
+    historyMonth,
+    setHistoryMonth,
+    history,
+    historyLoading,
+    startEdit,
+    requestDelete,
+  } = useCaltrek();
+  const isToday = selectedDate === DateUtils.todayIso();
+  const selectedStatus = GoalStatusUtils.forTotals(totals, logs.length > 0, goals);
 
   return (
-    <div className="space-y-5">
-      <PageHeader
-        eyebrow="Today"
-        title="Macro dashboard"
-        action={
-          <Button asChild size="lg" className="px-3">
-            <Link href="/search">
-              <Plus className="size-4" />
-              Add
-            </Link>
-          </Button>
-        }
+    <div className="space-y-5 lg:space-y-6">
+      <header className="flex items-end justify-between gap-4">
+        <div>
+          <div className="mb-1 flex items-center gap-2">
+            <span className="text-sm font-bold text-[var(--primary)]">
+              {DateUtils.relativeLabel(selectedDate)}
+            </span>
+            <StatusBadge status={selectedStatus} />
+          </div>
+          <h1 className="text-3xl font-bold tracking-[-0.04em] sm:text-4xl">
+            {DateUtils.format(selectedDate, { month: "long", day: "numeric" })}
+          </h1>
+        </div>
+        <Button asChild size="lg" className="rounded-xl px-4 shadow-[var(--shadow-button)]">
+          <Link href="/search">
+            <Plus className="size-4" />
+            Add food
+          </Link>
+        </Button>
+      </header>
+
+      <DateNavigator
+        selectedDate={selectedDate}
+        onSelectDate={selectDate}
+        onOpenCalendar={() => setCalendarOpen(true)}
       />
 
       {dashboardLoading ? (
         <DashboardSkeleton />
       ) : (
         <>
-          <MacroSummary totals={totals} goals={goals} />
-          <LayoutGroup>
-            <div className="space-y-4">
-              {MealUtils.all.map((meal) => (
-                <MealSection
-                  key={meal}
-                  meal={meal}
-                  entries={logs.filter((entry) => entry.meal === meal)}
-                  onEdit={startEdit}
-                  onDelete={requestDelete}
-                />
-              ))}
+          <div className="grid items-start gap-5 xl:grid-cols-[minmax(20rem,0.9fr)_minmax(28rem,1.1fr)]">
+            <div className="hidden lg:block">
+              <GoalCalendar
+                month={historyMonth}
+                selectedDate={selectedDate}
+                goals={goals}
+                summaries={history}
+                loading={historyLoading}
+                onMonthChange={setHistoryMonth}
+                onSelectDate={selectDate}
+              />
             </div>
-          </LayoutGroup>
+            <MacroSummary totals={totals} goals={goals} status={selectedStatus} />
+          </div>
+
+          <section>
+            <div className="mb-3 flex items-end justify-between gap-3">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--muted-foreground)]">
+                  Food log
+                </p>
+                <h2 className="mt-1 text-xl font-bold">
+                  {isToday ? "Today’s meals" : "Meals for this day"}
+                </h2>
+              </div>
+              <p className="text-sm font-semibold text-[var(--muted-foreground)]">
+                {logs.length} {logs.length === 1 ? "entry" : "entries"}
+              </p>
+            </div>
+            <LayoutGroup>
+              <div className="grid gap-4 md:grid-cols-2">
+                {MealUtils.all.map((meal) => (
+                  <MealSection
+                    key={meal}
+                    meal={meal}
+                    entries={logs.filter((entry) => entry.meal === meal)}
+                    onEdit={startEdit}
+                    onDelete={requestDelete}
+                  />
+                ))}
+              </div>
+            </LayoutGroup>
+          </section>
         </>
+      )}
+
+      <BottomSheet open={calendarOpen} onClose={() => setCalendarOpen(false)}>
+        <BottomSheetScrollArea className="space-y-4">
+          <BottomSheetHeader
+            title="Choose a day"
+            description="Review your nutrition history"
+            onClose={() => setCalendarOpen(false)}
+          />
+          <GoalCalendar
+            month={historyMonth}
+            selectedDate={selectedDate}
+            goals={goals}
+            summaries={history}
+            loading={historyLoading}
+            onMonthChange={setHistoryMonth}
+            onSelectDate={(date) => {
+              selectDate(date);
+              setCalendarOpen(false);
+            }}
+          />
+        </BottomSheetScrollArea>
+      </BottomSheet>
+    </div>
+  );
+}
+
+function DateNavigator({
+  selectedDate,
+  onSelectDate,
+  onOpenCalendar,
+}: {
+  selectedDate: string;
+  onSelectDate: (date: string) => void;
+  onOpenCalendar: () => void;
+}) {
+  const today = DateUtils.todayIso();
+  const isToday = selectedDate === today;
+
+  return (
+    <div className="flex items-center gap-2">
+      <Button
+        variant="outline"
+        size="icon"
+        className="rounded-xl bg-[var(--card)]"
+        aria-label="Previous day"
+        onClick={() => onSelectDate(DateUtils.addDays(selectedDate, -1))}
+      >
+        <ChevronLeft />
+      </Button>
+      <button
+        type="button"
+        className="flex min-w-0 flex-1 items-center justify-center gap-2 rounded-xl border border-[var(--border)] bg-[var(--card)] px-3 py-2.5 text-sm font-bold shadow-sm transition hover:border-[var(--primary)] hover:bg-[var(--primary-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)] lg:hidden"
+        aria-label="Open calendar"
+        onClick={onOpenCalendar}
+      >
+        <CalendarDays className="size-4 text-[var(--primary)]" />
+        <span className="truncate">
+          {DateUtils.format(selectedDate, {
+            weekday: "short",
+            month: "short",
+            day: "numeric",
+            year: selectedDate.slice(0, 4) === today.slice(0, 4) ? undefined : "numeric",
+          })}
+        </span>
+      </button>
+      <div className="hidden min-w-0 flex-1 items-center justify-center gap-2 rounded-xl border border-[var(--border)] bg-[var(--card)] px-3 py-2.5 text-sm font-bold shadow-sm lg:flex">
+        <CalendarDays className="size-4 text-[var(--primary)]" />
+        <span className="truncate">
+          {DateUtils.format(selectedDate, {
+            weekday: "short",
+            month: "short",
+            day: "numeric",
+            year: selectedDate.slice(0, 4) === today.slice(0, 4) ? undefined : "numeric",
+          })}
+        </span>
+      </div>
+      <Button
+        variant="outline"
+        size="icon"
+        className="rounded-xl bg-[var(--card)]"
+        aria-label="Next day"
+        disabled={isToday}
+        onClick={() => onSelectDate(DateUtils.addDays(selectedDate, 1))}
+      >
+        <ChevronRight />
+      </Button>
+      {!isToday && (
+        <Button
+          variant="ghost"
+          size="sm"
+          className="rounded-xl px-2.5 sm:px-3"
+          onClick={() => onSelectDate(today)}
+        >
+          Today
+        </Button>
       )}
     </div>
   );
@@ -68,30 +244,88 @@ export function TodayDashboard() {
 function MacroSummary({
   totals,
   goals,
+  status,
 }: {
-  totals: Record<"calories" | "protein" | "carbs" | "fat", number>;
-  goals: Record<"calories" | "protein" | "carbs" | "fat", number>;
+  totals: MacroTotals;
+  goals: MacroGoals;
+  status: GoalStatus;
 }) {
+  const caloriesLeft = goals.calories - totals.calories;
+  const calorieProgress = progressPercent(totals.calories, goals.calories);
+
   return (
-    <ContentCard>
-      <CardContent className="p-4">
-        <div className="flex items-end justify-between gap-4">
-          <div>
-            <p className="text-sm font-medium text-[var(--muted-foreground)]">Energy</p>
-            <p className="mt-1 text-4xl font-semibold tracking-normal">{totals.calories}</p>
+    <section className="overflow-hidden rounded-[var(--radius-xl)] border border-[var(--border)] bg-[var(--card)] shadow-[var(--shadow-card)]">
+      <div className="relative overflow-hidden bg-[var(--primary)] px-5 py-6 text-white sm:px-6">
+        <div className="pointer-events-none absolute -right-16 -top-24 size-56 rounded-full bg-white/10 blur-2xl" />
+        <div className="pointer-events-none absolute -bottom-24 left-1/3 size-44 rounded-full bg-[var(--secondary)]/20 blur-3xl" />
+        <div className="group absolute right-4 top-4 z-10 sm:right-5 sm:top-5">
+          <button
+            type="button"
+            aria-label="How goal days are calculated"
+            className="grid size-8 place-items-center rounded-full bg-white/10 text-white/75 transition hover:bg-white/20 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
+          >
+            <Info className="size-4" />
+          </button>
+          <div
+            role="tooltip"
+            className="pointer-events-none absolute right-0 top-10 w-64 translate-y-1 rounded-xl bg-[var(--foreground)] p-3 text-xs font-medium leading-relaxed text-white opacity-0 shadow-xl transition group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:translate-y-0 group-focus-within:opacity-100"
+          >
+            Goal days use a 90–110% calorie window and at least 90% of every macro target.
           </div>
-          <p className="pb-1 text-sm text-[var(--muted-foreground)]">
-            {Math.max(goals.calories - totals.calories, 0)} kcal left
-          </p>
         </div>
-        <Progress value={progressPercent(totals.calories, goals.calories)} className="mt-4 h-3" />
-        <div className="mt-4 grid grid-cols-3 gap-3">
-          <MacroPill label="Protein" value={totals.protein} goal={goals.protein} unit="g" />
-          <MacroPill label="Carbs" value={totals.carbs} goal={goals.carbs} unit="g" />
-          <MacroPill label="Fat" value={totals.fat} goal={goals.fat} unit="g" />
+        <div className="relative flex items-center gap-5">
+          <div
+            className="grid size-28 shrink-0 place-items-center rounded-full p-2"
+            style={{
+              background: `conic-gradient(var(--secondary) ${calorieProgress * 3.6}deg, rgba(255,255,255,0.16) 0deg)`,
+            }}
+          >
+            <div className="grid size-full place-items-center rounded-full bg-[var(--primary-strong)] text-center shadow-inner">
+              <div>
+                <Flame className="mx-auto mb-0.5 size-4 text-[var(--secondary)]" />
+                <p className="text-2xl font-bold tracking-[-0.04em]">{totals.calories}</p>
+                <p className="text-[0.65rem] font-semibold uppercase tracking-wider text-white/65">
+                  kcal
+                </p>
+              </div>
+            </div>
+          </div>
+          <div className="min-w-0">
+            <p className="text-xs font-bold uppercase tracking-[0.16em] text-white/60">
+              Daily energy
+            </p>
+            <p className="mt-2 text-2xl font-bold tracking-[-0.03em]">
+              {caloriesLeft > 0
+                ? `${caloriesLeft} kcal left`
+                : caloriesLeft === 0
+                  ? "Right on target"
+                  : `${Math.abs(caloriesLeft)} kcal over`}
+            </p>
+            <p className="mt-1 text-sm font-medium text-white/70">
+              {totals.calories} of {goals.calories} kcal
+            </p>
+            {status === "hit" && (
+              <div className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-white/12 px-2.5 py-1 text-xs font-bold">
+                <Check className="size-3.5" />
+                All goals reached
+              </div>
+            )}
+          </div>
         </div>
-      </CardContent>
-    </ContentCard>
+      </div>
+
+      <div className="grid gap-3 p-4 sm:grid-cols-3 sm:p-5">
+        <MacroPill
+          label="Protein"
+          value={totals.protein}
+          goal={goals.protein}
+          unit="g"
+          tone="green"
+        />
+        <MacroPill label="Carbs" value={totals.carbs} goal={goals.carbs} unit="g" tone="gold" />
+        <MacroPill label="Fat" value={totals.fat} goal={goals.fat} unit="g" tone="coral" />
+      </div>
+    </section>
   );
 }
 
@@ -100,23 +334,63 @@ function MacroPill({
   value,
   goal,
   unit,
+  tone,
 }: {
   label: string;
   value: number;
   goal: number;
   unit: string;
+  tone: "green" | "gold" | "coral";
 }) {
+  const remaining = Math.max(goal - value, 0);
+  const toneClass = {
+    green: "bg-[var(--success)]",
+    gold: "bg-[var(--warning)]",
+    coral: "bg-[var(--missed)]",
+  }[tone];
+
   return (
-    <div className="min-w-0 rounded-[var(--radius)] bg-[var(--surface)] p-3">
-      <div className="flex items-baseline justify-between gap-2">
-        <p className="truncate text-xs font-medium text-[var(--muted-foreground)]">{label}</p>
-        <p className="text-sm font-semibold">
-          {value}
-          {unit}
-        </p>
+    <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-3.5">
+      <div className="flex items-start justify-between gap-2">
+        <div>
+          <p className="text-xs font-bold text-[var(--muted-foreground)]">{label}</p>
+          <p className="mt-1 text-xl font-bold tracking-[-0.03em]">
+            {value}
+            <span className="ml-0.5 text-xs text-[var(--muted-foreground)]">{unit}</span>
+          </p>
+        </div>
+        <span className={cn("mt-1 size-2.5 rounded-full", toneClass)} />
       </div>
-      <Progress value={progressPercent(value, goal)} className="mt-2 h-2" />
+      <Progress
+        value={progressPercent(value, goal)}
+        className="mt-3 h-1.5 bg-black/7"
+        indicatorClassName={toneClass}
+      />
+      <p className="mt-2 text-[0.68rem] font-semibold text-[var(--muted-foreground)]">
+        {remaining > 0 ? `${remaining}${unit} to target` : "Target reached"}
+      </p>
     </div>
+  );
+}
+
+function StatusBadge({ status }: { status: GoalStatus }) {
+  const content = {
+    hit: { label: "Goals hit", className: "bg-[var(--success-soft)] text-[var(--success)]" },
+    almost: {
+      label: "Calories hit",
+      className: "bg-[var(--warning-soft)] text-[var(--warning-strong)]",
+    },
+    missed: { label: "Off target", className: "bg-[var(--missed-soft)] text-[var(--missed)]" },
+    "no-log": {
+      label: "No log yet",
+      className: "bg-[var(--muted)] text-[var(--muted-foreground)]",
+    },
+  }[status];
+
+  return (
+    <span className={cn("rounded-full px-2 py-0.5 text-[0.65rem] font-bold", content.className)}>
+      {content.label}
+    </span>
   );
 }
 
@@ -135,22 +409,25 @@ function MealSection({
   const calories = NutritionUtils.macroFor(entries, "calories");
 
   return (
-    <ContentCard>
+    <ContentCard className="rounded-[var(--radius-xl)] shadow-[var(--shadow-card)]">
       <CardContent className="p-4">
         <div className="flex items-center justify-between gap-3">
           <div className="flex min-w-0 items-center gap-3">
-            <div className="grid size-9 place-items-center rounded-[var(--radius)] bg-[var(--surface)] text-[var(--primary)]">
+            <div className="grid size-10 place-items-center rounded-xl bg-[var(--primary-soft)] text-[var(--primary)]">
               <Icon className="size-4" />
             </div>
             <div className="min-w-0">
-              <h2 className="truncate text-base font-semibold">{MealUtils.label(meal)}</h2>
-              <p className="text-sm text-[var(--muted-foreground)]">{calories} kcal</p>
+              <h3 className="truncate text-base font-bold">{MealUtils.label(meal)}</h3>
+              <p className="text-xs font-semibold text-[var(--muted-foreground)]">
+                {calories} kcal · {entries.length} {entries.length === 1 ? "item" : "items"}
+              </p>
             </div>
           </div>
           <Button
             asChild
             variant="outline"
             size="icon"
+            className="rounded-xl"
             aria-label={`Add ${MealUtils.label(meal)}`}
             title={`Add ${MealUtils.label(meal)}`}
           >
@@ -194,7 +471,7 @@ function FoodLogCard({
   return (
     <motion.article
       layout
-      className="grid grid-cols-[1fr_auto] items-center gap-3 rounded-[var(--radius)] bg-[var(--surface)] p-3"
+      className="grid grid-cols-[1fr_auto] items-center gap-3 rounded-xl bg-[var(--surface)] p-3"
     >
       <Button
         variant="ghost"
@@ -202,20 +479,21 @@ function FoodLogCard({
         onClick={onEdit}
       >
         <span className="min-w-0">
-          <p className="truncate text-sm font-semibold">{entry.food.name}</p>
+          <p className="truncate text-sm font-bold">{entry.food.name}</p>
           <p className="mt-1 truncate text-xs text-[var(--muted-foreground)]">
-            {FormatUtils.quantity(entry.amount)} {entry.food.servingUnit} |{" "}
+            {FormatUtils.quantity(entry.amount)} {entry.food.servingUnit} ·{" "}
             {FormatUtils.quantity(entry.quantity)} {entry.quantity === 1 ? "serving" : "servings"}
           </p>
         </span>
       </Button>
       <div className="flex items-center gap-2">
-        <p className="min-w-14 text-right text-sm font-semibold">
+        <p className="min-w-14 text-right text-sm font-bold">
           {Math.round(entry.food.calories * entry.quantity)}
         </p>
         <Button
-          variant="outline"
-          size="icon"
+          variant="ghost"
+          size="icon-sm"
+          className="text-[var(--muted-foreground)] hover:bg-[var(--missed-soft)] hover:text-[var(--missed)]"
           aria-label={`Delete ${entry.food.name}`}
           title={`Delete ${entry.food.name}`}
           onClick={onDelete}
@@ -233,10 +511,9 @@ function progressPercent(value: number, max: number) {
 
 function DashboardSkeleton() {
   return (
-    <div className="space-y-4">
-      <Skeleton className="h-40 rounded-[var(--radius-lg)]" />
-      <Skeleton className="h-36 rounded-[var(--radius-lg)]" />
-      <Skeleton className="h-36 rounded-[var(--radius-lg)]" />
+    <div className="grid gap-5 xl:grid-cols-2">
+      <Skeleton className="h-[28rem] rounded-[var(--radius-xl)]" />
+      <Skeleton className="h-[28rem] rounded-[var(--radius-xl)]" />
     </div>
   );
 }

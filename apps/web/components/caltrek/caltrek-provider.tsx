@@ -1,6 +1,6 @@
 "use client";
 
-import type { ProfileUpdateRequest, UserResponse } from "@caltrek/api-client";
+import type { DailySummaryResponse, ProfileUpdateRequest, UserResponse } from "@caltrek/api-client";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   createContext,
@@ -20,6 +20,7 @@ import { useCaltrekMutations } from "@/hooks/use-caltrek-mutations";
 import { useCaltrekQueries } from "@/hooks/use-caltrek-queries";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { CaltrekApiClient } from "@/lib/caltrek/api-client";
+import { DateUtils } from "@/lib/caltrek/date-utils";
 import { ErrorUtils } from "@/lib/caltrek/error-utils";
 import { FoodMapper } from "@/lib/caltrek/food-mapper";
 import { MealUtils } from "@/lib/caltrek/meal-utils";
@@ -42,6 +43,12 @@ export type CaltrekContextValue = {
   goals: MacroGoals;
   logs: LogEntry[];
   totals: MacroTotals;
+  selectedDate: string;
+  selectDate: (date: string) => void;
+  historyMonth: string;
+  setHistoryMonth: (date: string) => void;
+  history: Record<string, DailySummaryResponse>;
+  historyLoading: boolean;
   query: string;
   setQuery: (query: string) => void;
   searchResults: Food[];
@@ -68,6 +75,10 @@ export function CaltrekProvider({ children }: { children: ReactNode }) {
   const sessionRef = useRef<AuthSession | null>(null);
   const [authError, setAuthError] = useState<string | null>(null);
   const [query, setQuery] = useState("");
+  const [selectedDate, setSelectedDate] = useState(() => DateUtils.todayIso());
+  const [historyMonth, setHistoryMonthState] = useState(() =>
+    DateUtils.monthStart(DateUtils.todayIso()),
+  );
   const [selectedFood, setSelectedFood] = useState<Food | null>(null);
   const [editingEntry, setEditingEntry] = useState<LogEntry | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<LogEntry | null>(null);
@@ -99,8 +110,12 @@ export function CaltrekProvider({ children }: { children: ReactNode }) {
   }, [api, persistSession]);
 
   const searchTerm = useDebouncedValue(query.trim(), 300);
-  const queries = useCaltrekQueries(api, Boolean(session), searchTerm);
-  const mutations = useCaltrekMutations(api, queries.date);
+  const historyDates = useMemo(
+    () => DateUtils.daysInMonth(historyMonth).filter((date) => !DateUtils.isFuture(date)),
+    [historyMonth],
+  );
+  const queries = useCaltrekQueries(api, Boolean(session), searchTerm, selectedDate, historyDates);
+  const mutations = useCaltrekMutations(api, selectedDate);
   const user = queries.profile.data ?? session?.user;
   const logs = queries.logs.data ?? [];
   const libraryFoods = queries.library.data ?? [];
@@ -108,11 +123,21 @@ export function CaltrekProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const error =
-      queries.profile.error ?? queries.logs.error ?? queries.library.error ?? queries.search.error;
+      queries.profile.error ??
+      queries.logs.error ??
+      queries.library.error ??
+      queries.search.error ??
+      queries.historyError;
     if (error) {
       setToast(ErrorUtils.message(error));
     }
-  }, [queries.library.error, queries.logs.error, queries.profile.error, queries.search.error]);
+  }, [
+    queries.historyError,
+    queries.library.error,
+    queries.logs.error,
+    queries.profile.error,
+    queries.search.error,
+  ]);
 
   useEffect(() => {
     if (!toast) {
@@ -127,6 +152,14 @@ export function CaltrekProvider({ children }: { children: ReactNode }) {
     setQuantity(food.defaultServings ?? 1);
     setQuantityMode("servings");
     setMeal(nextMeal);
+  }
+
+  function selectDate(date: string) {
+    if (DateUtils.isFuture(date)) {
+      return;
+    }
+    setSelectedDate(date);
+    setHistoryMonthState(DateUtils.monthStart(date));
   }
 
   function startEdit(entry: LogEntry) {
@@ -270,6 +303,12 @@ export function CaltrekProvider({ children }: { children: ReactNode }) {
     goals: FoodMapper.goals(user),
     logs,
     totals: NutritionUtils.totals(logs),
+    selectedDate,
+    selectDate,
+    historyMonth,
+    setHistoryMonth: (date) => setHistoryMonthState(DateUtils.monthStart(date)),
+    history: queries.history,
+    historyLoading: queries.historyLoading,
     query,
     setQuery,
     searchResults,
@@ -332,6 +371,7 @@ export function CaltrekProvider({ children }: { children: ReactNode }) {
       />
       <ConfirmDeleteDialog
         entry={deleteTarget}
+        date={selectedDate}
         onCancel={() => setDeleteTarget(null)}
         onConfirm={removeEntry}
       />

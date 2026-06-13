@@ -3,6 +3,7 @@ import {
   type AuthResponse,
   type CreateFoodRequest,
   type DailyLogResponse,
+  type DailySummaryResponse,
   type FoodResponse,
   type ProfileUpdateRequest,
   type UserLibraryResponse,
@@ -75,6 +76,12 @@ export class CaltrekApiClient {
   getLogs(date: string) {
     return this.request<DailyLogResponse[]>((token) =>
       this.api.dailyLogs.listDailyLogs({ auth: token, query: { date } }),
+    );
+  }
+
+  getDailySummary(date: string) {
+    return this.request<DailySummaryResponse>((token) =>
+      this.api.dailyLogs.getDailySummary({ auth: token, query: { date } }),
     );
   }
 

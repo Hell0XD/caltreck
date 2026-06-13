@@ -11,13 +11,16 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import type { LogEntry } from "@/lib/caltrek/models";
+import { DateUtils } from "@/lib/caltrek/date-utils";
 
 export function ConfirmDeleteDialog({
   entry,
+  date,
   onCancel,
   onConfirm,
 }: {
   entry: LogEntry | null;
+  date: string;
   onCancel: () => void;
   onConfirm: (entry: LogEntry) => void;
 }) {
@@ -28,7 +31,9 @@ export function ConfirmDeleteDialog({
           <AlertDialogHeader>
             <AlertDialogTitle>Delete log entry?</AlertDialogTitle>
             <AlertDialogDescription>
-              This removes {entry.food.name} from today. The food stays in your library.
+              This removes {entry.food.name} from{" "}
+              {DateUtils.format(date, { month: "long", day: "numeric" })}. The food stays in your
+              library.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

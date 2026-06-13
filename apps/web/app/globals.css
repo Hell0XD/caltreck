@@ -14,6 +14,13 @@
   --primary-foreground: #ffffff;
   --secondary: #f1c84c;
   --secondary-foreground: #352b0c;
+  --success: #16805f;
+  --success-soft: #dcf3e9;
+  --warning: #e2a728;
+  --warning-strong: #8a5b00;
+  --warning-soft: #fff2c9;
+  --missed: #c95852;
+  --missed-soft: #fbe5e2;
   --muted: #e4e9e2;
   --muted-foreground: #59655d;
   --accent: var(--primary-soft);
@@ -26,6 +33,9 @@
   --skeleton: #e2e8df;
   --radius: 0.5rem;
   --radius-lg: 0.75rem;
+  --radius-xl: 1.25rem;
+  --shadow-card: 0 12px 32px rgba(23, 32, 27, 0.07);
+  --shadow-button: 0 8px 20px rgba(17, 97, 73, 0.22);
   --duration-fast: 150ms;
   --duration-normal: 220ms;
   --font-sans:
@@ -67,7 +77,9 @@ body {
   min-height: 100%;
   margin: 0;
   color: var(--foreground);
-  background: var(--background);
+  background:
+    radial-gradient(circle at 75% 0%, rgba(220, 239, 232, 0.7), transparent 28rem),
+    var(--background);
   font-family: var(--font-sans);
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;

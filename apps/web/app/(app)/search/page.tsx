@@ -8,6 +8,7 @@ import { PageHeader } from "@/components/caltrek/page-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
+import { DateUtils } from "@/lib/caltrek/date-utils";
 
 export default function SearchPage() {
   const {
@@ -19,12 +20,16 @@ export default function SearchPage() {
     openCreateFood,
     openEditFood,
     toggleFavorite,
+    selectedDate,
   } = useCaltrek();
 
   return (
     <div className="space-y-5">
       <PageHeader
-        eyebrow="Food search"
+        eyebrow={`Adding to ${DateUtils.relativeLabel(selectedDate).toLowerCase()}, ${DateUtils.format(
+          selectedDate,
+          { month: "short", day: "numeric" },
+        )}`}
         title="Add food"
         action={
           <Button variant="outline" size="lg" className="px-3" onClick={openCreateFood}>

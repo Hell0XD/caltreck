@@ -5,7 +5,7 @@ import type { Route } from "next";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { ChevronRight, Heart, Home, ScanLine, Search, UserRound } from "lucide-react";
+import { CalendarDays, ChevronRight, Heart, ScanLine, Search, UserRound } from "lucide-react";
 import { BrandBlock } from "@/components/caltrek/brand-block";
 import { MobileHeader } from "@/components/caltrek/mobile-header";
 import { Button } from "@/components/ui/button";
@@ -20,7 +20,7 @@ const navItems: Array<{
   label: string;
   icon: React.ReactElement<{ className?: string }>;
 }> = [
-  { route: "today", href: "/today", label: "Today", icon: <Home /> },
+  { route: "today", href: "/today", label: "Journal", icon: <CalendarDays /> },
   { route: "search", href: "/search", label: "Search", icon: <Search /> },
   { route: "scan", href: "/scan", label: "Scan", icon: <ScanLine /> },
   { route: "library", href: "/library", label: "Library", icon: <Heart /> },
@@ -34,7 +34,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <main className="min-h-dvh bg-[var(--background)] text-[var(--foreground)]">
-      <div className="mx-auto grid min-h-dvh w-full max-w-6xl grid-cols-1 lg:grid-cols-[18rem_minmax(0,1fr)]">
+      <div className="mx-auto grid min-h-dvh w-full max-w-7xl grid-cols-1 lg:grid-cols-[18rem_minmax(0,1fr)]">
         <aside className="hidden border-r border-[var(--border)] bg-[var(--surface)] px-5 py-6 lg:flex lg:flex-col">
           <BrandBlock />
           <DesktopNav activeRoute={activeRoute} />

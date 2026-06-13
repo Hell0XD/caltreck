@@ -8,8 +8,11 @@ import { caltrekQueryKeys } from "@/lib/caltrek/query-keys";
 
 export function useCaltrekMutations(api: CaltrekApiClient, date: string) {
   const queryClient = useQueryClient();
-  const invalidateLogs = () =>
-    queryClient.invalidateQueries({ queryKey: caltrekQueryKeys.logs(date) });
+  const invalidateDay = () =>
+    Promise.all([
+      queryClient.invalidateQueries({ queryKey: caltrekQueryKeys.logs(date) }),
+      queryClient.invalidateQueries({ queryKey: caltrekQueryKeys.summary(date) }),
+    ]);
   const invalidateLibrary = () =>
     queryClient.invalidateQueries({ queryKey: caltrekQueryKeys.library() });
   const invalidateFoods = () => queryClient.invalidateQueries({ queryKey: caltrekQueryKeys.all });
@@ -31,7 +34,7 @@ export function useCaltrekMutations(api: CaltrekApiClient, date: string) {
         quantity: number;
         unit: string;
       }) => api.createLog(food.id, date, meal, quantity, unit),
-      onSuccess: invalidateLogs,
+      onSuccess: invalidateDay,
     }),
     updateLog: useMutation({
       mutationFn: ({
@@ -45,11 +48,11 @@ export function useCaltrekMutations(api: CaltrekApiClient, date: string) {
         quantity: number;
         unit: string;
       }) => api.updateLog(entry.id, date, meal, quantity, unit),
-      onSuccess: invalidateLogs,
+      onSuccess: invalidateDay,
     }),
     deleteLog: useMutation({
       mutationFn: (entry: LogEntry) => api.deleteLog(entry.id),
-      onSuccess: invalidateLogs,
+      onSuccess: invalidateDay,
     }),
     saveLibraryFood: useMutation({
       mutationFn: ({ food, favorite }: { food: Food; favorite: boolean }) =>
