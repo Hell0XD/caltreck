@@ -12,6 +12,7 @@ export function useCaltrekMutations(api: CaltrekApiClient, date: string) {
     Promise.all([
       queryClient.invalidateQueries({ queryKey: caltrekQueryKeys.logs(date) }),
       queryClient.invalidateQueries({ queryKey: caltrekQueryKeys.summary(date) }),
+      queryClient.invalidateQueries({ queryKey: caltrekQueryKeys.summaries() }),
     ]);
   const invalidateLibrary = () =>
     queryClient.invalidateQueries({ queryKey: caltrekQueryKeys.library() });

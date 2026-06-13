@@ -1,9 +1,8 @@
 "use client";
 
 import type { DailySummaryResponse } from "@caltrek/api-client";
-import { useQueries, useQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { CaltrekApiClient } from "@/lib/caltrek/api-client";
-import { DateUtils } from "@/lib/caltrek/date-utils";
 import { FoodMapper } from "@/lib/caltrek/food-mapper";
 import { caltrekQueryKeys } from "@/lib/caltrek/query-keys";
 
@@ -35,19 +34,17 @@ export function useCaltrekQueries(
     enabled: authenticated && Boolean(searchTerm),
     staleTime: 60_000,
   });
-  const historyQueries = useQueries({
-    queries: historyDates.map((historyDate) => ({
-      queryKey: caltrekQueryKeys.summary(historyDate),
-      queryFn: () => api.getDailySummary(historyDate),
-      enabled: authenticated && historyDate <= DateUtils.todayIso(),
-      staleTime: 5 * 60_000,
-    })),
+  const historyFrom = historyDates.at(0);
+  const historyTo = historyDates.at(-1);
+  const historyQuery = useQuery({
+    queryKey: caltrekQueryKeys.summaries(historyFrom, historyTo),
+    queryFn: () => api.getDailySummaries(historyFrom!, historyTo!),
+    enabled: authenticated && Boolean(historyFrom && historyTo),
+    staleTime: 5 * 60_000,
   });
-  const history = historyQueries.reduce<Record<string, DailySummaryResponse>>(
-    (summaries, query, index) => {
-      if (query.data) {
-        summaries[historyDates[index]] = query.data;
-      }
+  const history = (historyQuery.data ?? []).reduce<Record<string, DailySummaryResponse>>(
+    (summaries, summary) => {
+      summaries[summary.logDate] = summary;
       return summaries;
     },
     {},
@@ -59,7 +56,7 @@ export function useCaltrekQueries(
     library,
     search,
     history,
-    historyLoading: historyQueries.some((query) => query.isPending),
-    historyError: historyQueries.find((query) => query.error)?.error,
+    historyLoading: historyQuery.isPending,
+    historyError: historyQuery.error,
   };
 }

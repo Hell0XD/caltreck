@@ -85,6 +85,12 @@ export class CaltrekApiClient {
     );
   }
 
+  getDailySummaries(from: string, to: string) {
+    return this.request<DailySummaryResponse[]>((token) =>
+      this.api.dailyLogs.listDailySummaries({ auth: token, query: { from, to } }),
+    );
+  }
+
   createLog(foodId: string, date: string, meal: MealType, quantity: number, unit: string) {
     return this.request<DailyLogResponse>((token) =>
       this.api.dailyLogs.createDailyLog({

@@ -431,6 +431,25 @@ export type GetApiLogsDailySummaryResponses = {
 
 export type GetApiLogsDailySummaryResponse = GetApiLogsDailySummaryResponses[keyof GetApiLogsDailySummaryResponses];
 
+export type GetApiLogsDailySummariesData = {
+    body?: never;
+    path?: never;
+    query: {
+        from: string;
+        to: string;
+    };
+    url: '/api/logs/daily/summaries';
+};
+
+export type GetApiLogsDailySummariesResponses = {
+    /**
+     * OK
+     */
+    200: Array<DailySummaryResponse>;
+};
+
+export type GetApiLogsDailySummariesResponse = GetApiLogsDailySummariesResponses[keyof GetApiLogsDailySummariesResponses];
+
 export type GetApiFoodsSearchData = {
     body?: never;
     path?: never;

@@ -9,7 +9,9 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
@@ -19,6 +21,7 @@ import reactor.core.publisher.Mono;
 public class DailyLogService {
 
     private static final BigDecimal ONE_HUNDRED = new BigDecimal("100");
+    private static final long MAX_SUMMARY_RANGE_DAYS = 62;
     private final DailyLogRepository dailyLogRepository;
     private final FoodRepository foodRepository;
 
@@ -32,6 +35,20 @@ public class DailyLogService {
                 .flatMap(this::toResponse)
                 .collectList()
                 .map(entries -> toSummary(date, entries));
+    }
+
+    public Flux<DailySummaryResponse> listDailySummaries(UUID userId, LocalDate from, LocalDate to) {
+        validateSummaryRange(from, to);
+        int dayCount = Math.toIntExact(ChronoUnit.DAYS.between(from, to) + 1);
+
+        return dailyLogRepository.findByUserIdAndLogDateRange(userId, from, to)
+                .concatMap(this::toResponse)
+                .collectMultimap(DailyLogResponse::logDate)
+                .flatMapMany(entriesByDate -> Flux.range(0, dayCount)
+                        .map(offset -> {
+                            LocalDate date = from.plusDays(offset);
+                            return toSummary(date, entriesForDate(entriesByDate, date));
+                        }));
     }
 
     public Mono<DailyLogResponse> create(UUID userId, CreateDailyLogRequest request) {
@@ -122,6 +139,21 @@ public class DailyLogService {
                 sum(entries, DailyLogResponse::carbs),
                 sum(entries, DailyLogResponse::fat),
                 entries);
+    }
+
+    private List<DailyLogResponse> entriesForDate(
+            Map<LocalDate, java.util.Collection<DailyLogResponse>> entriesByDate,
+            LocalDate date) {
+        return List.copyOf(entriesByDate.getOrDefault(date, List.of()));
+    }
+
+    private void validateSummaryRange(LocalDate from, LocalDate to) {
+        if (from.isAfter(to)) {
+            throw new IllegalArgumentException("'from' must be on or before 'to'.");
+        }
+        if (ChronoUnit.DAYS.between(from, to) >= MAX_SUMMARY_RANGE_DAYS) {
+            throw new IllegalArgumentException("Summary ranges cannot exceed 62 days.");
+        }
     }
 
     private BigDecimal sum(List<DailyLogResponse> entries, MacroAccessor accessor) {

@@ -50,6 +50,15 @@ public class DailyLogController {
         return dailyLogService.getDailySummary(user.id(), date);
     }
 
+    @GetMapping("/summaries")
+    @Operation(summary = "List daily macro summaries for a date range", operationId = "listDailySummaries")
+    public Flux<DailySummaryResponse> summaries(
+            @AuthenticationPrincipal AuthenticatedUser user,
+            @RequestParam LocalDate from,
+            @RequestParam LocalDate to) {
+        return dailyLogService.listDailySummaries(user.id(), from, to);
+    }
+
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "Create a daily log entry", operationId = "createDailyLog")
