@@ -4,7 +4,7 @@ import type React from "react";
 import type { Route } from "next";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import { CalendarDays, ChevronRight, Heart, ScanLine, Search, UserRound } from "lucide-react";
 import { BrandBlock } from "@/components/caltrek/brand-block";
 import { MobileHeader } from "@/components/caltrek/mobile-header";
@@ -50,17 +50,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </Button>
           </MobileHeader>
           <div className="flex-1 px-4 py-4 sm:px-6 lg:px-8 lg:py-8">
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={pathname}
-                initial={reduceMotion ? false : { opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={reduceMotion ? undefined : { opacity: 0, y: -10 }}
-                transition={{ duration: 0.2, ease: "easeOut" }}
-              >
-                {children}
-              </motion.div>
-            </AnimatePresence>
+            <motion.div
+              key={pathname}
+              initial={reduceMotion ? false : { opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.18, ease: "easeOut" }}
+            >
+              {children}
+            </motion.div>
           </div>
           <BottomNav activeRoute={activeRoute} />
         </section>
