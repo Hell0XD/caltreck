@@ -40,7 +40,7 @@ export function FoodList({
               <CardContent className="grid grid-cols-[1fr_auto] items-center gap-3 p-4">
                 <Button
                   variant="ghost"
-                  className="h-auto min-w-0 justify-start px-0 py-0 text-left hover:bg-transparent"
+                  className="h-auto min-w-0 justify-start px-0 py-0 text-left hover:bg-transparent hover:border-transparent"
                   onClick={() => onAdd(food)}
                 >
                   <span className="min-w-0">

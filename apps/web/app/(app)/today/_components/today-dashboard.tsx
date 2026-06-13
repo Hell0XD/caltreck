@@ -231,7 +231,7 @@ function DateNavigator({
         <Button
           variant="ghost"
           size="sm"
-          className="rounded-xl px-2.5 sm:px-3"
+          className="rounded-xl px-2.5 sm:px-3 font-bold!"
           onClick={() => onSelectDate(today)}
         >
           Today

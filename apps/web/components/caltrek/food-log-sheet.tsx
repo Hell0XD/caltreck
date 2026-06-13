@@ -145,7 +145,7 @@ function SheetBody({
       </div>
 
       <div>
-        <div className="mb-2 flex items-center justify-between gap-3">
+        <div className="mb-2 flex flex-col justify-between gap-2">
           <p className="text-sm font-semibold">
             {quantityMode === "servings"
               ? "Servings"
@@ -156,7 +156,7 @@ function SheetBody({
           {(supportsAmount || supportsPackage) && (
             <div
               className={cn(
-                "grid rounded-xl border border-[var(--border-strong)] bg-[var(--surface)] p-1",
+                "grid gap-2 rounded-xl border border-[var(--border-strong)] bg-[var(--surface)] p-1",
                 supportsAmount && supportsPackage ? "grid-cols-3" : "grid-cols-2",
               )}
             >
