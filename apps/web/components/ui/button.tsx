@@ -17,6 +17,8 @@ const buttonVariants = cva(
           "border border-[var(--border-strong)] bg-[var(--card)] text-[var(--foreground)] shadow-[var(--shadow-control)] hover:-translate-y-0.5 hover:bg-[var(--primary-soft)] hover:text-[var(--primary)] active:translate-y-0 active:shadow-none",
         secondary:
           "border border-[var(--secondary-foreground)] bg-secondary text-secondary-foreground shadow-[var(--shadow-control)] hover:-translate-y-0.5 hover:bg-[#f5d264] active:translate-y-0 active:shadow-none",
+        selected:
+          "border border-[var(--primary)] bg-[var(--primary-soft)] text-[var(--primary-strong)] shadow-[var(--shadow-control)] hover:bg-[color-mix(in_srgb,var(--primary-soft)_78%,var(--primary))]",
         ghost:
           "border border-transparent hover:border-[color-mix(in_srgb,var(--foreground)_20%,transparent)] hover:bg-accent hover:text-accent-foreground",
         link: "text-primary underline-offset-4 hover:underline",

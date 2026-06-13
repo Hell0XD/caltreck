@@ -109,7 +109,7 @@ export function AuthScreen({
                     <Button
                       type="button"
                       onClick={() => setMode("login")}
-                      variant={mode === "login" ? "secondary" : "ghost"}
+                      variant={mode === "login" ? "selected" : "ghost"}
                       className="h-10"
                     >
                       Sign in
@@ -117,7 +117,7 @@ export function AuthScreen({
                     <Button
                       type="button"
                       onClick={() => setMode("register")}
-                      variant={mode === "register" ? "secondary" : "ghost"}
+                      variant={mode === "register" ? "selected" : "ghost"}
                       className="h-10"
                     >
                       Register

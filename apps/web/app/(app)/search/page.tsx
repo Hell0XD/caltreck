@@ -32,7 +32,7 @@ export default function SearchPage() {
         )}`}
         title="Add food"
         action={
-          <Button variant="secondary" size="lg" className="px-4" onClick={openCreateFood}>
+          <Button size="lg" className="px-4" onClick={openCreateFood}>
             <Plus className="size-4" />
             Manual
           </Button>

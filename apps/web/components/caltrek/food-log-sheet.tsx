@@ -134,9 +134,9 @@ function SheetBody({
             <Button
               key={item}
               type="button"
-              variant={meal === item ? "secondary" : "outline"}
+              variant={meal === item ? "selected" : "outline"}
               onClick={() => onMeal(item)}
-              className={cn("h-11 px-2 text-xs", meal === item && "text-primary")}
+              className="h-11 px-2 text-xs"
             >
               {MealUtils.label(item)}
             </Button>
@@ -249,7 +249,7 @@ function QuantityModeButton({
     <Button
       type="button"
       size="sm"
-      variant={current === mode ? "secondary" : "ghost"}
+      variant={current === mode ? "selected" : "ghost"}
       onClick={onClick}
     >
       {children}
