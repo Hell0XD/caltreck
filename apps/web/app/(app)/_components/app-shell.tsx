@@ -8,6 +8,7 @@ import { motion, useReducedMotion } from "framer-motion";
 import { CalendarDays, ChevronRight, Heart, ScanLine, Search, UserRound } from "lucide-react";
 import { BrandBlock } from "@/components/caltrek/brand-block";
 import { MobileHeader } from "@/components/caltrek/mobile-header";
+import { ThemeToggle } from "@/components/caltrek/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { useCaltrek } from "@/hooks/use-caltrek";
 import { cn } from "@/lib/utils";
@@ -36,18 +37,24 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     <main className="min-h-dvh bg-[var(--background)] text-[var(--foreground)]">
       <div className="mx-auto grid min-h-dvh w-full max-w-7xl grid-cols-1 lg:grid-cols-[18rem_minmax(0,1fr)]">
         <aside className="hidden border-r border-[var(--border-strong)] bg-[var(--surface)] px-5 py-6 lg:flex lg:flex-col">
-          <BrandBlock />
+          <div className="flex items-center justify-between gap-3">
+            <BrandBlock />
+            <ThemeToggle className="shrink-0" />
+          </div>
           <DesktopNav activeRoute={activeRoute} />
           <UserPanel email={user.email} />
         </aside>
 
         <section className="mx-auto flex min-h-dvh w-full max-w-md flex-col pb-24 lg:max-w-none lg:pb-0">
           <MobileHeader>
-            <Button asChild variant="outline" size="icon">
-              <Link href="/account" aria-label="Open profile" title="Open profile">
-                <UserRound className="size-4" />
-              </Link>
-            </Button>
+            <div className="flex items-center gap-2">
+              <ThemeToggle />
+              <Button asChild variant="outline" size="icon">
+                <Link href="/account" aria-label="Open profile" title="Open profile">
+                  <UserRound className="size-4" />
+                </Link>
+              </Button>
+            </div>
           </MobileHeader>
           <div className="flex-1 px-4 py-4 sm:px-6 lg:px-8 lg:py-8">
             <motion.div

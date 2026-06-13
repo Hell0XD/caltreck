@@ -255,7 +255,7 @@ function MacroSummary({
 
   return (
     <section className="overflow-hidden rounded-[var(--radius-xl)] border border-[var(--border-strong)] bg-[var(--card)] shadow-[var(--shadow-card)]">
-      <div className="relative overflow-hidden bg-[var(--primary)] px-5 py-6 text-white sm:px-6">
+      <div className="relative overflow-hidden bg-[var(--energy-background)] px-5 py-6 text-white sm:px-6">
         <div className="pointer-events-none absolute -right-16 -top-24 size-56 rounded-full bg-white/10 blur-2xl" />
         <div className="pointer-events-none absolute -bottom-24 left-1/3 size-44 rounded-full bg-[var(--secondary)]/20 blur-3xl" />
         <div className="group absolute right-4 top-4 z-10 sm:right-5 sm:top-5">
@@ -268,7 +268,7 @@ function MacroSummary({
           </button>
           <div
             role="tooltip"
-            className="pointer-events-none absolute right-0 top-10 w-64 translate-y-1 rounded-xl bg-[var(--foreground)] p-3 text-xs font-medium leading-relaxed text-white opacity-0 shadow-xl transition group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:translate-y-0 group-focus-within:opacity-100"
+            className="pointer-events-none absolute right-0 top-10 w-64 translate-y-1 rounded-xl bg-[var(--foreground)] p-3 text-xs font-medium leading-relaxed text-[var(--foreground-contrast)] opacity-0 shadow-xl transition group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:translate-y-0 group-focus-within:opacity-100"
           >
             Goal days use a 90–110% calorie window and at least 90% of every macro target.
           </div>
@@ -280,18 +280,18 @@ function MacroSummary({
               background: `conic-gradient(var(--secondary) ${calorieProgress * 3.6}deg, rgba(255,255,255,0.16) 0deg)`,
             }}
           >
-            <div className="grid size-full place-items-center rounded-full bg-[var(--primary-strong)] text-center shadow-inner">
+            <div className="grid size-full place-items-center rounded-full bg-[var(--energy-inner)] text-center shadow-inner">
               <div>
                 <Flame className="mx-auto mb-0.5 size-4 text-[var(--secondary)]" />
                 <p className="text-2xl font-bold tracking-[-0.04em]">{totals.calories}</p>
-                <p className="text-[0.65rem] font-semibold uppercase tracking-wider text-white/65">
+                <p className="text-[0.65rem] font-semibold uppercase tracking-wider text-[var(--energy-unit)]">
                   kcal
                 </p>
               </div>
             </div>
           </div>
           <div className="min-w-0">
-            <p className="text-xs font-bold uppercase tracking-[0.16em] text-white/60">
+            <p className="text-xs font-bold uppercase tracking-[0.16em] text-[var(--energy-label)]">
               Daily energy
             </p>
             <p className="mt-2 text-2xl font-bold tracking-[-0.03em]">
@@ -301,7 +301,7 @@ function MacroSummary({
                   ? "Right on target"
                   : `${Math.abs(caloriesLeft)} kcal over`}
             </p>
-            <p className="mt-1 text-sm font-medium text-white/70">
+            <p className="mt-1 text-sm font-medium text-[var(--energy-detail)]">
               {totals.calories} of {goals.calories} kcal
             </p>
             {status === "hit" && (
@@ -363,7 +363,7 @@ function MacroPill({
       </div>
       <Progress
         value={progressPercent(value, goal)}
-        className="mt-3 h-1.5 bg-black/7"
+        className="mt-3 h-1.5 bg-[var(--progress-track)]"
         indicatorClassName={toneClass}
       />
       <p className="mt-2 text-[0.68rem] font-semibold text-[var(--muted-foreground)]">

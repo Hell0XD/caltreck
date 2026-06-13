@@ -141,7 +141,7 @@ export function GoalCalendar({
                     !future && "hover:-translate-y-0.5 hover:shadow-sm",
                     future && "cursor-not-allowed opacity-25",
                     selected &&
-                      "z-10 bg-[var(--foreground)] text-white shadow-[0_6px_18px_rgba(23,32,27,0.22)] ring-2 ring-[var(--foreground)] ring-offset-2 ring-offset-[var(--card)]",
+                      "z-10 bg-[var(--selected-date)] text-[var(--selected-date-foreground)] shadow-[0_6px_18px_rgba(23,32,27,0.22)] ring-2 ring-[var(--selected-date)] ring-offset-2 ring-offset-[var(--card)]",
                     today && !selected && "ring-1 ring-inset ring-[var(--primary)]",
                   )}
                 >
@@ -150,7 +150,7 @@ export function GoalCalendar({
                     <span
                       className={cn(
                         "absolute bottom-1.5 size-1 rounded-full",
-                        selected ? "bg-white/75" : dotStyles[status],
+                        selected ? "bg-[var(--selected-date-dot)]" : dotStyles[status],
                       )}
                     />
                   )}

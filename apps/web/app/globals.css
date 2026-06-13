@@ -1,8 +1,11 @@
 @import "tailwindcss";
 
 :root {
+  color-scheme: light;
   --background: #f6f7f4;
+  --background-glow: rgba(220, 239, 232, 0.7);
   --foreground: #17201b;
+  --foreground-contrast: #ffffff;
   --card: #ffffff;
   --card-foreground: var(--foreground);
   --popover: var(--card);
@@ -12,7 +15,14 @@
   --primary-strong: #0d4c3a;
   --primary-soft: #dcefe8;
   --primary-foreground: #ffffff;
+  --selected-control-foreground: var(--primary-strong);
+  --energy-background: var(--primary);
+  --energy-inner: var(--primary-strong);
+  --energy-label: rgba(255, 255, 255, 0.6);
+  --energy-unit: rgba(255, 255, 255, 0.65);
+  --energy-detail: rgba(255, 255, 255, 0.7);
   --secondary: #f1c84c;
+  --secondary-hover: #f5d264;
   --secondary-foreground: #352b0c;
   --success: #16805f;
   --success-soft: #dcf3e9;
@@ -32,6 +42,10 @@
   --destructive-strong: #a23431;
   --ring: #2f8065;
   --skeleton: #e2e8df;
+  --progress-track: rgba(0, 0, 0, 0.07);
+  --selected-date: var(--foreground);
+  --selected-date-foreground: #ffffff;
+  --selected-date-dot: rgba(255, 255, 255, 0.75);
   --radius: 0.5rem;
   --radius-lg: 0.75rem;
   --radius-xl: 1.25rem;
@@ -42,6 +56,57 @@
   --duration-normal: 220ms;
   --font-sans:
     Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.dark {
+  color-scheme: dark;
+  --background: #0d1511;
+  --background-glow: rgba(25, 61, 49, 0.72);
+  --foreground: #edf5f0;
+  --foreground-contrast: #17201b;
+  --card: #16211b;
+  --card-foreground: var(--foreground);
+  --popover: #1a2720;
+  --popover-foreground: var(--foreground);
+  --surface: #111a16;
+  --primary: #58c9a7;
+  --primary-strong: #299775;
+  --primary-soft: #193d31;
+  --primary-foreground: #071a14;
+  --selected-control-foreground: var(--primary);
+  --energy-background: #147a65;
+  --energy-inner: #0d6658;
+  --energy-label: rgba(255, 255, 255, 0.9);
+  --energy-unit: rgba(255, 255, 255, 0.9);
+  --energy-detail: rgba(255, 255, 255, 0.9);
+  --secondary: #f1c84c;
+  --secondary-hover: #f5d264;
+  --secondary-foreground: #352b0c;
+  --success: #61d1ad;
+  --success-soft: #17382d;
+  --warning: #f1c65d;
+  --warning-strong: #f4ce72;
+  --warning-soft: #3e3215;
+  --missed: #f0877f;
+  --missed-soft: #442421;
+  --muted: #243129;
+  --muted-foreground: #aebdb4;
+  --accent: var(--primary-soft);
+  --accent-foreground: var(--primary);
+  --border: #34433a;
+  --border-strong: #617268;
+  --input: var(--border);
+  --destructive: #e36b65;
+  --destructive-strong: #f08782;
+  --ring: #69d2b1;
+  --skeleton: #26342c;
+  --progress-track: rgba(255, 255, 255, 0.1);
+  --selected-date: var(--foreground);
+  --selected-date-foreground: #17201b;
+  --selected-date-dot: rgba(23, 32, 27, 0.65);
+  --shadow-card: 0 14px 36px rgba(0, 0, 0, 0.28);
+  --shadow-button: 0 8px 20px rgba(0, 0, 0, 0.32);
+  --shadow-control: 0 3px 0 rgba(0, 0, 0, 0.28);
 }
 
 @theme inline {
@@ -80,8 +145,7 @@ body {
   margin: 0;
   color: var(--foreground);
   background:
-    radial-gradient(circle at 75% 0%, rgba(220, 239, 232, 0.7), transparent 28rem),
-    var(--background);
+    radial-gradient(circle at 75% 0%, var(--background-glow), transparent 28rem), var(--background);
   font-family: var(--font-sans);
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;

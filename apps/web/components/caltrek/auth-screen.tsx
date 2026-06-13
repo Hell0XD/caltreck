@@ -17,6 +17,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { BrandBlock } from "@/components/caltrek/brand-block";
+import { ThemeToggle } from "@/components/caltrek/theme-toggle";
 
 type AuthMode = "login" | "register";
 
@@ -79,7 +80,8 @@ export function AuthScreen({
   }
 
   return (
-    <main className="grid min-h-dvh bg-[var(--background)] px-4 py-8 text-[var(--foreground)]">
+    <main className="relative grid min-h-dvh bg-[var(--background)] px-4 py-8 text-[var(--foreground)]">
+      <ThemeToggle className="absolute right-4 top-4" />
       <section className="mx-auto flex w-full max-w-sm flex-col justify-center">
         <BrandBlock className="mb-8" />
 
