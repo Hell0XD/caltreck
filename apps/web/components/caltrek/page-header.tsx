@@ -12,8 +12,10 @@ export function PageHeader({
   return (
     <header className="flex items-end justify-between gap-4">
       <div>
-        <p className="text-sm font-medium text-[var(--muted-foreground)]">{eyebrow}</p>
-        <h1 className="text-3xl font-semibold tracking-normal">{title}</h1>
+        <p className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--primary)]">
+          {eyebrow}
+        </p>
+        <h1 className="mt-1 text-3xl font-bold tracking-[-0.04em] sm:text-4xl">{title}</h1>
       </div>
       {action}
     </header>

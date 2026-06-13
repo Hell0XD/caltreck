@@ -24,7 +24,7 @@ export default function SearchPage() {
   } = useCaltrek();
 
   return (
-    <div className="space-y-5">
+    <div className="mx-auto w-full max-w-3xl space-y-5">
       <PageHeader
         eyebrow={`Adding to ${DateUtils.relativeLabel(selectedDate).toLowerCase()}, ${DateUtils.format(
           selectedDate,
@@ -32,14 +32,14 @@ export default function SearchPage() {
         )}`}
         title="Add food"
         action={
-          <Button variant="outline" size="lg" className="px-3" onClick={openCreateFood}>
+          <Button variant="secondary" size="lg" className="px-4" onClick={openCreateFood}>
             <Plus className="size-4" />
             Manual
           </Button>
         }
       />
       <div className="relative">
-        <Search className="pointer-events-none absolute left-3 top-1/2 size-5 -translate-y-1/2 text-muted-foreground" />
+        <Search className="pointer-events-none absolute left-3 top-1/2 z-10 size-5 -translate-y-1/2 text-[var(--primary)]" />
         <Input
           value={query}
           onChange={(event) => setQuery(event.target.value)}

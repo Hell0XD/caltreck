@@ -35,7 +35,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <main className="min-h-dvh bg-[var(--background)] text-[var(--foreground)]">
       <div className="mx-auto grid min-h-dvh w-full max-w-7xl grid-cols-1 lg:grid-cols-[18rem_minmax(0,1fr)]">
-        <aside className="hidden border-r border-[var(--border)] bg-[var(--surface)] px-5 py-6 lg:flex lg:flex-col">
+        <aside className="hidden border-r border-[var(--border-strong)] bg-[var(--surface)] px-5 py-6 lg:flex lg:flex-col">
           <BrandBlock />
           <DesktopNav activeRoute={activeRoute} />
           <UserPanel email={user.email} />
@@ -73,7 +73,7 @@ function UserPanel({ email }: { email: string }) {
   return (
     <Link
       href="/account"
-      className="mt-auto flex items-center gap-3 rounded-[var(--radius)] border border-[var(--border)] bg-[var(--card)] p-3 transition hover:border-[var(--primary)] hover:bg-[var(--primary-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)]"
+      className="mt-auto flex items-center gap-3 rounded-xl border border-[var(--border-strong)] bg-[var(--card)] p-3 shadow-[var(--shadow-control)] transition hover:-translate-y-0.5 hover:bg-[var(--primary-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)]"
     >
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-semibold">Signed in</p>
@@ -102,7 +102,7 @@ function routeFromPath(pathname: string): AppRoute {
 
 function BottomNav({ activeRoute }: { activeRoute: AppRoute }) {
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-[var(--border)] bg-[color-mix(in_srgb,var(--card)_94%,transparent)] px-3 pb-[max(env(safe-area-inset-bottom),0.5rem)] pt-2 backdrop-blur lg:hidden">
+    <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-[var(--border-strong)] bg-[color-mix(in_srgb,var(--card)_94%,transparent)] px-3 pb-[max(env(safe-area-inset-bottom),0.5rem)] pt-2 backdrop-blur lg:hidden">
       <div className="mx-auto grid max-w-md grid-cols-4 gap-1">
         {navItems.map((item) => (
           <NavLink key={item.route} activeRoute={activeRoute} {...item} />
@@ -143,17 +143,17 @@ function NavLink({
     <Link
       href={href}
       className={cn(
-        "relative flex min-h-12 items-center justify-center gap-2 rounded-[var(--radius)] px-3 text-sm font-semibold transition",
+        "relative flex min-h-12 items-center justify-center gap-2 rounded-xl px-3 text-sm font-bold transition",
         wide && "w-full justify-start",
         active
-          ? "bg-[var(--primary-soft)] text-[var(--primary)]"
+          ? "border border-[var(--primary)] bg-[var(--primary-soft)] text-[var(--primary)] shadow-[var(--shadow-control)]"
           : "text-[var(--muted-foreground)] hover:bg-[var(--muted)] hover:text-[var(--foreground)]",
       )}
     >
       {active && (
         <motion.span
           layoutId="active-route"
-          className="absolute inset-0 rounded-[var(--radius)] bg-[var(--primary-soft)]"
+          className="absolute inset-0 rounded-xl bg-[var(--primary-soft)]"
         />
       )}
       <span className="relative">{icon}</span>

@@ -62,15 +62,20 @@ export function AccountForm() {
   }
 
   return (
-    <div className="space-y-5">
+    <div className="mx-auto w-full max-w-3xl space-y-5">
       <PageHeader eyebrow="Profile and targets" title="Account" />
 
       <ContentCard>
-        <CardContent className="p-4">
+        <CardContent className="p-4 sm:p-5">
           <Form {...form}>
             <form onSubmit={form.handleSubmit(submit)} className="space-y-5">
-              <section className="space-y-3">
-                <h2 className="text-base font-semibold">Profile</h2>
+              <section className="space-y-3 rounded-2xl bg-[var(--surface)] p-4">
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-[0.12em] text-[var(--primary)]">
+                    Personal details
+                  </p>
+                  <h2 className="mt-1 text-lg font-bold">Profile</h2>
+                </div>
                 <FormField
                   control={form.control}
                   name="email"
@@ -116,9 +121,12 @@ export function AccountForm() {
                 />
               </section>
 
-              <section className="space-y-3">
+              <section className="space-y-3 rounded-2xl bg-[var(--primary-soft)] p-4">
                 <div>
-                  <h2 className="text-base font-semibold">Daily goals</h2>
+                  <p className="text-xs font-bold uppercase tracking-[0.12em] text-[var(--primary)]">
+                    Nutrition plan
+                  </p>
+                  <h2 className="mt-1 text-lg font-bold">Daily goals</h2>
                   <p className="mt-1 text-sm text-[var(--muted-foreground)]">
                     These targets drive the progress shown on Today.
                   </p>

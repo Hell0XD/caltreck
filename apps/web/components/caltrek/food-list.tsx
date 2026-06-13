@@ -26,10 +26,14 @@ export function FoodList({
   return (
     <section className="space-y-3">
       <div className="flex items-center gap-2">
-        {icon}
-        <h2 className="text-base font-semibold">{title}</h2>
+        {icon && (
+          <span className="grid size-8 place-items-center rounded-lg bg-[var(--primary-soft)] text-[var(--primary)]">
+            {icon}
+          </span>
+        )}
+        <h2 className="text-lg font-bold tracking-[-0.02em]">{title}</h2>
       </div>
-      <div className="space-y-2">
+      <div className="grid gap-3">
         {foods.map((food) => (
           <ContentCard key={food.id}>
             <motion.article layout>
@@ -40,13 +44,13 @@ export function FoodList({
                   onClick={() => onAdd(food)}
                 >
                   <span className="min-w-0">
-                    <p className="truncate text-sm font-semibold">{food.name}</p>
-                    <p className="mt-1 truncate text-xs text-[var(--muted-foreground)]">
-                      {food.brand} - {food.serving}
+                    <p className="truncate text-base font-bold tracking-[-0.02em]">{food.name}</p>
+                    <p className="mt-0.5 truncate text-xs font-semibold text-[var(--muted-foreground)]">
+                      {[food.brand, food.serving].filter(Boolean).join(" · ")}
                     </p>
-                    <p className="mt-2 text-xs text-[var(--muted-foreground)]">
-                      {food.calories} kcal | P {food.protein}g | C {food.carbs}g | F {food.fat}g
-                    </p>
+                    <span className="mt-2 inline-flex rounded-lg bg-[var(--surface)] px-2 py-1 text-[0.68rem] font-bold text-[var(--muted-foreground)]">
+                      {food.calories} kcal · P {food.protein}g · C {food.carbs}g · F {food.fat}g
+                    </span>
                   </span>
                 </Button>
                 <div className="flex items-center gap-2">
@@ -73,7 +77,7 @@ export function FoodList({
                     </Button>
                   )}
                   <Button
-                    variant="outline"
+                    variant="default"
                     size="icon"
                     aria-label={`Add ${food.name}`}
                     title={`Add ${food.name}`}

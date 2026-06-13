@@ -3,5 +3,5 @@ import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
 export function ContentCard({ className, ...props }: ComponentProps<typeof Card>) {
-  return <Card className={cn("gap-0 py-0 shadow-sm shadow-slate-950/5", className)} {...props} />;
+  return <Card className={cn("gap-0 py-0", className)} {...props} />;
 }

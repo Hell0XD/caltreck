@@ -10,7 +10,8 @@ import { z } from "zod";
 import { useCaltrek } from "@/hooks/use-caltrek";
 import { PageHeader } from "@/components/caltrek/page-header";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { CardContent } from "@/components/ui/card";
+import { ContentCard } from "@/components/caltrek/content-card";
 import {
   Form,
   FormControl,
@@ -115,10 +116,10 @@ export function BarcodeScanner() {
   }
 
   return (
-    <div className="space-y-5">
+    <div className="mx-auto w-full max-w-2xl space-y-5">
       <PageHeader eyebrow="Barcode scanner" title="Scan food" />
 
-      <Card className="gap-0 overflow-hidden py-0">
+      <ContentCard className="overflow-hidden">
         <div className="relative aspect-[3/4] bg-slate-950">
           <video
             ref={videoRef}
@@ -127,7 +128,7 @@ export function BarcodeScanner() {
             playsInline
           />
           <div className="pointer-events-none absolute inset-0 grid place-items-center p-8">
-            <div className="h-36 w-full max-w-64 rounded-[var(--radius)] border-2 border-white/80 shadow-[0_0_0_999px_rgb(2_6_23/0.45)]" />
+            <div className="h-36 w-full max-w-64 rounded-2xl border border-white shadow-[0_0_0_999px_rgb(2_6_23/0.5),0_0_24px_rgba(255,255,255,0.2)]" />
           </div>
           {scanState === "success" && (
             <motion.div
@@ -147,7 +148,7 @@ export function BarcodeScanner() {
           <div className="flex items-start gap-3">
             <StatusIcon state={scanState} />
             <div className="min-w-0 flex-1">
-              <p className="text-sm font-semibold">{statusTitle(scanState)}</p>
+              <p className="text-base font-bold">{statusTitle(scanState)}</p>
               <p className="mt-1 text-sm leading-6 text-[var(--muted-foreground)]">{message}</p>
               {lastBarcode && (
                 <p className="mt-1 text-xs text-[var(--muted-foreground)]">{lastBarcode}</p>
@@ -174,9 +175,9 @@ export function BarcodeScanner() {
             </Button>
           </div>
         </div>
-      </Card>
+      </ContentCard>
 
-      <Card className="gap-0 py-0">
+      <ContentCard>
         <CardContent className="p-4">
           <Form {...form}>
             <form onSubmit={form.handleSubmit(submitManualBarcode)} className="space-y-3">
@@ -212,7 +213,7 @@ export function BarcodeScanner() {
             </form>
           </Form>
         </CardContent>
-      </Card>
+      </ContentCard>
     </div>
   );
 }

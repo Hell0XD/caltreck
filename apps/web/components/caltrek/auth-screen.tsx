@@ -83,28 +83,29 @@ export function AuthScreen({
       <section className="mx-auto flex w-full max-w-sm flex-col justify-center">
         <BrandBlock className="mb-8" />
 
-        <Card className="gap-0 py-0 shadow-sm shadow-slate-950/5">
+        <Card className="gap-0 overflow-hidden py-0">
+          <div className="h-2 bg-[var(--primary)]" />
           <CardContent className="p-5">
             {loading ? (
               <div className="space-y-4">
-                <Skeleton className="h-8 rounded-[var(--radius)]" />
-                <Skeleton className="h-12 rounded-[var(--radius)]" />
-                <Skeleton className="h-12 rounded-[var(--radius)]" />
-                <Skeleton className="h-11 rounded-[var(--radius)]" />
+                <Skeleton className="h-8" />
+                <Skeleton className="h-12" />
+                <Skeleton className="h-12" />
+                <Skeleton className="h-11" />
               </div>
             ) : (
               <Form {...form}>
                 <form onSubmit={form.handleSubmit(submit)} className="space-y-4">
                   <div>
-                    <p className="text-sm font-medium text-[var(--muted-foreground)]">
+                    <p className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--primary)]">
                       {mode === "login" ? "Welcome back" : "Create account"}
                     </p>
-                    <h1 className="mt-1 text-2xl font-semibold tracking-normal">
+                    <h1 className="mt-1 text-3xl font-bold tracking-[-0.04em]">
                       {mode === "login" ? "Sign in" : "Start tracking"}
                     </h1>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-2 rounded-[var(--radius)] bg-[var(--surface)] p-1">
+                  <div className="grid grid-cols-2 gap-2 rounded-xl border border-[var(--border-strong)] bg-[var(--surface)] p-1">
                     <Button
                       type="button"
                       onClick={() => setMode("login")}
@@ -185,7 +186,7 @@ export function AuthScreen({
                   />
 
                   {error && (
-                    <p className="rounded-[var(--radius)] border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                    <p className="rounded-xl border border-[var(--destructive)] bg-[var(--missed-soft)] px-3 py-2 text-sm font-semibold text-[var(--destructive-strong)]">
                       {error}
                     </p>
                   )}

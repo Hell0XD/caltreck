@@ -192,7 +192,7 @@ function DateNavigator({
       </Button>
       <button
         type="button"
-        className="flex min-w-0 flex-1 items-center justify-center gap-2 rounded-xl border border-[var(--border)] bg-[var(--card)] px-3 py-2.5 text-sm font-bold shadow-sm transition hover:border-[var(--primary)] hover:bg-[var(--primary-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)] lg:hidden"
+        className="flex min-w-0 flex-1 items-center justify-center gap-2 rounded-xl border border-[var(--border-strong)] bg-[var(--card)] px-3 py-2.5 text-sm font-bold shadow-[var(--shadow-control)] transition hover:-translate-y-0.5 hover:border-[var(--primary)] hover:bg-[var(--primary-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)] lg:hidden"
         aria-label="Open calendar"
         onClick={onOpenCalendar}
       >
@@ -206,7 +206,7 @@ function DateNavigator({
           })}
         </span>
       </button>
-      <div className="hidden min-w-0 flex-1 items-center justify-center gap-2 rounded-xl border border-[var(--border)] bg-[var(--card)] px-3 py-2.5 text-sm font-bold shadow-sm lg:flex">
+      <div className="hidden min-w-0 flex-1 items-center justify-center gap-2 rounded-xl border border-[var(--border-strong)] bg-[var(--card)] px-3 py-2.5 text-sm font-bold shadow-[var(--shadow-control)] lg:flex">
         <CalendarDays className="size-4 text-[var(--primary)]" />
         <span className="truncate">
           {DateUtils.format(selectedDate, {
@@ -254,7 +254,7 @@ function MacroSummary({
   const calorieProgress = progressPercent(totals.calories, goals.calories);
 
   return (
-    <section className="overflow-hidden rounded-[var(--radius-xl)] border border-[var(--border)] bg-[var(--card)] shadow-[var(--shadow-card)]">
+    <section className="overflow-hidden rounded-[var(--radius-xl)] border border-[var(--border-strong)] bg-[var(--card)] shadow-[var(--shadow-card)]">
       <div className="relative overflow-hidden bg-[var(--primary)] px-5 py-6 text-white sm:px-6">
         <div className="pointer-events-none absolute -right-16 -top-24 size-56 rounded-full bg-white/10 blur-2xl" />
         <div className="pointer-events-none absolute -bottom-24 left-1/3 size-44 rounded-full bg-[var(--secondary)]/20 blur-3xl" />
@@ -350,7 +350,7 @@ function MacroPill({
   }[tone];
 
   return (
-    <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-3.5">
+    <div className="rounded-2xl border border-[var(--border-strong)] bg-[var(--surface)] p-3.5">
       <div className="flex items-start justify-between gap-2">
         <div>
           <p className="text-xs font-bold text-[var(--muted-foreground)]">{label}</p>

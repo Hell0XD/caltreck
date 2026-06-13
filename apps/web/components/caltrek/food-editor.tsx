@@ -241,8 +241,8 @@ export function FoodEditor({
 
 function EditorSection({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <section className="space-y-3">
-      <h3 className="text-sm font-semibold">{title}</h3>
+    <section className="space-y-3 rounded-2xl border border-[var(--border-strong)] bg-[var(--surface)] p-4">
+      <h3 className="text-sm font-bold">{title}</h3>
       {children}
     </section>
   );

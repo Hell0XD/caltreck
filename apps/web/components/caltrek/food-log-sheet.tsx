@@ -156,7 +156,7 @@ function SheetBody({
           {(supportsAmount || supportsPackage) && (
             <div
               className={cn(
-                "grid rounded-[var(--radius)] bg-[var(--surface)] p-1",
+                "grid rounded-xl border border-[var(--border-strong)] bg-[var(--surface)] p-1",
                 supportsAmount && supportsPackage ? "grid-cols-3" : "grid-cols-2",
               )}
             >
@@ -188,7 +188,7 @@ function SheetBody({
             </div>
           )}
         </div>
-        <div className="grid grid-cols-[auto_1fr_auto] items-center gap-3 rounded-[var(--radius-lg)] bg-[var(--surface)] p-3">
+        <div className="grid grid-cols-[auto_1fr_auto] items-center gap-3 rounded-2xl border border-[var(--border-strong)] bg-[var(--surface)] p-3">
           <Button
             variant="outline"
             size="icon"
@@ -305,18 +305,18 @@ function NutritionRow({
   return (
     <div
       className={cn(
-        "rounded-[var(--radius-lg)] bg-[var(--surface)] p-3",
-        selected && "bg-[var(--primary-soft)]",
+        "rounded-2xl border border-[var(--border-strong)] bg-[var(--surface)] p-3",
+        selected && "border-[var(--primary)] bg-[var(--primary-soft)]",
       )}
     >
-      <p className="mb-2 text-xs font-semibold text-[var(--muted-foreground)]">{label}</p>
+      <p className="mb-2 text-xs font-bold text-[var(--muted-foreground)]">{label}</p>
       <div className="grid grid-cols-4 gap-2">
         {(["calories", "protein", "carbs", "fat"] as const).map((key) => (
           <div key={key} className="min-w-0 text-center">
             <p className="truncate text-xs capitalize text-[var(--muted-foreground)]">
               {key === "calories" ? "kcal" : key}
             </p>
-            <p className="mt-1 text-sm font-semibold">
+            <p className="mt-1 text-sm font-bold">
               {NutritionUtils.format(values[key])}
               {key === "calories" ? "" : "g"}
             </p>

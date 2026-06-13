@@ -18,9 +18,9 @@ export function BottomSheet({
   return (
     <Drawer.Root open={open} onOpenChange={(nextOpen) => !nextOpen && onClose()}>
       <Drawer.Portal>
-        <Drawer.Overlay className="fixed inset-0 z-40 bg-slate-950/35" />
-        <Drawer.Content className="fixed inset-x-0 bottom-0 z-50 mx-auto max-h-[94dvh] max-w-md overflow-hidden rounded-t-[1.25rem] border border-[var(--border)] bg-[var(--card)] p-4 shadow-2xl outline-none lg:max-w-lg">
-          <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-[var(--border)]" />
+        <Drawer.Overlay className="fixed inset-0 z-40 bg-[var(--foreground)]/45 backdrop-blur-[2px]" />
+        <Drawer.Content className="fixed inset-x-0 bottom-0 z-50 mx-auto max-h-[94dvh] max-w-md overflow-hidden rounded-t-[1.5rem] border border-[var(--border-strong)] bg-[var(--card)] p-4 shadow-2xl outline-none lg:max-w-lg">
+          <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-[var(--border-strong)]" />
           {children}
         </Drawer.Content>
       </Drawer.Portal>
@@ -61,8 +61,10 @@ export function BottomSheetHeader({
         <ChevronLeft className="size-4" />
       </Button>
       <div className="min-w-0 flex-1">
-        <Drawer.Title className="truncate text-xl font-semibold">{title}</Drawer.Title>
-        <Drawer.Description className="mt-1 truncate text-sm text-[var(--muted-foreground)]">
+        <Drawer.Title className="truncate text-xl font-bold tracking-[-0.03em]">
+          {title}
+        </Drawer.Title>
+        <Drawer.Description className="mt-1 truncate text-xs font-semibold text-[var(--muted-foreground)]">
           {description}
         </Drawer.Description>
       </div>

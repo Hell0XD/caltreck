@@ -10,7 +10,7 @@ export default function LibraryPage() {
   const { favoriteFoods, recentFoods, openAddFood, toggleFavorite } = useCaltrek();
 
   return (
-    <div className="space-y-5">
+    <div className="mx-auto w-full max-w-4xl space-y-6">
       <PageHeader eyebrow="Library" title="Foods you use" />
       {favoriteFoods.length === 0 ? (
         <EmptyState title="No favorite foods" body="Favorite foods will appear here." />

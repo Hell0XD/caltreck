@@ -13,7 +13,7 @@ export function EmptyState({
   return (
     <Card className="gap-0 border-dashed bg-[var(--surface)] py-0 shadow-none">
       <CardContent className={cn("text-center", compact ? "p-3" : "p-8")}>
-        <p className="text-sm font-semibold">{title}</p>
+        <p className="text-sm font-bold">{title}</p>
         <p className="mt-1 text-sm leading-6 text-muted-foreground">{body}</p>
       </CardContent>
     </Card>
