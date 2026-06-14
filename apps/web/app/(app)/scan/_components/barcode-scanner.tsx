@@ -3,8 +3,17 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { BrowserMultiFormatReader, type IScannerControls } from "@zxing/browser";
 import { motion } from "framer-motion";
-import { AlertCircle, Camera, Check, Keyboard, RotateCcw, ScanLine } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import {
+  AlertCircle,
+  Camera,
+  Check,
+  ImageUp,
+  Keyboard,
+  LoaderCircle,
+  RotateCcw,
+  ScanLine,
+} from "lucide-react";
+import { type ChangeEvent, useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { useCaltrek } from "@/hooks/use-caltrek";
@@ -23,7 +32,14 @@ import {
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
-type ScanState = "idle" | "requesting" | "scanning" | "resolving" | "success" | "failed";
+type ScanState =
+  | "idle"
+  | "requesting"
+  | "scanning"
+  | "decoding"
+  | "resolving"
+  | "success"
+  | "failed";
 
 const barcodeSchema = z.object({
   barcode: z.string().regex(/^\d{8,14}$/, "Barcode must contain 8 to 14 digits."),
@@ -33,6 +49,7 @@ type BarcodeFormValues = z.infer<typeof barcodeSchema>;
 
 export function BarcodeScanner() {
   const videoRef = useRef<HTMLVideoElement | null>(null);
+  const imageInputRef = useRef<HTMLInputElement | null>(null);
   const controlsRef = useRef<IScannerControls | null>(null);
   const [scanState, setScanState] = useState<ScanState>("idle");
   const [message, setMessage] = useState(
@@ -115,12 +132,40 @@ export function BarcodeScanner() {
     void resolveBarcode(value.barcode);
   }
 
+  async function scanImage(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) {
+      return;
+    }
+
+    stopScanner();
+    setScanState("decoding");
+    setMessage(`Reading barcode from ${file.name}.`);
+    setLastBarcode(null);
+
+    const imageUrl = URL.createObjectURL(file);
+    try {
+      const result = await new BrowserMultiFormatReader().decodeFromImageUrl(imageUrl);
+      await resolveBarcode(result.getText());
+    } catch {
+      setScanState("failed");
+      setMessage(
+        "No readable barcode was found in that image. Try a sharper, well-lit photo with the full barcode visible.",
+      );
+    } finally {
+      URL.revokeObjectURL(imageUrl);
+    }
+  }
+
+  const busy = scanState === "requesting" || scanState === "decoding" || scanState === "resolving";
+
   return (
     <div className="mx-auto w-full max-w-2xl space-y-5">
       <PageHeader eyebrow="Barcode scanner" title="Scan food" />
 
       <ContentCard className="overflow-hidden">
-        <div className="relative aspect-[3/4] bg-slate-950">
+        <div className="relative aspect-[3/4] overflow-hidden bg-slate-950">
           <video
             ref={videoRef}
             className={cn("h-full w-full object-cover", scanState === "idle" && "opacity-30")}
@@ -156,11 +201,20 @@ export function BarcodeScanner() {
             </div>
           </div>
 
+          <input
+            ref={imageInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            tabIndex={-1}
+            onChange={scanImage}
+          />
+
           <div className="grid grid-cols-2 gap-3">
             <Button
               size="lg"
               onClick={scanState === "scanning" ? pauseScanner : startScanner}
-              disabled={scanState === "requesting" || scanState === "resolving"}
+              disabled={busy}
             >
               <Camera className="size-4" />
               {scanState === "scanning" ? "Stop" : "Camera"}
@@ -168,7 +222,18 @@ export function BarcodeScanner() {
             <Button
               variant="outline"
               size="lg"
+              onClick={() => imageInputRef.current?.click()}
+              disabled={busy}
+            >
+              <ImageUp className="size-4" />
+              Upload image
+            </Button>
+            <Button
+              className="col-span-2"
+              variant="outline"
+              size="lg"
               onClick={() => void resolveBarcode(lastBarcode ?? manualBarcode)}
+              disabled={busy || scanState === "scanning" || !(lastBarcode ?? manualBarcode)}
             >
               <RotateCcw className="size-4" />
               Retry
@@ -225,6 +290,9 @@ function StatusIcon({ state }: { state: ScanState }) {
   if (state === "success") {
     return <Check className="mt-0.5 size-5 shrink-0 text-[var(--primary)]" />;
   }
+  if (state === "decoding" || state === "resolving" || state === "requesting") {
+    return <LoaderCircle className="mt-0.5 size-5 shrink-0 animate-spin text-[var(--primary)]" />;
+  }
   return <ScanLine className="mt-0.5 size-5 shrink-0 text-[var(--primary)]" />;
 }
 
@@ -234,6 +302,8 @@ function statusTitle(state: ScanState) {
       return "Requesting camera";
     case "scanning":
       return "Scanning";
+    case "decoding":
+      return "Reading image";
     case "resolving":
       return "Resolving barcode";
     case "success":
