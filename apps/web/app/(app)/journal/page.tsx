@@ -1,5 +1,5 @@
 import { TodayDashboard } from "./_components/today-dashboard";
 
-export default function TodayPage() {
+export default function JournalPage() {
   return <TodayDashboard />;
 }

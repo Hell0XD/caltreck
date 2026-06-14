@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { useCaltrek } from "@/hooks/use-caltrek";
 import { cn } from "@/lib/utils";
 
-type AppRoute = "today" | "search" | "scan" | "library" | "account";
+type AppRoute = "journal" | "search" | "scan" | "library" | "account";
 
 const navItems: Array<{
   route: AppRoute;
@@ -21,7 +21,7 @@ const navItems: Array<{
   label: string;
   icon: React.ReactElement<{ className?: string }>;
 }> = [
-  { route: "today", href: "/today", label: "Journal", icon: <CalendarDays /> },
+  { route: "journal", href: "/journal", label: "Journal", icon: <CalendarDays /> },
   { route: "search", href: "/search", label: "Search", icon: <Search /> },
   { route: "scan", href: "/scan", label: "Scan", icon: <ScanLine /> },
   { route: "library", href: "/library", label: "Library", icon: <Heart /> },
@@ -101,7 +101,7 @@ function routeFromPath(pathname: string): AppRoute {
   if (pathname.startsWith("/account")) {
     return "account";
   }
-  return "today";
+  return "journal";
 }
 
 function BottomNav({ activeRoute }: { activeRoute: AppRoute }) {
