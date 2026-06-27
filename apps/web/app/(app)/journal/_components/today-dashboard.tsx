@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { LayoutGroup, motion } from "framer-motion";
-import { useState } from "react";
+import { LayoutGroup, motion, useReducedMotion } from "framer-motion";
+import { useEffect, useRef, useState } from "react";
 import {
   Apple,
   Beef,
@@ -250,8 +250,9 @@ function MacroSummary({
   goals: MacroGoals;
   status: GoalStatus;
 }) {
+  const animatedTotals = useAnimatedTotals(totals);
   const caloriesLeft = goals.calories - totals.calories;
-  const calorieProgress = progressPercent(totals.calories, goals.calories);
+  const calorieProgress = progressPercent(animatedTotals.calories, goals.calories);
 
   return (
     <section className="overflow-hidden rounded-[var(--radius-xl)] border border-[var(--border-strong)] bg-[var(--card)] shadow-[var(--shadow-card)]">
@@ -283,7 +284,9 @@ function MacroSummary({
             <div className="grid size-full place-items-center rounded-full bg-[var(--energy-inner)] text-center shadow-inner">
               <div>
                 <Flame className="mx-auto mb-0.5 size-4 text-[var(--secondary)]" />
-                <p className="text-2xl font-bold tracking-[-0.04em]">{totals.calories}</p>
+                <p className="text-2xl font-bold tabular-nums tracking-[-0.04em]">
+                  {animatedTotals.calories}
+                </p>
                 <p className="text-[0.65rem] font-semibold uppercase tracking-wider text-[var(--energy-unit)]">
                   kcal
                 </p>
@@ -301,7 +304,7 @@ function MacroSummary({
                   ? "Right on target"
                   : `${Math.abs(caloriesLeft)} kcal over`}
             </p>
-            <p className="mt-1 text-sm font-medium text-[var(--energy-detail)]">
+            <p className="mt-1 text-sm font-medium tabular-nums text-[var(--energy-detail)]">
               {totals.calories} of {goals.calories} kcal
             </p>
             {status === "hit" && (
@@ -317,13 +320,19 @@ function MacroSummary({
       <div className="grid gap-3 p-4 sm:grid-cols-3 sm:p-5">
         <MacroPill
           label="Protein"
-          value={totals.protein}
+          value={animatedTotals.protein}
           goal={goals.protein}
           unit="g"
           tone="green"
         />
-        <MacroPill label="Carbs" value={totals.carbs} goal={goals.carbs} unit="g" tone="gold" />
-        <MacroPill label="Fat" value={totals.fat} goal={goals.fat} unit="g" tone="coral" />
+        <MacroPill
+          label="Carbs"
+          value={animatedTotals.carbs}
+          goal={goals.carbs}
+          unit="g"
+          tone="gold"
+        />
+        <MacroPill label="Fat" value={animatedTotals.fat} goal={goals.fat} unit="g" tone="coral" />
       </div>
     </section>
   );
@@ -354,7 +363,7 @@ function MacroPill({
       <div className="flex items-start justify-between gap-2">
         <div>
           <p className="text-xs font-bold text-[var(--muted-foreground)]">{label}</p>
-          <p className="mt-1 text-xl font-bold tracking-[-0.03em]">
+          <p className="mt-1 text-xl font-bold tabular-nums tracking-[-0.03em]">
             {value}
             <span className="ml-0.5 text-xs text-[var(--muted-foreground)]">{unit}</span>
           </p>
@@ -507,6 +516,70 @@ function FoodLogCard({
 
 function progressPercent(value: number, max: number) {
   return max > 0 ? Math.min((value / max) * 100, 100) : 0;
+}
+
+function useAnimatedTotals(target: MacroTotals) {
+  const reduceMotion = useReducedMotion();
+  const {
+    calories: targetCalories,
+    protein: targetProtein,
+    carbs: targetCarbs,
+    fat: targetFat,
+  } = target;
+  const current = useRef<MacroTotals>(
+    reduceMotion ? target : { calories: 0, protein: 0, carbs: 0, fat: 0 },
+  );
+  const [value, setValue] = useState(current.current);
+
+  useEffect(() => {
+    if (reduceMotion) {
+      const finalValue = {
+        calories: targetCalories,
+        protein: targetProtein,
+        carbs: targetCarbs,
+        fat: targetFat,
+      };
+      current.current = finalValue;
+      setValue(finalValue);
+      return;
+    }
+
+    const start = current.current;
+    const startedAt = Date.now();
+
+    function update() {
+      const progress = Math.min((Date.now() - startedAt) / 1150, 1);
+      const eased = 1 - Math.pow(1 - progress, 5);
+      const latest = {
+        calories: interpolate(start.calories, targetCalories, eased),
+        protein: interpolate(start.protein, targetProtein, eased),
+        carbs: interpolate(start.carbs, targetCarbs, eased),
+        fat: interpolate(start.fat, targetFat, eased),
+      };
+
+      current.current = latest;
+      setValue(latest);
+
+      if (progress === 1) {
+        window.clearInterval(timer);
+      }
+    }
+
+    const timer = window.setInterval(update, 16);
+    update();
+    return () => window.clearInterval(timer);
+  }, [reduceMotion, targetCalories, targetCarbs, targetFat, targetProtein]);
+
+  return {
+    calories: Math.round(value.calories),
+    protein: Math.round(value.protein),
+    carbs: Math.round(value.carbs),
+    fat: Math.round(value.fat),
+  };
+}
+
+function interpolate(from: number, to: number, progress: number) {
+  return from + (to - from) * progress;
 }
 
 function DashboardSkeleton() {
