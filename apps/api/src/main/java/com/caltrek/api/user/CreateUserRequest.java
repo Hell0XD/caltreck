@@ -5,7 +5,7 @@ import jakarta.validation.constraints.NotBlank;
 
 public record CreateUserRequest(
         @Email @NotBlank String email,
-        String displayName,
+        @NotBlank String firstName,
+        @NotBlank String lastName,
         String timezone) {
 }
-

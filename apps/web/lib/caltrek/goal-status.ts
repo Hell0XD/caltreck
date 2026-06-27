@@ -8,12 +8,15 @@ const calorieCeiling = 1.1;
 const macroKeys: MacroKey[] = ["protein", "carbs", "fat"];
 
 export class GoalStatusUtils {
-  static forSummary(summary: DailySummaryResponse | undefined, goals: MacroGoals): GoalStatus {
+  static forSummary(
+    summary: DailySummaryResponse | undefined,
+    fallbackGoals?: MacroGoals,
+  ): GoalStatus {
     if (!summary || summary.entries.length === 0) {
       return "no-log";
     }
 
-    return this.forTotals(summary, true, goals);
+    return this.forTotals(summary, true, this.goalsForSummary(summary, fallbackGoals));
   }
 
   static forTotals(totals: MacroTotals, hasEntries: boolean, goals: MacroGoals): GoalStatus {
@@ -35,5 +38,20 @@ export class GoalStatusUtils {
       return "almost";
     }
     return "missed";
+  }
+
+  static goalsForSummary(
+    summary: DailySummaryResponse | undefined,
+    fallbackGoals?: MacroGoals,
+  ): MacroGoals {
+    if (!summary) {
+      return fallbackGoals ?? { calories: 0, protein: 0, carbs: 0, fat: 0 };
+    }
+    return {
+      calories: summary.calorieGoal,
+      protein: summary.proteinGoal,
+      carbs: summary.carbsGoal,
+      fat: summary.fatGoal,
+    };
   }
 }

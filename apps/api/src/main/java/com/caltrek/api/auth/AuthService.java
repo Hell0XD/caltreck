@@ -3,6 +3,8 @@ package com.caltrek.api.auth;
 import com.caltrek.api.common.InputNormalizer;
 import com.caltrek.api.common.NotFoundException;
 import com.caltrek.api.user.User;
+import com.caltrek.api.user.UserGoal;
+import com.caltrek.api.user.UserGoalService;
 import com.caltrek.api.user.UserRepository;
 import com.caltrek.api.user.UserResponse;
 import java.security.MessageDigest;
@@ -15,6 +17,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Mono;
 
 @Service
@@ -24,6 +27,7 @@ public class AuthService {
     private static final Base64.Encoder TOKEN_ENCODER = Base64.getUrlEncoder().withoutPadding();
     private final UserRepository userRepository;
     private final RefreshTokenRepository refreshTokenRepository;
+    private final UserGoalService userGoalService;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final Duration refreshTokenTtl;
@@ -31,32 +35,34 @@ public class AuthService {
     public AuthService(
             UserRepository userRepository,
             RefreshTokenRepository refreshTokenRepository,
+            UserGoalService userGoalService,
             PasswordEncoder passwordEncoder,
             JwtService jwtService,
             @Value("${caltrek.security.refresh-token-ttl}") Duration refreshTokenTtl) {
         this.userRepository = userRepository;
         this.refreshTokenRepository = refreshTokenRepository;
+        this.userGoalService = userGoalService;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
         this.refreshTokenTtl = refreshTokenTtl;
     }
 
+    @Transactional
     public Mono<AuthResponse> register(RegisterRequest request) {
         OffsetDateTime now = OffsetDateTime.now();
         User user = new User(
                 null,
                 InputNormalizer.normalizeEmail(request.email()),
                 passwordEncoder.encode(request.password()),
-                InputNormalizer.blankToNull(request.displayName()),
+                request.firstName().trim(),
+                request.lastName().trim(),
                 InputNormalizer.normalizeTimezone(request.timezone()),
-                User.DEFAULT_CALORIE_GOAL,
-                User.DEFAULT_PROTEIN_GOAL,
-                User.DEFAULT_CARBS_GOAL,
-                User.DEFAULT_FAT_GOAL,
                 now,
                 now);
         return userRepository.save(user)
                 .onErrorMap(DuplicateKeyException.class, exception -> new IllegalArgumentException("Email is already registered."))
+                .flatMap(saved -> userGoalService.createInitialGoal(saved)
+                        .map(goal -> new UserWithGoal(saved, goal)))
                 .flatMap(this::issueTokens);
     }
 
@@ -96,9 +102,11 @@ public class AuthService {
     public Mono<UserResponse> profile(AuthenticatedUser user) {
         return userRepository.findById(user.id())
                 .switchIfEmpty(Mono.error(new NotFoundException("User was not found.")))
-                .map(UserResponse::from);
+                .flatMap(found -> userGoalService.currentGoal(found)
+                        .map(goal -> UserResponse.from(found, goal)));
     }
 
+    @Transactional
     public Mono<UserResponse> updateProfile(AuthenticatedUser authenticatedUser, ProfileUpdateRequest request) {
         return userRepository.findById(authenticatedUser.id())
                 .switchIfEmpty(Mono.error(new NotFoundException("User was not found.")))
@@ -106,19 +114,24 @@ public class AuthService {
                         user.id(),
                         user.email(),
                         user.passwordHash(),
-                        InputNormalizer.blankToNull(request.displayName()),
+                        request.firstName().trim(),
+                        request.lastName().trim(),
                         InputNormalizer.normalizeTimezone(request.timezone()),
-                        valueOrExisting(request.calorieGoal(), user.calorieGoal()),
-                        valueOrExisting(request.proteinGoal(), user.proteinGoal()),
-                        valueOrExisting(request.carbsGoal(), user.carbsGoal()),
-                        valueOrExisting(request.fatGoal(), user.fatGoal()),
                         user.createdAt(),
                         OffsetDateTime.now()))
                 .flatMap(userRepository::save)
-                .map(UserResponse::from);
+                .flatMap(user -> userGoalService.updateGoalIfChanged(user, request)
+                        .map(goal -> UserResponse.from(user, goal)));
     }
 
     private Mono<AuthResponse> issueTokens(User user) {
+        return userGoalService.currentGoal(user)
+                .map(goal -> new UserWithGoal(user, goal))
+                .flatMap(this::issueTokens);
+    }
+
+    private Mono<AuthResponse> issueTokens(UserWithGoal userWithGoal) {
+        User user = userWithGoal.user();
         AuthenticatedUser authenticatedUser = new AuthenticatedUser(user.id(), user.email());
         AuthToken accessToken = jwtService.createAccessToken(authenticatedUser);
         String refreshTokenValue = randomToken();
@@ -136,7 +149,7 @@ public class AuthService {
                         accessToken.expiresAt(),
                         refreshTokenValue,
                         expiresAt.toInstant(),
-                        UserResponse.from(user)));
+                        UserResponse.from(user, userWithGoal.goal())));
     }
 
     private Mono<Void> revoke(RefreshToken token) {
@@ -166,10 +179,6 @@ public class AuthService {
         }
     }
 
-    private java.math.BigDecimal valueOrExisting(
-            java.math.BigDecimal requested,
-            java.math.BigDecimal existing) {
-        return requested == null ? existing : requested;
+    private record UserWithGoal(User user, UserGoal goal) {
     }
-
 }

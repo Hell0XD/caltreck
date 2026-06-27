@@ -11,5 +11,9 @@ public record DailySummaryResponse(
         @NotNull BigDecimal protein,
         @NotNull BigDecimal carbs,
         @NotNull BigDecimal fat,
+        @NotNull BigDecimal calorieGoal,
+        @NotNull BigDecimal proteinGoal,
+        @NotNull BigDecimal carbsGoal,
+        @NotNull BigDecimal fatGoal,
         @NotNull List<DailyLogResponse> entries) {
 }

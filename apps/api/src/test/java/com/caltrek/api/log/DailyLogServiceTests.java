@@ -9,9 +9,12 @@ import static org.mockito.Mockito.when;
 
 import com.caltrek.api.food.Food;
 import com.caltrek.api.food.FoodRepository;
+import com.caltrek.api.user.UserGoal;
+import com.caltrek.api.user.UserGoalService;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
+import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Flux;
@@ -24,31 +27,42 @@ class DailyLogServiceTests {
     void listsSummariesForTheWholeRangeWithEmptyDays() {
         DailyLogRepository logRepository = mock(DailyLogRepository.class);
         FoodRepository foodRepository = mock(FoodRepository.class);
-        DailyLogService service = new DailyLogService(logRepository, foodRepository);
+        UserGoalService userGoalService = mock(UserGoalService.class);
+        DailyLogService service = new DailyLogService(logRepository, foodRepository, userGoalService);
         UUID userId = UUID.randomUUID();
         UUID foodId = UUID.randomUUID();
         LocalDate from = LocalDate.of(2026, 6, 1);
         LocalDate to = LocalDate.of(2026, 6, 3);
         DailyLog log = dailyLog(userId, foodId, from.plusDays(1));
         Food food = food(foodId);
+        UserGoal firstGoal = goal(userId, from, "2000");
+        UserGoal secondGoal = goal(userId, from.plusDays(1), "2400");
 
         when(logRepository.findByUserIdAndLogDateRange(userId, from, to))
                 .thenReturn(Flux.just(log));
         when(foodRepository.findById(foodId)).thenReturn(Mono.just(food));
+        when(userGoalService.goalsForRange(userId, from, to))
+                .thenReturn(Mono.just(Map.of(
+                        from, firstGoal,
+                        from.plusDays(1), secondGoal,
+                        to, secondGoal)));
 
         StepVerifier.create(service.listDailySummaries(userId, from, to))
                 .assertNext(summary -> {
                     assertThat(summary.logDate()).isEqualTo(from);
                     assertThat(summary.calories()).isEqualByComparingTo(BigDecimal.ZERO);
+                    assertThat(summary.calorieGoal()).isEqualByComparingTo("2000");
                     assertThat(summary.entries()).isEmpty();
                 })
                 .assertNext(summary -> {
                     assertThat(summary.logDate()).isEqualTo(from.plusDays(1));
                     assertThat(summary.calories()).isEqualByComparingTo("250.00");
+                    assertThat(summary.calorieGoal()).isEqualByComparingTo("2400");
                     assertThat(summary.entries()).hasSize(1);
                 })
                 .assertNext(summary -> {
                     assertThat(summary.logDate()).isEqualTo(to);
+                    assertThat(summary.calorieGoal()).isEqualByComparingTo("2400");
                     assertThat(summary.entries()).isEmpty();
                 })
                 .verifyComplete();
@@ -60,7 +74,8 @@ class DailyLogServiceTests {
     void rejectsInvalidSummaryRangesBeforeQueryingTheRepository() {
         DailyLogRepository logRepository = mock(DailyLogRepository.class);
         FoodRepository foodRepository = mock(FoodRepository.class);
-        DailyLogService service = new DailyLogService(logRepository, foodRepository);
+        UserGoalService userGoalService = mock(UserGoalService.class);
+        DailyLogService service = new DailyLogService(logRepository, foodRepository, userGoalService);
         LocalDate from = LocalDate.of(2026, 6, 3);
 
         assertThatIllegalArgumentException()
@@ -71,6 +86,7 @@ class DailyLogServiceTests {
                 .withMessage("'from' must be on or before 'to'.");
 
         verifyNoInteractions(logRepository);
+        verifyNoInteractions(userGoalService);
     }
 
     private DailyLog dailyLog(UUID userId, UUID foodId, LocalDate date) {
@@ -113,6 +129,20 @@ class DailyLogServiceTests {
                 BigDecimal.ZERO,
                 BigDecimal.ZERO,
                 null,
+                now,
+                now);
+    }
+
+    private UserGoal goal(UUID userId, LocalDate effectiveFrom, String calories) {
+        OffsetDateTime now = OffsetDateTime.now();
+        return new UserGoal(
+                UUID.randomUUID(),
+                userId,
+                effectiveFrom,
+                new BigDecimal(calories),
+                new BigDecimal("150"),
+                new BigDecimal("250"),
+                new BigDecimal("70"),
                 now,
                 now);
     }

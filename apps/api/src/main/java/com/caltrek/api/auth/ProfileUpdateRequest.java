@@ -5,7 +5,8 @@ import jakarta.validation.constraints.NotBlank;
 import java.math.BigDecimal;
 
 public record ProfileUpdateRequest(
-        String displayName,
+        @NotBlank String firstName,
+        @NotBlank String lastName,
         @NotBlank String timezone,
         @DecimalMin(value = "0.0", inclusive = false) BigDecimal calorieGoal,
         @DecimalMin("0.0") BigDecimal proteinGoal,

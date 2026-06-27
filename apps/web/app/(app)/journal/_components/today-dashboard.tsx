@@ -62,7 +62,8 @@ export function TodayDashboard() {
     requestDelete,
   } = useCaltrek();
   const isToday = selectedDate === DateUtils.todayIso();
-  const selectedStatus = GoalStatusUtils.forTotals(totals, logs.length > 0, goals);
+  const selectedGoals = GoalStatusUtils.goalsForSummary(history[selectedDate], goals);
+  const selectedStatus = GoalStatusUtils.forTotals(totals, logs.length > 0, selectedGoals);
 
   return (
     <div className="space-y-5 lg:space-y-6">
@@ -101,14 +102,14 @@ export function TodayDashboard() {
               <GoalCalendar
                 month={historyMonth}
                 selectedDate={selectedDate}
-                goals={goals}
+                goals={selectedGoals}
                 summaries={history}
                 loading={historyLoading}
                 onMonthChange={setHistoryMonth}
                 onSelectDate={selectDate}
               />
             </div>
-            <MacroSummary totals={totals} goals={goals} status={selectedStatus} />
+            <MacroSummary totals={totals} goals={selectedGoals} status={selectedStatus} />
           </div>
 
           <section>
@@ -152,7 +153,7 @@ export function TodayDashboard() {
           <GoalCalendar
             month={historyMonth}
             selectedDate={selectedDate}
-            goals={goals}
+            goals={selectedGoals}
             summaries={history}
             loading={historyLoading}
             onMonthChange={setHistoryMonth}

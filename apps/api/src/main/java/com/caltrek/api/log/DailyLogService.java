@@ -5,6 +5,8 @@ import com.caltrek.api.common.InputNormalizer;
 import com.caltrek.api.common.NotFoundException;
 import com.caltrek.api.food.Food;
 import com.caltrek.api.food.FoodRepository;
+import com.caltrek.api.user.UserGoal;
+import com.caltrek.api.user.UserGoalService;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
@@ -24,30 +26,42 @@ public class DailyLogService {
     private static final long MAX_SUMMARY_RANGE_DAYS = 62;
     private final DailyLogRepository dailyLogRepository;
     private final FoodRepository foodRepository;
+    private final UserGoalService userGoalService;
 
-    public DailyLogService(DailyLogRepository dailyLogRepository, FoodRepository foodRepository) {
+    public DailyLogService(
+            DailyLogRepository dailyLogRepository,
+            FoodRepository foodRepository,
+            UserGoalService userGoalService) {
         this.dailyLogRepository = dailyLogRepository;
         this.foodRepository = foodRepository;
+        this.userGoalService = userGoalService;
     }
 
     public Mono<DailySummaryResponse> getDailySummary(UUID userId, LocalDate date) {
-        return dailyLogRepository.findByUserIdAndLogDateOrderByCreatedAtAsc(userId, date)
+        Mono<List<DailyLogResponse>> entries = dailyLogRepository.findByUserIdAndLogDateOrderByCreatedAtAsc(userId, date)
                 .flatMap(this::toResponse)
-                .collectList()
-                .map(entries -> toSummary(date, entries));
+                .collectList();
+        return Mono.zip(entries, userGoalService.goalForDate(userId, date))
+                .map(tuple -> toSummary(date, tuple.getT1(), tuple.getT2()));
     }
 
     public Flux<DailySummaryResponse> listDailySummaries(UUID userId, LocalDate from, LocalDate to) {
         validateSummaryRange(from, to);
         int dayCount = Math.toIntExact(ChronoUnit.DAYS.between(from, to) + 1);
 
-        return dailyLogRepository.findByUserIdAndLogDateRange(userId, from, to)
+        Mono<Map<LocalDate, java.util.Collection<DailyLogResponse>>> entriesByDate =
+                dailyLogRepository.findByUserIdAndLogDateRange(userId, from, to)
                 .concatMap(this::toResponse)
-                .collectMultimap(DailyLogResponse::logDate)
-                .flatMapMany(entriesByDate -> Flux.range(0, dayCount)
+                .collectMultimap(DailyLogResponse::logDate);
+
+        return Mono.zip(entriesByDate, userGoalService.goalsForRange(userId, from, to))
+                .flatMapMany(tuple -> Flux.range(0, dayCount)
                         .map(offset -> {
                             LocalDate date = from.plusDays(offset);
-                            return toSummary(date, entriesForDate(entriesByDate, date));
+                            return toSummary(
+                                    date,
+                                    entriesForDate(tuple.getT1(), date),
+                                    tuple.getT2().get(date));
                         }));
     }
 
@@ -131,13 +145,17 @@ public class DailyLogService {
                 OffsetDateTime.now());
     }
 
-    private DailySummaryResponse toSummary(LocalDate date, List<DailyLogResponse> entries) {
+    private DailySummaryResponse toSummary(LocalDate date, List<DailyLogResponse> entries, UserGoal goal) {
         return new DailySummaryResponse(
                 date,
                 sum(entries, DailyLogResponse::calories),
                 sum(entries, DailyLogResponse::protein),
                 sum(entries, DailyLogResponse::carbs),
                 sum(entries, DailyLogResponse::fat),
+                goal.calorieGoal(),
+                goal.proteinGoal(),
+                goal.carbsGoal(),
+                goal.fatGoal(),
                 entries);
     }
 

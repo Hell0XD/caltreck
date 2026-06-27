@@ -22,7 +22,8 @@ import { Input } from "@/components/ui/input";
 
 const accountSchema = z.object({
   email: z.email(),
-  displayName: z.string().trim().max(80, "Display name must be 80 characters or fewer."),
+  firstName: z.string().trim().min(1, "First name is required.").max(60),
+  lastName: z.string().trim().min(1, "Last name is required.").max(60),
   timezone: z.string().trim().min(1, "Timezone is required."),
   calorieGoal: goalSchema("Calories", 1),
   proteinGoal: goalSchema("Protein", 0),
@@ -49,7 +50,8 @@ export function AccountForm() {
     setError(null);
     try {
       await updateProfile({
-        displayName: value.displayName || undefined,
+        firstName: value.firstName,
+        lastName: value.lastName,
         timezone: value.timezone,
         calorieGoal: Number(value.calorieGoal),
         proteinGoal: Number(value.proteinGoal),
@@ -95,12 +97,25 @@ export function AccountForm() {
                 />
                 <FormField
                   control={form.control}
-                  name="displayName"
+                  name="firstName"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-xs text-muted-foreground">Display name</FormLabel>
+                      <FormLabel className="text-xs text-muted-foreground">First name</FormLabel>
                       <FormControl>
-                        <Input className="h-11" {...field} />
+                        <Input autoComplete="given-name" className="h-11" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="lastName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-xs text-muted-foreground">Last name</FormLabel>
+                      <FormControl>
+                        <Input autoComplete="family-name" className="h-11" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -219,7 +234,8 @@ function userToForm(
 ): AccountForm {
   return {
     email: user.email,
-    displayName: user.displayName ?? "",
+    firstName: user.firstName,
+    lastName: user.lastName,
     timezone: user.timezone,
     calorieGoal: String(goals.calories),
     proteinGoal: String(goals.protein),

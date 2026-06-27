@@ -24,16 +24,24 @@ type AuthMode = "login" | "register";
 const authSchema = z
   .object({
     mode: z.enum(["login", "register"]),
-    displayName: z.string().trim().max(80, "Display name must be 80 characters or fewer."),
+    firstName: z.string().trim().max(60, "First name must be 60 characters or fewer."),
+    lastName: z.string().trim().max(60, "Last name must be 60 characters or fewer."),
     email: z.string().trim().email("Enter a valid email address."),
     password: z.string().min(8, "Password must contain at least 8 characters."),
   })
   .superRefine((value, context) => {
-    if (value.mode === "register" && !value.displayName) {
+    if (value.mode === "register" && !value.firstName) {
       context.addIssue({
         code: "custom",
-        path: ["displayName"],
-        message: "Display name is required.",
+        path: ["firstName"],
+        message: "First name is required.",
+      });
+    }
+    if (value.mode === "register" && !value.lastName) {
+      context.addIssue({
+        code: "custom",
+        path: ["lastName"],
+        message: "Last name is required.",
       });
     }
   });
@@ -51,14 +59,16 @@ export function AuthScreen({
     mode: AuthMode,
     email: string,
     password: string,
-    displayName: string,
+    firstName: string,
+    lastName: string,
   ) => Promise<void>;
 }) {
   const form = useForm<AuthFormValues>({
     resolver: zodResolver(authSchema),
     defaultValues: {
       mode: "login",
-      displayName: "",
+      firstName: "",
+      lastName: "",
       email: "",
       password: "",
     },
@@ -69,13 +79,13 @@ export function AuthScreen({
     if (!onSubmit) {
       return;
     }
-    await onSubmit(value.mode, value.email, value.password, value.displayName);
+    await onSubmit(value.mode, value.email, value.password, value.firstName, value.lastName);
   }
 
   function setMode(nextMode: AuthMode) {
     form.setValue("mode", nextMode, { shouldDirty: true });
     if (nextMode === "login") {
-      form.clearErrors("displayName");
+      form.clearErrors(["firstName", "lastName"]);
     }
   }
 
@@ -127,24 +137,44 @@ export function AuthScreen({
                   </div>
 
                   {mode === "register" && (
-                    <FormField
-                      control={form.control}
-                      name="displayName"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Display name</FormLabel>
-                          <FormControl>
-                            <Input
-                              autoComplete="name"
-                              placeholder="Alex"
-                              className="h-11"
-                              {...field}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                    <div className="grid grid-cols-2 gap-3">
+                      <FormField
+                        control={form.control}
+                        name="firstName"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>First name</FormLabel>
+                            <FormControl>
+                              <Input
+                                autoComplete="given-name"
+                                placeholder="Alex"
+                                className="h-11"
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="lastName"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Last name</FormLabel>
+                            <FormControl>
+                              <Input
+                                autoComplete="family-name"
+                                placeholder="Morgan"
+                                className="h-11"
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
                   )}
 
                   <FormField

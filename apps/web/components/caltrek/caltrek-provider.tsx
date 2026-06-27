@@ -279,13 +279,13 @@ export function CaltrekProvider({ children }: { children: ReactNode }) {
     return (
       <AuthScreen
         error={authError}
-        onSubmit={async (mode, email, password, displayName) => {
+        onSubmit={async (mode, email, password, firstName, lastName) => {
           setAuthError(null);
           try {
             if (mode === "login") {
               await api.login(email, password);
             } else {
-              await api.register(email, password, displayName);
+              await api.register(email, password, firstName, lastName);
             }
           } catch (error) {
             setAuthError(ErrorUtils.message(error));

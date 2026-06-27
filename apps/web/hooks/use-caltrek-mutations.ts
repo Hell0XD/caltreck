@@ -21,7 +21,10 @@ export function useCaltrekMutations(api: CaltrekApiClient, date: string) {
   return {
     updateProfile: useMutation({
       mutationFn: (profile: ProfileUpdateRequest) => api.updateProfile(profile),
-      onSuccess: (user) => queryClient.setQueryData(caltrekQueryKeys.profile(), user),
+      onSuccess: async (user) => {
+        queryClient.setQueryData(caltrekQueryKeys.profile(), user);
+        await queryClient.invalidateQueries({ queryKey: caltrekQueryKeys.summaries() });
+      },
     }),
     createLog: useMutation({
       mutationFn: ({

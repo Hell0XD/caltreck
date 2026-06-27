@@ -5,7 +5,8 @@ export type ClientOptions = {
 };
 
 export type ProfileUpdateRequest = {
-    displayName?: string;
+    firstName: string;
+    lastName: string;
     timezone: string;
     calorieGoal?: number;
     proteinGoal?: number;
@@ -16,7 +17,8 @@ export type ProfileUpdateRequest = {
 export type UserResponse = {
     id: string;
     email: string;
-    displayName?: string;
+    firstName: string;
+    lastName: string;
     timezone: string;
     calorieGoal: number;
     proteinGoal: number;
@@ -149,7 +151,8 @@ export type CreateFoodRequest = {
 export type RegisterRequest = {
     email: string;
     password: string;
-    displayName?: string;
+    firstName: string;
+    lastName: string;
     timezone?: string;
 };
 
@@ -176,6 +179,10 @@ export type DailySummaryResponse = {
     protein: number;
     carbs: number;
     fat: number;
+    calorieGoal: number;
+    proteinGoal: number;
+    carbsGoal: number;
+    fatGoal: number;
     entries: Array<DailyLogResponse>;
 };
 

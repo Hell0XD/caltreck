@@ -41,13 +41,14 @@ export class CaltrekApiClient {
     this.saveAuth(response);
   }
 
-  async register(email: string, password: string, displayName: string) {
+  async register(email: string, password: string, firstName: string, lastName: string) {
     const response = await this.authRequest(
       this.api.authentication.registerUser({
         body: {
           email,
           password,
-          displayName: displayName || undefined,
+          firstName,
+          lastName,
           timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
         },
       }),
