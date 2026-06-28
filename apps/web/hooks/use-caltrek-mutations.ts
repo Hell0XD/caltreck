@@ -26,6 +26,16 @@ export function useCaltrekMutations(api: CaltrekApiClient, date: string) {
         await queryClient.invalidateQueries({ queryKey: caltrekQueryKeys.summaries() });
       },
     }),
+    saveWeight: useMutation({
+      mutationFn: ({ measuredOn, weightKg }: { measuredOn: string; weightKg: number }) =>
+        api.saveWeight(measuredOn, weightKg),
+      onSuccess: async () => {
+        await Promise.all([
+          queryClient.invalidateQueries({ queryKey: caltrekQueryKeys.weights() }),
+          queryClient.invalidateQueries({ queryKey: caltrekQueryKeys.profile() }),
+        ]);
+      },
+    }),
     createLog: useMutation({
       mutationFn: ({
         food,

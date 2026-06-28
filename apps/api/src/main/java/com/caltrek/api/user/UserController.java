@@ -7,12 +7,16 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 @Validated
@@ -22,9 +26,11 @@ import reactor.core.publisher.Mono;
 public class UserController {
 
     private final AuthService authService;
+    private final UserWeightService userWeightService;
 
-    public UserController(AuthService authService) {
+    public UserController(AuthService authService, UserWeightService userWeightService) {
         this.authService = authService;
+        this.userWeightService = userWeightService;
     }
 
     @GetMapping("/me")
@@ -39,5 +45,20 @@ public class UserController {
             @AuthenticationPrincipal AuthenticatedUser user,
             @Valid @RequestBody ProfileUpdateRequest request) {
         return authService.updateProfile(user, request);
+    }
+
+    @GetMapping("/me/weights")
+    @Operation(summary = "List current user weight entries", operationId = "listCurrentUserWeights")
+    public Flux<UserWeightResponse> listWeights(@AuthenticationPrincipal AuthenticatedUser user) {
+        return userWeightService.list(user.id());
+    }
+
+    @PostMapping("/me/weights")
+    @ResponseStatus(HttpStatus.CREATED)
+    @Operation(summary = "Create or update a current user weight entry", operationId = "saveCurrentUserWeight")
+    public Mono<UserWeightResponse> saveWeight(
+            @AuthenticationPrincipal AuthenticatedUser user,
+            @Valid @RequestBody UserWeightRequest request) {
+        return userWeightService.save(user.id(), request);
     }
 }

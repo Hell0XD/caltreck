@@ -7,12 +7,15 @@ import com.caltrek.api.user.UserGoal;
 import com.caltrek.api.user.UserGoalService;
 import com.caltrek.api.user.UserRepository;
 import com.caltrek.api.user.UserResponse;
+import com.caltrek.api.user.UserWeightEntry;
+import com.caltrek.api.user.UserWeightService;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.util.Base64;
+import java.util.Optional;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -28,6 +31,7 @@ public class AuthService {
     private final UserRepository userRepository;
     private final RefreshTokenRepository refreshTokenRepository;
     private final UserGoalService userGoalService;
+    private final UserWeightService userWeightService;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final Duration refreshTokenTtl;
@@ -36,12 +40,14 @@ public class AuthService {
             UserRepository userRepository,
             RefreshTokenRepository refreshTokenRepository,
             UserGoalService userGoalService,
+            UserWeightService userWeightService,
             PasswordEncoder passwordEncoder,
             JwtService jwtService,
             @Value("${caltrek.security.refresh-token-ttl}") Duration refreshTokenTtl) {
         this.userRepository = userRepository;
         this.refreshTokenRepository = refreshTokenRepository;
         this.userGoalService = userGoalService;
+        this.userWeightService = userWeightService;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
         this.refreshTokenTtl = refreshTokenTtl;
@@ -56,6 +62,13 @@ public class AuthService {
                 passwordEncoder.encode(request.password()),
                 request.firstName().trim(),
                 request.lastName().trim(),
+                null,
+                null,
+                null,
+                null,
+                null,
+                false,
+                false,
                 InputNormalizer.normalizeTimezone(request.timezone()),
                 now,
                 now);
@@ -102,8 +115,7 @@ public class AuthService {
     public Mono<UserResponse> profile(AuthenticatedUser user) {
         return userRepository.findById(user.id())
                 .switchIfEmpty(Mono.error(new NotFoundException("User was not found.")))
-                .flatMap(found -> userGoalService.currentGoal(found)
-                        .map(goal -> UserResponse.from(found, goal)));
+                .flatMap(this::responseFor);
     }
 
     @Transactional
@@ -116,12 +128,19 @@ public class AuthService {
                         user.passwordHash(),
                         request.firstName().trim(),
                         request.lastName().trim(),
+                        valueOrExisting(request.gender(), user.gender()),
+                        valueOrExisting(request.dateOfBirth(), user.dateOfBirth()),
+                        valueOrExisting(request.heightCm(), user.heightCm()),
+                        valueOrExisting(request.activityLevel(), user.activityLevel()),
+                        valueOrExisting(request.nutritionGoal(), user.nutritionGoal()),
+                        valueOrExisting(request.onboardingCompleted(), user.onboardingCompleted()),
+                        valueOrExisting(request.appTourCompleted(), user.appTourCompleted()),
                         InputNormalizer.normalizeTimezone(request.timezone()),
                         user.createdAt(),
                         OffsetDateTime.now()))
                 .flatMap(userRepository::save)
                 .flatMap(user -> userGoalService.updateGoalIfChanged(user, request)
-                        .map(goal -> UserResponse.from(user, goal)));
+                        .flatMap(goal -> responseFor(user, goal)));
     }
 
     private Mono<AuthResponse> issueTokens(User user) {
@@ -144,12 +163,33 @@ public class AuthService {
                 null,
                 OffsetDateTime.now());
         return refreshTokenRepository.save(refreshToken)
-                .map(saved -> new AuthResponse(
+                .then(latestWeight(user.id()))
+                .map(latest -> new AuthResponse(
                         accessToken.value(),
                         accessToken.expiresAt(),
                         refreshTokenValue,
                         expiresAt.toInstant(),
-                        UserResponse.from(user, userWithGoal.goal())));
+                        UserResponse.from(user, userWithGoal.goal(), latest.orElse(null))));
+    }
+
+    private Mono<UserResponse> responseFor(User user) {
+        return userGoalService.currentGoal(user)
+                .flatMap(goal -> responseFor(user, goal));
+    }
+
+    private Mono<UserResponse> responseFor(User user, UserGoal goal) {
+        return latestWeight(user.id())
+                .map(latest -> UserResponse.from(user, goal, latest.orElse(null)));
+    }
+
+    private Mono<Optional<UserWeightEntry>> latestWeight(java.util.UUID userId) {
+        return userWeightService.latest(userId)
+                .map(Optional::of)
+                .defaultIfEmpty(Optional.empty());
+    }
+
+    private <T> T valueOrExisting(T requested, T existing) {
+        return requested == null ? existing : requested;
     }
 
     private Mono<Void> revoke(RefreshToken token) {

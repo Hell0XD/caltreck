@@ -8,6 +8,7 @@ import {
   type ProfileUpdateRequest,
   type UserLibraryResponse,
   type UserResponse,
+  type UserWeightResponse,
 } from "@caltrek/api-client";
 import { ErrorUtils } from "./error-utils";
 import type { AuthSession, MealType } from "./models";
@@ -71,6 +72,18 @@ export class CaltrekApiClient {
   updateProfile(profile: ProfileUpdateRequest) {
     return this.request<UserResponse>((token) =>
       this.api.users.updateCurrentUser({ auth: token, body: profile }),
+    );
+  }
+
+  getWeights() {
+    return this.request<UserWeightResponse[]>((token) =>
+      this.api.users.listCurrentUserWeights({ auth: token }),
+    );
+  }
+
+  saveWeight(measuredOn: string, weightKg: number) {
+    return this.request<UserWeightResponse>((token) =>
+      this.api.users.saveCurrentUserWeight({ auth: token, body: { measuredOn, weightKg } }),
     );
   }
 

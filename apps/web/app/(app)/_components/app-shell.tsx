@@ -50,7 +50,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <div className="flex items-center gap-2">
               <ThemeToggle />
               <Button asChild variant="outline" size="icon">
-                <Link href="/account" aria-label="Open profile" title="Open profile">
+                <Link
+                  href="/account"
+                  aria-label="Open profile"
+                  title="Open profile"
+                  data-tour="mobile-account-link"
+                >
                   <UserRound className="size-4" />
                 </Link>
               </Button>
@@ -77,6 +82,7 @@ function UserPanel({ email }: { email: string }) {
   return (
     <Link
       href="/account"
+      data-tour="desktop-account-link"
       className="mt-auto flex items-center gap-3 rounded-xl border border-[var(--border-strong)] bg-[var(--card)] p-3 shadow-[var(--shadow-control)] transition hover:-translate-y-0.5 hover:bg-[var(--primary-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)]"
     >
       <div className="min-w-0 flex-1">
@@ -106,7 +112,10 @@ function routeFromPath(pathname: string): AppRoute {
 
 function BottomNav({ activeRoute }: { activeRoute: AppRoute }) {
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-[var(--border-strong)] bg-[color-mix(in_srgb,var(--card)_94%,transparent)] px-3 pb-[max(env(safe-area-inset-bottom),0.5rem)] pt-2 backdrop-blur lg:hidden">
+    <nav
+      data-tour="mobile-navigation"
+      className="fixed inset-x-0 bottom-0 z-30 border-t border-[var(--border-strong)] bg-[color-mix(in_srgb,var(--card)_94%,transparent)] px-3 pb-[max(env(safe-area-inset-bottom),0.5rem)] pt-2 backdrop-blur lg:hidden"
+    >
       <div className="mx-auto grid max-w-md grid-cols-4 gap-1">
         {navItems.map((item) => (
           <NavLink key={item.route} activeRoute={activeRoute} {...item} />
@@ -118,7 +127,7 @@ function BottomNav({ activeRoute }: { activeRoute: AppRoute }) {
 
 function DesktopNav({ activeRoute }: { activeRoute: AppRoute }) {
   return (
-    <nav className="mt-8 space-y-2">
+    <nav data-tour="desktop-navigation" className="mt-8 space-y-2">
       {navItems.map((item) => (
         <NavLink key={item.route} activeRoute={activeRoute} wide {...item} />
       ))}

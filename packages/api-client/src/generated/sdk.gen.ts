@@ -2,7 +2,7 @@
 
 import type { Client, Options as Options2, TDataShape } from './client';
 import { client } from './client.gen';
-import type { DeleteApiLogsDailyByIdData, DeleteApiLogsDailyByIdResponses, DeleteApiUserLibraryByIdData, DeleteApiUserLibraryByIdResponses, GetApiFoodsBarcodeByBarcodeData, GetApiFoodsBarcodeByBarcodeResponses, GetApiFoodsSearchData, GetApiFoodsSearchResponses, GetApiLogsDailyData, GetApiLogsDailyResponses, GetApiLogsDailySummariesData, GetApiLogsDailySummariesResponses, GetApiLogsDailySummaryData, GetApiLogsDailySummaryResponses, GetApiUserLibraryData, GetApiUserLibraryResponses, GetApiUsersMeData, GetApiUsersMeResponses, PostApiAuthLoginData, PostApiAuthLoginResponses, PostApiAuthLogoutData, PostApiAuthLogoutResponses, PostApiAuthRefreshData, PostApiAuthRefreshResponses, PostApiAuthRegisterData, PostApiAuthRegisterResponses, PostApiFoodsData, PostApiFoodsResponses, PostApiLogsDailyData, PostApiLogsDailyResponses, PostApiUserLibraryData, PostApiUserLibraryResponses, PutApiFoodsByIdData, PutApiFoodsByIdResponses, PutApiLogsDailyByIdData, PutApiLogsDailyByIdResponses, PutApiUsersMeData, PutApiUsersMeResponses } from './types.gen';
+import type { DeleteApiLogsDailyByIdData, DeleteApiLogsDailyByIdResponses, DeleteApiUserLibraryByIdData, DeleteApiUserLibraryByIdResponses, GetApiFoodsBarcodeByBarcodeData, GetApiFoodsBarcodeByBarcodeResponses, GetApiFoodsSearchData, GetApiFoodsSearchResponses, GetApiLogsDailyData, GetApiLogsDailyResponses, GetApiLogsDailySummariesData, GetApiLogsDailySummariesResponses, GetApiLogsDailySummaryData, GetApiLogsDailySummaryResponses, GetApiUserLibraryData, GetApiUserLibraryResponses, GetApiUsersMeData, GetApiUsersMeResponses, GetApiUsersMeWeightsData, GetApiUsersMeWeightsResponses, PostApiAuthLoginData, PostApiAuthLoginResponses, PostApiAuthLogoutData, PostApiAuthLogoutResponses, PostApiAuthRefreshData, PostApiAuthRefreshResponses, PostApiAuthRegisterData, PostApiAuthRegisterResponses, PostApiFoodsData, PostApiFoodsResponses, PostApiLogsDailyData, PostApiLogsDailyResponses, PostApiUserLibraryData, PostApiUserLibraryResponses, PostApiUsersMeWeightsData, PostApiUsersMeWeightsResponses, PutApiFoodsByIdData, PutApiFoodsByIdResponses, PutApiLogsDailyByIdData, PutApiLogsDailyByIdResponses, PutApiUsersMeData, PutApiUsersMeResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -20,7 +20,7 @@ export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends 
 
 class HeyApiClient {
     protected client: Client;
-
+    
     constructor(args?: {
         client?: Client;
     }) {
@@ -57,7 +57,7 @@ export class Users extends HeyApiClient {
             ...options
         });
     }
-
+    
     /**
      * Update the current user profile
      */
@@ -65,6 +65,32 @@ export class Users extends HeyApiClient {
         return (options.client ?? this.client).put<PutApiUsersMeResponses, unknown, ThrowOnError>({
             security: [{ scheme: 'bearer', type: 'http' }],
             url: '/api/users/me',
+            ...options,
+            headers: {
+                'Content-Type': 'application/json',
+                ...options.headers
+            }
+        });
+    }
+    
+    /**
+     * List current user weight entries
+     */
+    public listCurrentUserWeights<ThrowOnError extends boolean = false>(options?: Options<GetApiUsersMeWeightsData, ThrowOnError>) {
+        return (options?.client ?? this.client).get<GetApiUsersMeWeightsResponses, unknown, ThrowOnError>({
+            security: [{ scheme: 'bearer', type: 'http' }],
+            url: '/api/users/me/weights',
+            ...options
+        });
+    }
+    
+    /**
+     * Create or update a current user weight entry
+     */
+    public saveCurrentUserWeight<ThrowOnError extends boolean = false>(options: Options<PostApiUsersMeWeightsData, ThrowOnError>) {
+        return (options.client ?? this.client).post<PostApiUsersMeWeightsResponses, unknown, ThrowOnError>({
+            security: [{ scheme: 'bearer', type: 'http' }],
+            url: '/api/users/me/weights',
             ...options,
             headers: {
                 'Content-Type': 'application/json',
@@ -137,6 +163,7 @@ export class DailyLogs extends HeyApiClient {
             ...options
         });
     }
+    
     /**
      * List daily macro summaries for a date range
      */

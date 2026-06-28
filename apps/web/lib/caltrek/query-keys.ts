@@ -8,5 +8,6 @@ export const caltrekQueryKeys = {
       ? ([...caltrekQueryKeys.all, "summaries", from, to] as const)
       : ([...caltrekQueryKeys.all, "summaries"] as const),
   library: () => [...caltrekQueryKeys.all, "library"] as const,
+  weights: () => [...caltrekQueryKeys.all, "weights"] as const,
   search: (query: string) => [...caltrekQueryKeys.all, "search", query] as const,
 };

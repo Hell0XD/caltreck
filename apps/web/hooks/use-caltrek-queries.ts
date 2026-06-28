@@ -28,6 +28,11 @@ export function useCaltrekQueries(
     queryFn: async () => (await api.getLibrary()).map((entry) => FoodMapper.library(entry)),
     enabled: authenticated,
   });
+  const weights = useQuery({
+    queryKey: caltrekQueryKeys.weights(),
+    queryFn: () => api.getWeights(),
+    enabled: authenticated,
+  });
   const search = useQuery({
     queryKey: caltrekQueryKeys.search(searchTerm),
     queryFn: async () => (await api.searchFoods(searchTerm)).map((food) => FoodMapper.food(food)),
@@ -54,6 +59,7 @@ export function useCaltrekQueries(
     profile,
     logs,
     library,
+    weights,
     search,
     history,
     historyLoading: historyQuery.isPending,

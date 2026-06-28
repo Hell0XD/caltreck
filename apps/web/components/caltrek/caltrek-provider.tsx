@@ -1,6 +1,11 @@
 "use client";
 
-import type { DailySummaryResponse, ProfileUpdateRequest, UserResponse } from "@caltrek/api-client";
+import type {
+  DailySummaryResponse,
+  ProfileUpdateRequest,
+  UserResponse,
+  UserWeightResponse,
+} from "@caltrek/api-client";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   createContext,
@@ -11,10 +16,13 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import { AuthScreen } from "./auth-screen";
+import { AppTour } from "./app-tour";
 import { ConfirmDeleteDialog } from "./confirm-delete-dialog";
 import { FoodEditor, type FoodEditorValue } from "./food-editor";
 import { EditLogSheet, FoodSheet } from "./food-log-sheet";
+import { OnboardingScreen } from "./onboarding-screen";
 import { Toast } from "./toast";
 import { useCaltrekMutations } from "@/hooks/use-caltrek-mutations";
 import { useCaltrekQueries } from "@/hooks/use-caltrek-queries";
@@ -49,6 +57,7 @@ export type CaltrekContextValue = {
   setHistoryMonth: (date: string) => void;
   history: Record<string, DailySummaryResponse>;
   historyLoading: boolean;
+  weights: UserWeightResponse[];
   query: string;
   setQuery: (query: string) => void;
   searchResults: Food[];
@@ -64,6 +73,10 @@ export type CaltrekContextValue = {
   openCreateFood: () => void;
   openEditFood: (food: Food) => void;
   updateProfile: (profile: ProfileUpdateRequest) => Promise<void>;
+  completeOnboarding: (profile: ProfileUpdateRequest, weightKg: number) => Promise<void>;
+  saveWeight: (measuredOn: string, weightKg: number) => Promise<void>;
+  openOnboardingHelper: () => void;
+  replayAppTour: () => void;
   logout: () => void;
 };
 
@@ -71,6 +84,8 @@ export const CaltrekContext = createContext<CaltrekContextValue | null>(null);
 
 export function CaltrekProvider({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient();
+  const pathname = usePathname();
+  const router = useRouter();
   const [session, setSession] = useState<AuthSession | null>();
   const sessionRef = useRef<AuthSession | null>(null);
   const [authError, setAuthError] = useState<string | null>(null);
@@ -88,6 +103,9 @@ export function CaltrekProvider({ children }: { children: ReactNode }) {
   const [toast, setToast] = useState<string | null>(null);
   const [foodEditorOpen, setFoodEditorOpen] = useState(false);
   const [foodEditorTarget, setFoodEditorTarget] = useState<Food | null>(null);
+  const [tourRun, setTourRun] = useState(false);
+  const [tourSeenThisSession, setTourSeenThisSession] = useState(false);
+  const [onboardingHelperOpen, setOnboardingHelperOpen] = useState(false);
 
   const persistSession = useCallback((nextSession: AuthSession | null) => {
     sessionRef.current = nextSession;
@@ -126,6 +144,7 @@ export function CaltrekProvider({ children }: { children: ReactNode }) {
       queries.profile.error ??
       queries.logs.error ??
       queries.library.error ??
+      queries.weights.error ??
       queries.search.error ??
       queries.historyError;
     if (error) {
@@ -137,7 +156,21 @@ export function CaltrekProvider({ children }: { children: ReactNode }) {
     queries.logs.error,
     queries.profile.error,
     queries.search.error,
+    queries.weights.error,
   ]);
+
+  useEffect(() => {
+    if (
+      user?.onboardingCompleted === true &&
+      user.appTourCompleted !== true &&
+      pathname?.startsWith("/journal") &&
+      !tourRun &&
+      !tourSeenThisSession
+    ) {
+      setTourRun(true);
+      setTourSeenThisSession(true);
+    }
+  }, [pathname, tourRun, tourSeenThisSession, user?.appTourCompleted, user?.onboardingCompleted]);
 
   useEffect(() => {
     if (!toast) {
@@ -266,6 +299,62 @@ export function CaltrekProvider({ children }: { children: ReactNode }) {
     setToast("Account goals updated.");
   }
 
+  async function completeOnboarding(profile: ProfileUpdateRequest, weightKg: number) {
+    await mutations.saveWeight.mutateAsync({ measuredOn: DateUtils.todayIso(), weightKg });
+    const updatedUser = await mutations.updateProfile.mutateAsync(profile);
+    const currentSession = sessionRef.current;
+    if (currentSession) {
+      persistSession({ ...currentSession, user: updatedUser });
+    }
+    router.replace("/journal");
+    setToast("Your targets are ready.");
+  }
+
+  async function completeOnboardingHelper(profile: ProfileUpdateRequest, weightKg: number) {
+    await mutations.saveWeight.mutateAsync({ measuredOn: DateUtils.todayIso(), weightKg });
+    const updatedUser = await mutations.updateProfile.mutateAsync({
+      ...profile,
+      onboardingCompleted: user?.onboardingCompleted ?? true,
+    });
+    const currentSession = sessionRef.current;
+    if (currentSession) {
+      persistSession({ ...currentSession, user: updatedUser });
+    }
+    setOnboardingHelperOpen(false);
+    router.replace("/account");
+    setToast("Targets recalibrated.");
+  }
+
+  async function saveWeight(measuredOn: string, weightKg: number) {
+    await mutations.saveWeight.mutateAsync({ measuredOn, weightKg });
+    setToast("Weight entry saved.");
+  }
+
+  async function completeAppTour() {
+    setTourRun(false);
+    setTourSeenThisSession(true);
+    if (user?.appTourCompleted) {
+      return;
+    }
+    if (!user) {
+      return;
+    }
+    try {
+      const updatedUser = await mutations.updateProfile.mutateAsync({
+        firstName: user.firstName,
+        lastName: user.lastName,
+        timezone: user.timezone,
+        appTourCompleted: true,
+      });
+      const currentSession = sessionRef.current;
+      if (currentSession) {
+        persistSession({ ...currentSession, user: updatedUser });
+      }
+    } catch (error) {
+      setToast(ErrorUtils.message(error));
+    }
+  }
+
   async function logout() {
     await api.logout();
     queryClient.removeQueries({ queryKey: caltrekQueryKeys.all });
@@ -295,6 +384,39 @@ export function CaltrekProvider({ children }: { children: ReactNode }) {
     );
   }
 
+  if (user.onboardingCompleted !== true) {
+    return (
+      <>
+        <OnboardingScreen
+          user={user}
+          goals={FoodMapper.goals(user)}
+          saving={mutations.updateProfile.isPending || mutations.saveWeight.isPending}
+          onComplete={completeOnboarding}
+        />
+        <Toast message={toast} />
+      </>
+    );
+  }
+
+  if (onboardingHelperOpen) {
+    return (
+      <>
+        <OnboardingScreen
+          user={user}
+          goals={FoodMapper.goals(user)}
+          saving={mutations.updateProfile.isPending || mutations.saveWeight.isPending}
+          title="Recalibrate goals"
+          onCancel={() => {
+            setOnboardingHelperOpen(false);
+            router.replace("/account");
+          }}
+          onComplete={completeOnboardingHelper}
+        />
+        <Toast message={toast} />
+      </>
+    );
+  }
+
   const searchResults = query.trim()
     ? FoodMapper.mergeLibraryFlags(searchFoods, libraryFoods)
     : libraryFoods;
@@ -309,6 +431,7 @@ export function CaltrekProvider({ children }: { children: ReactNode }) {
     setHistoryMonth: (date) => setHistoryMonthState(DateUtils.monthStart(date)),
     history: queries.history,
     historyLoading: queries.historyLoading,
+    weights: queries.weights.data ?? [],
     query,
     setQuery,
     searchResults,
@@ -335,6 +458,13 @@ export function CaltrekProvider({ children }: { children: ReactNode }) {
       setFoodEditorOpen(true);
     },
     updateProfile,
+    completeOnboarding,
+    saveWeight,
+    openOnboardingHelper: () => setOnboardingHelperOpen(true),
+    replayAppTour: () => {
+      setTourSeenThisSession(true);
+      setTourRun(true);
+    },
     logout,
   };
 
@@ -382,6 +512,7 @@ export function CaltrekProvider({ children }: { children: ReactNode }) {
         onClose={() => setFoodEditorOpen(false)}
         onSubmit={saveFood}
       />
+      <AppTour run={tourRun} onDone={completeAppTour} />
       <Toast message={toast} />
     </CaltrekContext.Provider>
   );

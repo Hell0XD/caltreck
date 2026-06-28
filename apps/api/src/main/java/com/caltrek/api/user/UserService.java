@@ -28,6 +28,13 @@ public class UserService {
                 null,
                 request.firstName().trim(),
                 request.lastName().trim(),
+                null,
+                null,
+                null,
+                null,
+                null,
+                false,
+                false,
                 InputNormalizer.normalizeTimezone(request.timezone()),
                 now,
                 now);

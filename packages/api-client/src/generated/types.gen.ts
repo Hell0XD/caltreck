@@ -8,6 +8,13 @@ export type ProfileUpdateRequest = {
     firstName: string;
     lastName: string;
     timezone: string;
+    gender?: string;
+    dateOfBirth?: string;
+    heightCm?: number;
+    activityLevel?: string;
+    nutritionGoal?: string;
+    onboardingCompleted?: boolean;
+    appTourCompleted?: boolean;
     calorieGoal?: number;
     proteinGoal?: number;
     carbsGoal?: number;
@@ -19,6 +26,15 @@ export type UserResponse = {
     email: string;
     firstName: string;
     lastName: string;
+    gender?: string;
+    dateOfBirth?: string;
+    heightCm?: number;
+    activityLevel?: string;
+    nutritionGoal?: string;
+    onboardingCompleted?: boolean;
+    appTourCompleted?: boolean;
+    latestWeightKg?: number;
+    latestWeightMeasuredOn?: string;
     timezone: string;
     calorieGoal: number;
     proteinGoal: number;
@@ -93,6 +109,17 @@ export type FoodResponse = {
     fiberPer100g: number;
     sugarPer100g: number;
     saltPer100g: number;
+};
+
+export type UserWeightRequest = {
+    measuredOn: string;
+    weightKg: number;
+};
+
+export type UserWeightResponse = {
+    id: string;
+    measuredOn: string;
+    weightKg: number;
 };
 
 export type SaveLibraryEntryRequest = {
@@ -271,6 +298,38 @@ export type PutApiFoodsByIdResponses = {
 };
 
 export type PutApiFoodsByIdResponse = PutApiFoodsByIdResponses[keyof PutApiFoodsByIdResponses];
+
+export type GetApiUsersMeWeightsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/users/me/weights';
+};
+
+export type GetApiUsersMeWeightsResponses = {
+    /**
+     * OK
+     */
+    200: Array<UserWeightResponse>;
+};
+
+export type GetApiUsersMeWeightsResponse = GetApiUsersMeWeightsResponses[keyof GetApiUsersMeWeightsResponses];
+
+export type PostApiUsersMeWeightsData = {
+    body: UserWeightRequest;
+    path?: never;
+    query?: never;
+    url: '/api/users/me/weights';
+};
+
+export type PostApiUsersMeWeightsResponses = {
+    /**
+     * Created
+     */
+    201: UserWeightResponse;
+};
+
+export type PostApiUsersMeWeightsResponse = PostApiUsersMeWeightsResponses[keyof PostApiUsersMeWeightsResponses];
 
 export type GetApiUserLibraryData = {
     body?: never;

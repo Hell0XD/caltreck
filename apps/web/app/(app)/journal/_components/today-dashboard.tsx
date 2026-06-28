@@ -79,7 +79,12 @@ export function TodayDashboard() {
             {DateUtils.format(selectedDate, { month: "long", day: "numeric" })}
           </h1>
         </div>
-        <Button asChild size="lg" className="rounded-xl px-4 shadow-[var(--shadow-button)]">
+        <Button
+          asChild
+          size="lg"
+          className="rounded-xl px-4 shadow-[var(--shadow-button)]"
+          data-tour="add-food"
+        >
           <Link href="/search">
             <Plus className="size-4" />
             Add food
@@ -112,7 +117,7 @@ export function TodayDashboard() {
             <MacroSummary totals={totals} goals={selectedGoals} status={selectedStatus} />
           </div>
 
-          <section>
+          <section data-tour="meal-log">
             <div className="mb-3 flex items-end justify-between gap-3">
               <div>
                 <p className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--muted-foreground)]">
@@ -181,7 +186,7 @@ function DateNavigator({
   const isToday = selectedDate === today;
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-2" data-tour="dashboard-date">
       <Button
         variant="outline"
         size="icon"
@@ -256,7 +261,10 @@ function MacroSummary({
   const calorieProgress = progressPercent(animatedTotals.calories, goals.calories);
 
   return (
-    <section className="overflow-hidden rounded-[var(--radius-xl)] border border-[var(--border-strong)] bg-[var(--card)] shadow-[var(--shadow-card)]">
+    <section
+      data-tour="macro-summary"
+      className="overflow-hidden rounded-[var(--radius-xl)] border border-[var(--border-strong)] bg-[var(--card)] shadow-[var(--shadow-card)]"
+    >
       <div className="relative overflow-hidden bg-[var(--energy-background)] px-5 py-6 text-white sm:px-6">
         <div className="pointer-events-none absolute -right-16 -top-24 size-56 rounded-full bg-white/10 blur-2xl" />
         <div className="pointer-events-none absolute -bottom-24 left-1/3 size-44 rounded-full bg-[var(--secondary)]/20 blur-3xl" />
