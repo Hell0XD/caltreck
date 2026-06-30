@@ -1,9 +1,15 @@
 "use client";
 
 import * as React from "react";
-import { DayPicker } from "react-day-picker";
+import { DayPicker, type DropdownProps } from "react-day-picker";
 
 import { buttonVariants } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+} from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 
 function Calendar({
@@ -18,9 +24,9 @@ function Calendar({
       className={cn("p-2", className)}
       classNames={{
         root: "relative",
-        months: "flex flex-col gap-2",
+        months: "flex flex-col",
         month: "space-y-2",
-        month_caption: "flex items-center justify-center px-6 pt-6",
+        month_caption: "flex items-center justify-center px-6",
         caption_label:
           "inline-flex h-9 items-center justify-center gap-1 rounded-lg border border-[var(--border-strong)] bg-[var(--card)] px-2 text-sm font-semibold shadow-[var(--shadow-control)]",
         chevron: "size-4 opacity-70",
@@ -54,12 +60,66 @@ function Calendar({
         dropdown_root: "relative inline-flex h-9 min-w-0 items-center first:w-28 last:w-20",
         dropdown:
           "absolute inset-0 z-10 h-full w-full cursor-pointer opacity-0",
-        months_dropdown: "min-w-28",
+        months_dropdown: "min-w-18",
         years_dropdown: "min-w-20",
         ...classNames,
       }}
+      components={{
+        Dropdown: CalendarDropdown,
+        ...props.components,
+      }}
       {...props}
     />
+  );
+}
+
+function CalendarDropdown({
+  options,
+  value,
+  onChange,
+  disabled,
+  className,
+  "aria-label": ariaLabel,
+}: DropdownProps) {
+  const stringValue = value === undefined ? undefined : String(value);
+  const selectedOption = options?.find((option) => String(option.value) === stringValue);
+  const isMonth = ariaLabel?.toLowerCase().includes("month") ?? false;
+  const displayValue =
+    isMonth && selectedOption
+      ? new Intl.DateTimeFormat(undefined, { month: "short" }).format(
+          new Date(2000, selectedOption.value, 1),
+        )
+      : selectedOption?.label;
+
+  return (
+    <Select
+      value={stringValue}
+      disabled={disabled}
+      onValueChange={(nextValue) => {
+        onChange?.({
+          target: { value: nextValue },
+        } as React.ChangeEvent<HTMLSelectElement>);
+      }}
+    >
+      <SelectTrigger
+        aria-label={ariaLabel}
+        size="sm"
+        className={cn("rounded-lg px-2", className)}
+      >
+        <span className="truncate">{displayValue}</span>
+      </SelectTrigger>
+      <SelectContent align="center" className="max-h-72">
+        {options?.map((option) => (
+          <SelectItem
+            key={option.value}
+            value={String(option.value)}
+            disabled={option.disabled}
+          >
+            {option.label}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
   );
 }
 

@@ -56,11 +56,28 @@ export function DatePicker({
         <Button
           type="button"
           variant="outline"
+          aria-haspopup="dialog"
+          aria-expanded={open}
           className={cn(
-            "h-11 w-full justify-start bg-[var(--card)] px-3 text-left font-semibold",
+            "h-11 w-full justify-start rounded-xl border border-[var(--border-strong)] bg-[var(--card)] px-3 text-left font-medium shadow-[var(--shadow-control)] hover:translate-y-0 hover:bg-[var(--card)] hover:text-[var(--foreground)] hover:shadow-[var(--shadow-control)] active:translate-y-0 active:shadow-[var(--shadow-control)]",
             !value && "text-[var(--muted-foreground)]",
             className,
           )}
+          onPointerDown={(event) => {
+            if (event.button !== 0) {
+              return;
+            }
+            setOpen(true);
+          }}
+          onClick={(event) => {
+            event.preventDefault();
+          }}
+          onKeyDown={(event) => {
+            if (event.key === "Enter" || event.key === " ") {
+              event.preventDefault();
+              setOpen((current) => !current);
+            }
+          }}
         >
           <CalendarIcon className="size-4 opacity-70" />
           {value ? DateUtils.format(value, { month: "short", day: "numeric", year: "numeric" }) : placeholder}
