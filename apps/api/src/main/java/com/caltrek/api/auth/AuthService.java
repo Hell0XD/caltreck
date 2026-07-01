@@ -9,6 +9,7 @@ import com.caltrek.api.user.UserRepository;
 import com.caltrek.api.user.UserResponse;
 import com.caltrek.api.user.UserWeightEntry;
 import com.caltrek.api.user.UserWeightService;
+import com.caltrek.api.user.DeleteAccountRequest;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
@@ -70,6 +71,7 @@ public class AuthService {
                 false,
                 false,
                 InputNormalizer.normalizeTimezone(request.timezone()),
+                InputNormalizer.DEFAULT_UNIT_SYSTEM,
                 now,
                 now);
         return userRepository.save(user)
@@ -112,6 +114,16 @@ public class AuthService {
                 .then();
     }
 
+    @Transactional
+    public Mono<Void> deleteAccount(AuthenticatedUser authenticatedUser, DeleteAccountRequest request) {
+        return userRepository.findById(authenticatedUser.id())
+                .switchIfEmpty(Mono.error(new NotFoundException("User was not found.")))
+                .filter(user -> user.passwordHash() != null
+                        && passwordEncoder.matches(request.password(), user.passwordHash()))
+                .switchIfEmpty(Mono.error(new AuthException("Password is incorrect.")))
+                .flatMap(userRepository::delete);
+    }
+
     public Mono<UserResponse> profile(AuthenticatedUser user) {
         return userRepository.findById(user.id())
                 .switchIfEmpty(Mono.error(new NotFoundException("User was not found.")))
@@ -131,11 +143,14 @@ public class AuthService {
                         valueOrExisting(request.gender(), user.gender()),
                         valueOrExisting(request.dateOfBirth(), user.dateOfBirth()),
                         valueOrExisting(request.heightCm(), user.heightCm()),
-                        valueOrExisting(request.activityLevel(), user.activityLevel()),
-                        valueOrExisting(request.nutritionGoal(), user.nutritionGoal()),
+                        request.activityLevel() == null ? user.activityLevel() : request.activityLevel().value(),
+                        request.nutritionGoal() == null ? user.nutritionGoal() : request.nutritionGoal().value(),
                         valueOrExisting(request.onboardingCompleted(), user.onboardingCompleted()),
                         valueOrExisting(request.appTourCompleted(), user.appTourCompleted()),
                         InputNormalizer.normalizeTimezone(request.timezone()),
+                        request.unitSystem() == null
+                                ? InputNormalizer.normalizeUnitSystem(user.unitSystem())
+                                : InputNormalizer.normalizeUnitSystem(request.unitSystem()),
                         user.createdAt(),
                         OffsetDateTime.now()))
                 .flatMap(userRepository::save)

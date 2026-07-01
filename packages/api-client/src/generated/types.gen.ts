@@ -4,17 +4,26 @@ export type ClientOptions = {
     baseUrl: 'http://localhost:8080' | (string & {});
 };
 
+export type UserTimezone = 'Europe/Prague' | 'Europe/Berlin' | 'Europe/London' | 'UTC' | 'America/New_York' | 'America/Chicago' | 'America/Denver' | 'America/Los_Angeles' | 'Asia/Tokyo' | 'Australia/Sydney';
+
+export type UnitSystem = 'metric' | 'imperial';
+
+export type ActivityLevel = 'sedentary' | 'light' | 'moderate' | 'active' | 'very_active';
+
+export type NutritionGoal = 'lose' | 'maintain' | 'gain';
+
 export type ProfileUpdateRequest = {
     firstName: string;
     lastName: string;
-    timezone: string;
+    timezone: UserTimezone;
     gender?: string;
     dateOfBirth?: string;
     heightCm?: number;
-    activityLevel?: string;
-    nutritionGoal?: string;
+    activityLevel?: ActivityLevel;
+    nutritionGoal?: NutritionGoal;
     onboardingCompleted?: boolean;
     appTourCompleted?: boolean;
+    unitSystem?: UnitSystem;
     calorieGoal?: number;
     proteinGoal?: number;
     carbsGoal?: number;
@@ -29,17 +38,22 @@ export type UserResponse = {
     gender?: string;
     dateOfBirth?: string;
     heightCm?: number;
-    activityLevel?: string;
-    nutritionGoal?: string;
+    activityLevel?: ActivityLevel;
+    nutritionGoal?: NutritionGoal;
     onboardingCompleted?: boolean;
     appTourCompleted?: boolean;
     latestWeightKg?: number;
     latestWeightMeasuredOn?: string;
-    timezone: string;
+    timezone: UserTimezone;
+    unitSystem: UnitSystem;
     calorieGoal: number;
     proteinGoal: number;
     carbsGoal: number;
     fatGoal: number;
+};
+
+export type DeleteAccountRequest = {
+    password: string;
 };
 
 export type UpdateDailyLogRequest = {
@@ -180,7 +194,7 @@ export type RegisterRequest = {
     password: string;
     firstName: string;
     lastName: string;
-    timezone?: string;
+    timezone?: UserTimezone;
 };
 
 export type AuthResponse = {
@@ -244,6 +258,22 @@ export type PutApiUsersMeResponses = {
 };
 
 export type PutApiUsersMeResponse = PutApiUsersMeResponses[keyof PutApiUsersMeResponses];
+
+export type DeleteApiUsersMeData = {
+    body: DeleteAccountRequest;
+    path?: never;
+    query?: never;
+    url: '/api/users/me';
+};
+
+export type DeleteApiUsersMeResponses = {
+    /**
+     * No Content
+     */
+    204: void;
+};
+
+export type DeleteApiUsersMeResponse = DeleteApiUsersMeResponses[keyof DeleteApiUsersMeResponses];
 
 export type DeleteApiLogsDailyByIdData = {
     body?: never;
@@ -330,6 +360,24 @@ export type PostApiUsersMeWeightsResponses = {
 };
 
 export type PostApiUsersMeWeightsResponse = PostApiUsersMeWeightsResponses[keyof PostApiUsersMeWeightsResponses];
+
+export type DeleteApiUsersMeWeightsByIdData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/users/me/weights/{id}';
+};
+
+export type DeleteApiUsersMeWeightsByIdResponses = {
+    /**
+     * No Content
+     */
+    204: void;
+};
+
+export type DeleteApiUsersMeWeightsByIdResponse = DeleteApiUsersMeWeightsByIdResponses[keyof DeleteApiUsersMeWeightsByIdResponses];
 
 export type GetApiUserLibraryData = {
     body?: never;

@@ -2,7 +2,16 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { UserWeightResponse } from "@caltrek/api-client";
-import { Check, LogOut, PlayCircle, RefreshCw, Scale } from "lucide-react";
+import {
+  AlertTriangle,
+  Check,
+  LogOut,
+  PlayCircle,
+  RefreshCw,
+  Scale,
+  Settings,
+  Trash2,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import type { FormEvent } from "react";
 import { useEffect, useState } from "react";
@@ -14,6 +23,16 @@ import { DatePicker } from "@/components/caltrek/date-picker";
 import { PageHeader } from "@/components/caltrek/page-header";
 import { Button } from "@/components/ui/button";
 import { CardContent } from "@/components/ui/card";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import {
   Form,
   FormControl,
@@ -33,9 +52,17 @@ import {
 import { DateUtils } from "@/lib/caltrek/date-utils";
 import { FormatUtils } from "@/lib/caltrek/format-utils";
 import {
+  preferredTimezone,
+  supportedTimezoneValues,
+  timezoneOptions,
+} from "@/lib/caltrek/timezone-utils";
+import { UnitUtils, unitSystemOptions, type UnitSystem } from "@/lib/caltrek/unit-utils";
+import {
   activityOptions,
+  activityLevelValues,
   ageFromDateOfBirth,
   genderOptions,
+  nutritionGoalValues,
   nutritionGoalOptions,
   type ActivityLevelValue,
   type GenderValue,
@@ -46,7 +73,8 @@ const accountSchema = z.object({
   email: z.email(),
   firstName: z.string().trim().min(1, "First name is required.").max(60),
   lastName: z.string().trim().min(1, "Last name is required.").max(60),
-  timezone: z.string().trim().min(1, "Timezone is required."),
+  timezone: z.enum(supportedTimezoneValues),
+  unitSystem: z.enum(["metric", "imperial"]),
   gender: z.enum(["male", "female", "other"]),
   dateOfBirth: z
     .string()
@@ -56,8 +84,8 @@ const accountSchema = z.object({
       return age >= 13 && age <= 120 && value < DateUtils.todayIso();
     }, "Enter a valid date of birth."),
   heightCm: goalSchema("Height", 1),
-  activityLevel: z.enum(["sedentary", "light", "moderate", "active", "very_active"]),
-  nutritionGoal: z.enum(["lose", "maintain", "gain"]),
+  activityLevel: z.enum(activityLevelValues),
+  nutritionGoal: z.enum(nutritionGoalValues),
   calorieGoal: goalSchema("Calories", 1),
   proteinGoal: goalSchema("Protein", 0),
   carbsGoal: goalSchema("Carbs", 0),
@@ -74,16 +102,27 @@ export function AccountForm() {
     weights,
     updateProfile,
     saveWeight,
+    deleteWeight,
+    deleteAccount,
     openOnboardingHelper,
     replayAppTour,
     logout,
   } = useCaltrek();
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
+  const [deleteAccountOpen, setDeleteAccountOpen] = useState(false);
+  const [deletePassword, setDeletePassword] = useState("");
+  const [deleteAccountError, setDeleteAccountError] = useState<string | null>(null);
+  const [deletingAccount, setDeletingAccount] = useState(false);
   const form = useForm<AccountForm>({
     resolver: zodResolver(accountSchema),
     defaultValues: userToForm(user, goals),
   });
+  const unitSystem = UnitUtils.normalize(form.watch("unitSystem"));
+  const timezone = form.watch("timezone");
+  const timezoneSelectOptions = timezoneOptions.some((option) => option.value === timezone)
+    ? timezoneOptions
+    : [{ value: timezone, label: timezone }, ...timezoneOptions];
 
   useEffect(() => {
     form.reset(userToForm(user, goals));
@@ -96,9 +135,10 @@ export function AccountForm() {
         firstName: value.firstName,
         lastName: value.lastName,
         timezone: value.timezone,
+        unitSystem: value.unitSystem,
         gender: value.gender,
         dateOfBirth: value.dateOfBirth,
-        heightCm: Number(value.heightCm),
+        heightCm: UnitUtils.displayHeightToCm(Number(value.heightCm), value.unitSystem),
         activityLevel: value.activityLevel,
         nutritionGoal: value.nutritionGoal,
         calorieGoal: Number(value.calorieGoal),
@@ -114,6 +154,39 @@ export function AccountForm() {
   function startTourReplay() {
     router.push("/journal");
     window.setTimeout(replayAppTour, 150);
+  }
+
+  function changeUnitSystem(nextSystem: UnitSystem) {
+    const currentSystem = UnitUtils.normalize(form.getValues("unitSystem"));
+    const currentHeight = Number(form.getValues("heightCm"));
+    if (Number.isFinite(currentHeight) && currentHeight > 0 && nextSystem !== currentSystem) {
+      const heightCm = UnitUtils.displayHeightToCm(currentHeight, currentSystem);
+      form.setValue("heightCm", FormatUtils.quantity(UnitUtils.cmToDisplay(heightCm, nextSystem)), {
+        shouldDirty: true,
+        shouldValidate: true,
+      });
+    }
+    form.setValue("unitSystem", nextSystem, { shouldDirty: true, shouldValidate: true });
+  }
+
+  async function confirmDeleteAccount() {
+    if (!deletePassword) {
+      setDeleteAccountError("Enter your password to delete your account.");
+      return;
+    }
+    setDeleteAccountError(null);
+    setDeletingAccount(true);
+    try {
+      await deleteAccount(deletePassword);
+      setDeleteAccountOpen(false);
+      setDeletePassword("");
+    } catch (nextError) {
+      setDeleteAccountError(
+        nextError instanceof Error ? nextError.message : "Could not delete your account.",
+      );
+    } finally {
+      setDeletingAccount(false);
+    }
   }
 
   return (
@@ -176,19 +249,6 @@ export function AccountForm() {
                     )}
                   />
                 </div>
-                <FormField
-                  control={form.control}
-                  name="timezone"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-xs text-muted-foreground">Timezone</FormLabel>
-                      <FormControl>
-                        <Input className="h-11" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
                 <div className="grid gap-3 sm:grid-cols-2">
                   <SelectField
                     control={form.control}
@@ -217,7 +277,13 @@ export function AccountForm() {
                       </FormItem>
                     )}
                   />
-                  <GoalField control={form.control} label="Height (cm)" name="heightCm" min="1" />
+                  <GoalField
+                    control={form.control}
+                    label={UnitUtils.heightLabel(unitSystem)}
+                    name="heightCm"
+                    min="1"
+                    step={UnitUtils.heightInputStep(unitSystem)}
+                  />
                   <SelectField
                     control={form.control}
                     name="activityLevel"
@@ -284,7 +350,80 @@ export function AccountForm() {
         </CardContent>
       </ContentCard>
 
-      <WeightProgress weights={weights} latestWeight={user.latestWeightKg} onSave={saveWeight} />
+      <WeightProgress
+        weights={weights}
+        latestWeight={user.latestWeightKg}
+        unitSystem={unitSystem}
+        onSave={saveWeight}
+        onDelete={deleteWeight}
+      />
+
+      <ContentCard>
+        <CardContent className="p-4 sm:p-5">
+          <section className="space-y-4 rounded-2xl bg-[var(--surface)] p-4">
+            <div className="flex items-center gap-3">
+              <div className="grid size-10 place-items-center rounded-xl bg-[var(--primary-soft)] text-[var(--primary)]">
+                <Settings className="size-4" />
+              </div>
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.12em] text-[var(--primary)]">
+                  Preferences
+                </p>
+                <h2 className="mt-1 text-lg font-bold">Display</h2>
+              </div>
+            </div>
+
+            <Form {...form}>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <SelectField
+                  control={form.control}
+                  name="timezone"
+                  label="Timezone"
+                  options={timezoneSelectOptions}
+                />
+                <FormField
+                  control={form.control}
+                  name="unitSystem"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-xs text-muted-foreground">System</FormLabel>
+                      <FormControl>
+                        <Select
+                          value={UnitUtils.normalize(field.value)}
+                          onValueChange={(value) => changeUnitSystem(value as UnitSystem)}
+                        >
+                          <SelectTrigger aria-label="System">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {unitSystemOptions.map((option) => (
+                              <SelectItem key={option.value} value={option.value}>
+                                {option.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              {error && <p className="text-sm font-medium text-[var(--destructive)]">{error}</p>}
+              <Button
+                type="button"
+                size="lg"
+                disabled={form.formState.isSubmitting}
+                className="w-full"
+                onClick={form.handleSubmit(submit)}
+              >
+                <Check className="size-4" />
+                {form.formState.isSubmitting ? "Saving..." : "Save preferences"}
+              </Button>
+            </Form>
+          </section>
+        </CardContent>
+      </ContentCard>
 
       <Button variant="outline" size="lg" onClick={startTourReplay} className="w-full">
         <PlayCircle className="size-4" />
@@ -295,6 +434,66 @@ export function AccountForm() {
         <LogOut className="size-4" />
         Sign out
       </Button>
+
+      <Button
+        variant="destructive"
+        size="lg"
+        onClick={() => {
+          setDeleteAccountError(null);
+          setDeletePassword("");
+          setDeleteAccountOpen(true);
+        }}
+        className="w-full"
+      >
+        <AlertTriangle className="size-4" />
+        Delete account
+      </Button>
+
+      <AlertDialog
+        open={deleteAccountOpen}
+        onOpenChange={(open) => {
+          if (!open && !deletingAccount) {
+            setDeleteAccountOpen(false);
+            setDeleteAccountError(null);
+            setDeletePassword("");
+          }
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete account?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This permanently removes your profile and all the information about you. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <label className="grid gap-2">
+            <span className="text-xs font-bold text-[var(--muted-foreground)]">Password</span>
+            <Input
+              type="password"
+              autoComplete="current-password"
+              value={deletePassword}
+              className="h-11"
+              onChange={(event) => setDeletePassword(event.target.value)}
+            />
+          </label>
+          {deleteAccountError && (
+            <p className="text-sm font-semibold text-[var(--destructive)]">
+              {deleteAccountError}
+            </p>
+          )}
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deletingAccount}>Cancel</AlertDialogCancel>
+            <Button
+              type="button"
+              variant="destructive"
+              disabled={deletingAccount || !deletePassword}
+              onClick={confirmDeleteAccount}
+            >
+              {deletingAccount ? "Deleting..." : "Delete account"}
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
@@ -304,11 +503,13 @@ function GoalField({
   label,
   name,
   min,
+  step = "any",
 }: {
   control: Control<AccountForm>;
   label: string;
   name: GoalFieldName;
   min: string;
+  step?: string;
 }) {
   return (
     <FormField
@@ -321,7 +522,7 @@ function GoalField({
             <Input
               type="number"
               min={min}
-              step="any"
+              step={step}
               inputMode="decimal"
               className="h-11"
               {...field}
@@ -342,7 +543,7 @@ function SelectField({
 }: {
   control: Control<AccountForm>;
   label: string;
-  name: "gender" | "activityLevel" | "nutritionGoal";
+  name: "gender" | "activityLevel" | "nutritionGoal" | "timezone";
   options: Array<{ value: string; label: string }>;
 }) {
   return (
@@ -354,7 +555,7 @@ function SelectField({
           <FormLabel className="text-xs text-muted-foreground">{label}</FormLabel>
           <FormControl>
             <Select value={field.value} onValueChange={field.onChange}>
-              <SelectTrigger>
+              <SelectTrigger aria-label={label}>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -376,23 +577,35 @@ function SelectField({
 function WeightProgress({
   weights,
   latestWeight,
+  unitSystem,
   onSave,
+  onDelete,
 }: {
   weights: UserWeightResponse[];
   latestWeight?: number;
+  unitSystem: UnitSystem;
   onSave: (measuredOn: string, weightKg: number) => Promise<void>;
+  onDelete: (id: string) => Promise<void>;
 }) {
   const [measuredOn, setMeasuredOn] = useState(DateUtils.todayIso());
-  const [weightKg, setWeightKg] = useState(latestWeight ? String(latestWeight) : "");
+  const [displayWeight, setDisplayWeight] = useState(() =>
+    UnitUtils.formatWeightInput(latestWeight, unitSystem),
+  );
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<UserWeightResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const recentWeights = [...weights].sort((left, right) =>
     right.measuredOn.localeCompare(left.measuredOn),
   );
 
+  useEffect(() => {
+    setDisplayWeight(UnitUtils.formatWeightInput(latestWeight, unitSystem));
+  }, [latestWeight, unitSystem]);
+
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const parsedWeight = Number(weightKg);
+    const parsedWeight = Number(displayWeight);
     if (!measuredOn || measuredOn > DateUtils.todayIso() || !Number.isFinite(parsedWeight) || parsedWeight <= 0) {
       setError("Enter a past or current date and a positive weight.");
       return;
@@ -400,11 +613,27 @@ function WeightProgress({
     setError(null);
     setSaving(true);
     try {
-      await onSave(measuredOn, parsedWeight);
+      await onSave(measuredOn, UnitUtils.displayWeightToKg(parsedWeight, unitSystem));
     } catch (nextError) {
       setError(nextError instanceof Error ? nextError.message : "Could not save weight.");
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function confirmDelete() {
+    if (!deleteTarget) {
+      return;
+    }
+    setError(null);
+    setDeleting(true);
+    try {
+      await onDelete(deleteTarget.id);
+      setDeleteTarget(null);
+    } catch (nextError) {
+      setError(nextError instanceof Error ? nextError.message : "Could not delete weight.");
+    } finally {
+      setDeleting(false);
     }
   }
 
@@ -424,7 +653,7 @@ function WeightProgress({
             </div>
           </div>
 
-          <WeightChart weights={weights} />
+          <WeightChart weights={weights} unitSystem={unitSystem} />
 
           <form onSubmit={submit} className="grid gap-3 sm:grid-cols-[1fr_1fr_auto]">
             <label className="grid gap-2">
@@ -438,16 +667,16 @@ function WeightProgress({
             </label>
             <label className="grid gap-2">
               <span className="text-xs font-bold text-[var(--muted-foreground)]">
-                Weight (kg)
+                {UnitUtils.weightLabel(unitSystem)}
               </span>
               <Input
                 type="number"
                 min="1"
-                step="any"
+                step={UnitUtils.weightInputStep(unitSystem)}
                 inputMode="decimal"
-                value={weightKg}
+                value={displayWeight}
                 className="h-11"
-                onChange={(event) => setWeightKg(event.target.value)}
+                onChange={(event) => setDisplayWeight(event.target.value)}
               />
             </label>
             <Button type="submit" size="lg" disabled={saving} className="self-end">
@@ -467,9 +696,25 @@ function WeightProgress({
                 <span className="font-semibold">
                   {DateUtils.format(entry.measuredOn, { month: "short", day: "numeric", year: "numeric" })}
                 </span>
-                <span className="font-bold tabular-nums">
-                  {FormatUtils.quantity(entry.weightKg)} kg
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className="font-bold tabular-nums">
+                    {UnitUtils.formatWeight(entry.weightKg, unitSystem)}
+                  </span>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    aria-label={`Delete weight from ${DateUtils.format(entry.measuredOn, {
+                      month: "long",
+                      day: "numeric",
+                      year: "numeric",
+                    })}`}
+                    className="size-8 text-[var(--muted-foreground)] hover:text-[var(--destructive)]"
+                    onClick={() => setDeleteTarget(entry)}
+                  >
+                    <Trash2 className="size-4" />
+                  </Button>
+                </div>
               </div>
             ))}
             {recentWeights.length === 0 && (
@@ -480,11 +725,34 @@ function WeightProgress({
           </div>
         </section>
       </CardContent>
+      <AlertDialog open={Boolean(deleteTarget)} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+        {deleteTarget && (
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete weight entry?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This removes {UnitUtils.formatWeight(deleteTarget.weightKg, unitSystem)} from{" "}
+                {DateUtils.format(deleteTarget.measuredOn, {
+                  month: "long",
+                  day: "numeric",
+                  year: "numeric",
+                })}.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
+              <AlertDialogAction variant="destructive" disabled={deleting} onClick={confirmDelete}>
+                {deleting ? "Deleting..." : "Delete"}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        )}
+      </AlertDialog>
     </ContentCard>
   );
 }
 
-function WeightChart({ weights }: { weights: UserWeightResponse[] }) {
+function WeightChart({ weights, unitSystem }: { weights: UserWeightResponse[]; unitSystem: UnitSystem }) {
   if (weights.length < 2) {
     return (
       <div className="grid h-40 place-items-center rounded-2xl border border-dashed border-[var(--border-strong)] bg-[var(--card)] px-4 text-center text-sm font-semibold text-[var(--muted-foreground)]">
@@ -524,8 +792,8 @@ function WeightChart({ weights }: { weights: UserWeightResponse[] }) {
         })}
       </svg>
       <div className="mt-2 flex justify-between text-xs font-bold text-[var(--muted-foreground)]">
-        <span>{FormatUtils.quantity(ordered[0].weightKg)} kg</span>
-        <span>{FormatUtils.quantity(ordered.at(-1)!.weightKg)} kg</span>
+        <span>{UnitUtils.formatWeight(ordered[0].weightKg, unitSystem)}</span>
+        <span>{UnitUtils.formatWeight(ordered.at(-1)!.weightKg, unitSystem)}</span>
       </div>
     </div>
   );
@@ -549,10 +817,11 @@ function userToForm(
     email: user.email,
     firstName: user.firstName,
     lastName: user.lastName,
-    timezone: user.timezone,
+    timezone: preferredTimezone(user.timezone),
+    unitSystem: UnitUtils.normalize(user.unitSystem),
     gender: ((user.gender as GenderValue | undefined) ?? "other") satisfies GenderValue,
     dateOfBirth: user.dateOfBirth ?? "",
-    heightCm: user.heightCm ? String(user.heightCm) : "",
+    heightCm: UnitUtils.formatHeightInput(user.heightCm, UnitUtils.normalize(user.unitSystem)),
     activityLevel:
       ((user.activityLevel as ActivityLevelValue | undefined) ?? "moderate") satisfies ActivityLevelValue,
     nutritionGoal:

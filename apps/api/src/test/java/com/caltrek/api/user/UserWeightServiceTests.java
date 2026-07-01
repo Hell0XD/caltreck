@@ -3,6 +3,7 @@ package com.caltrek.api.user;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
@@ -40,5 +41,26 @@ class UserWeightServiceTests {
                     assertThat(response.weightKg()).isEqualByComparingTo("83.6");
                 })
                 .verifyComplete();
+    }
+
+    @Test
+    void deletesOwnedWeightEntry() {
+        UserWeightRepository repository = mock(UserWeightRepository.class);
+        UserWeightService service = new UserWeightService(repository);
+        UUID userId = UUID.randomUUID();
+        UserWeightEntry existing = new UserWeightEntry(
+                UUID.randomUUID(),
+                userId,
+                LocalDate.of(2026, 6, 27),
+                new BigDecimal("83.6"),
+                OffsetDateTime.now(),
+                OffsetDateTime.now());
+
+        when(repository.findById(existing.id())).thenReturn(Mono.just(existing));
+        when(repository.delete(existing)).thenReturn(Mono.empty());
+
+        StepVerifier.create(service.delete(userId, existing.id()))
+                .verifyComplete();
+        verify(repository).delete(existing);
     }
 }

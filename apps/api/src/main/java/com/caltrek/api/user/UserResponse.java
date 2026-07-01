@@ -1,5 +1,9 @@
 package com.caltrek.api.user;
 
+import com.caltrek.api.common.ActivityLevel;
+import com.caltrek.api.common.NutritionGoal;
+import com.caltrek.api.common.UnitSystem;
+import com.caltrek.api.common.UserTimezone;
 import jakarta.validation.constraints.NotNull;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -13,13 +17,14 @@ public record UserResponse(
         String gender,
         LocalDate dateOfBirth,
         BigDecimal heightCm,
-        String activityLevel,
-        String nutritionGoal,
+        ActivityLevel activityLevel,
+        NutritionGoal nutritionGoal,
         boolean onboardingCompleted,
         boolean appTourCompleted,
         BigDecimal latestWeightKg,
         LocalDate latestWeightMeasuredOn,
-        @NotNull String timezone,
+        @NotNull UserTimezone timezone,
+        @NotNull UnitSystem unitSystem,
         @NotNull BigDecimal calorieGoal,
         @NotNull BigDecimal proteinGoal,
         @NotNull BigDecimal carbsGoal,
@@ -38,13 +43,14 @@ public record UserResponse(
                 user.gender(),
                 user.dateOfBirth(),
                 user.heightCm(),
-                user.activityLevel(),
-                user.nutritionGoal(),
+                ActivityLevel.fromStored(user.activityLevel()),
+                NutritionGoal.fromStored(user.nutritionGoal()),
                 user.onboardingCompleted(),
                 user.appTourCompleted(),
                 latestWeight == null ? null : latestWeight.weightKg(),
                 latestWeight == null ? null : latestWeight.measuredOn(),
-                user.timezone(),
+                UserTimezone.fromStored(user.timezone()),
+                UnitSystem.fromStored(user.unitSystem()),
                 goal.calorieGoal(),
                 goal.proteinGoal(),
                 goal.carbsGoal(),

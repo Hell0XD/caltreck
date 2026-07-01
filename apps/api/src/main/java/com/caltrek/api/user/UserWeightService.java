@@ -1,5 +1,7 @@
 package com.caltrek.api.user;
 
+import com.caltrek.api.auth.ForbiddenException;
+import com.caltrek.api.common.NotFoundException;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
@@ -43,5 +45,16 @@ public class UserWeightService {
 
     public Mono<UserWeightEntry> latest(UUID userId) {
         return userWeightRepository.findFirstByUserIdOrderByMeasuredOnDesc(userId);
+    }
+
+    public Mono<Void> delete(UUID userId, UUID id) {
+        return userWeightRepository.findById(id)
+                .switchIfEmpty(Mono.error(new NotFoundException("Weight entry was not found.")))
+                .flatMap(existing -> {
+                    if (!existing.userId().equals(userId)) {
+                        return Mono.error(new ForbiddenException("Weight entry belongs to another user."));
+                    }
+                    return userWeightRepository.delete(existing);
+                });
     }
 }

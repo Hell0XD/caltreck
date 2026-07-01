@@ -3,9 +3,15 @@ package com.caltrek.api.auth;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.caltrek.api.common.ActivityLevel;
+import com.caltrek.api.common.NutritionGoal;
+import com.caltrek.api.common.UnitSystem;
+import com.caltrek.api.common.UserTimezone;
 import com.caltrek.api.user.User;
+import com.caltrek.api.user.DeleteAccountRequest;
 import com.caltrek.api.user.UserGoal;
 import com.caltrek.api.user.UserGoalService;
 import com.caltrek.api.user.UserRepository;
@@ -53,19 +59,21 @@ class AuthServiceTests {
                 false,
                 false,
                 "UTC",
+                "metric",
                 createdAt,
                 createdAt);
         ProfileUpdateRequest request = new ProfileUpdateRequest(
                 "Updated",
                 "Person",
-                "Europe/Prague",
+                UserTimezone.EUROPE_PRAGUE,
                 "female",
                 LocalDate.of(1991, 4, 20),
                 new BigDecimal("168"),
-                "moderate",
-                "lose",
+                ActivityLevel.MODERATE,
+                NutritionGoal.LOSE,
                 true,
                 false,
+                UnitSystem.IMPERIAL,
                 new BigDecimal("2300"),
                 new BigDecimal("175"),
                 null,
@@ -93,14 +101,15 @@ class AuthServiceTests {
                 .assertNext(response -> {
                     assertThat(response.firstName()).isEqualTo("Updated");
                     assertThat(response.lastName()).isEqualTo("Person");
-                    assertThat(response.timezone()).isEqualTo("Europe/Prague");
+                    assertThat(response.timezone()).isEqualTo(UserTimezone.EUROPE_PRAGUE);
                     assertThat(response.gender()).isEqualTo("female");
                     assertThat(response.dateOfBirth()).isEqualTo(LocalDate.of(1991, 4, 20));
                     assertThat(response.heightCm()).isEqualByComparingTo("168");
-                    assertThat(response.activityLevel()).isEqualTo("moderate");
-                    assertThat(response.nutritionGoal()).isEqualTo("lose");
+                    assertThat(response.activityLevel()).isEqualTo(ActivityLevel.MODERATE);
+                    assertThat(response.nutritionGoal()).isEqualTo(NutritionGoal.LOSE);
                     assertThat(response.onboardingCompleted()).isTrue();
                     assertThat(response.appTourCompleted()).isFalse();
+                    assertThat(response.unitSystem()).isEqualTo(UnitSystem.IMPERIAL);
                     assertThat(response.calorieGoal()).isEqualByComparingTo("2300");
                     assertThat(response.proteinGoal()).isEqualByComparingTo("175");
                     assertThat(response.carbsGoal()).isEqualByComparingTo("250");
@@ -155,6 +164,7 @@ class AuthServiceTests {
                     user.onboardingCompleted(),
                     user.appTourCompleted(),
                     user.timezone(),
+                    user.unitSystem(),
                     user.createdAt(),
                     user.updatedAt()));
         });
@@ -169,10 +179,11 @@ class AuthServiceTests {
                         "password123",
                         "New",
                         "User",
-                        "UTC")))
+                        UserTimezone.UTC)))
                 .assertNext(response -> {
                     assertThat(response.user().onboardingCompleted()).isFalse();
                     assertThat(response.user().appTourCompleted()).isFalse();
+                    assertThat(response.user().unitSystem()).isEqualTo(UnitSystem.METRIC);
                     assertThat(response.user().latestWeightKg()).isNull();
                     assertThat(response.refreshToken()).isNotBlank();
                 })
@@ -208,6 +219,7 @@ class AuthServiceTests {
                 true,
                 true,
                 "UTC",
+                "metric",
                 now,
                 now);
         UserGoal goal = new UserGoal(
@@ -238,5 +250,48 @@ class AuthServiceTests {
                     assertThat(response.latestWeightMeasuredOn()).isEqualTo(LocalDate.of(2026, 6, 27));
                 })
                 .verifyComplete();
+    }
+
+    @Test
+    void deletesAccountWhenPasswordMatches() {
+        UserRepository userRepository = mock(UserRepository.class);
+        PasswordEncoder passwordEncoder = mock(PasswordEncoder.class);
+        AuthService service = new AuthService(
+                userRepository,
+                mock(RefreshTokenRepository.class),
+                mock(UserGoalService.class),
+                mock(UserWeightService.class),
+                passwordEncoder,
+                mock(JwtService.class),
+                Duration.ofDays(30));
+        UUID userId = UUID.randomUUID();
+        OffsetDateTime now = OffsetDateTime.now();
+        User user = new User(
+                userId,
+                "user@example.com",
+                "hash",
+                "User",
+                "Person",
+                null,
+                null,
+                null,
+                null,
+                null,
+                false,
+                false,
+                "UTC",
+                "metric",
+                now,
+                now);
+
+        when(userRepository.findById(userId)).thenReturn(Mono.just(user));
+        when(passwordEncoder.matches("password123", "hash")).thenReturn(true);
+        when(userRepository.delete(user)).thenReturn(Mono.empty());
+
+        StepVerifier.create(service.deleteAccount(
+                        new AuthenticatedUser(userId, user.email()),
+                        new DeleteAccountRequest("password123")))
+                .verifyComplete();
+        verify(userRepository).delete(user);
     }
 }

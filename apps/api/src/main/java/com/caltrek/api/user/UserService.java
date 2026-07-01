@@ -36,6 +36,7 @@ public class UserService {
                 false,
                 false,
                 InputNormalizer.normalizeTimezone(request.timezone()),
+                InputNormalizer.DEFAULT_UNIT_SYSTEM,
                 now,
                 now);
         return userRepository.save(user)

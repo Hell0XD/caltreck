@@ -2,7 +2,7 @@
 
 import type { Client, Options as Options2, TDataShape } from './client';
 import { client } from './client.gen';
-import type { DeleteApiLogsDailyByIdData, DeleteApiLogsDailyByIdResponses, DeleteApiUserLibraryByIdData, DeleteApiUserLibraryByIdResponses, GetApiFoodsBarcodeByBarcodeData, GetApiFoodsBarcodeByBarcodeResponses, GetApiFoodsSearchData, GetApiFoodsSearchResponses, GetApiLogsDailyData, GetApiLogsDailyResponses, GetApiLogsDailySummariesData, GetApiLogsDailySummariesResponses, GetApiLogsDailySummaryData, GetApiLogsDailySummaryResponses, GetApiUserLibraryData, GetApiUserLibraryResponses, GetApiUsersMeData, GetApiUsersMeResponses, GetApiUsersMeWeightsData, GetApiUsersMeWeightsResponses, PostApiAuthLoginData, PostApiAuthLoginResponses, PostApiAuthLogoutData, PostApiAuthLogoutResponses, PostApiAuthRefreshData, PostApiAuthRefreshResponses, PostApiAuthRegisterData, PostApiAuthRegisterResponses, PostApiFoodsData, PostApiFoodsResponses, PostApiLogsDailyData, PostApiLogsDailyResponses, PostApiUserLibraryData, PostApiUserLibraryResponses, PostApiUsersMeWeightsData, PostApiUsersMeWeightsResponses, PutApiFoodsByIdData, PutApiFoodsByIdResponses, PutApiLogsDailyByIdData, PutApiLogsDailyByIdResponses, PutApiUsersMeData, PutApiUsersMeResponses } from './types.gen';
+import type { DeleteApiLogsDailyByIdData, DeleteApiLogsDailyByIdResponses, DeleteApiUserLibraryByIdData, DeleteApiUserLibraryByIdResponses, DeleteApiUsersMeData, DeleteApiUsersMeResponses, DeleteApiUsersMeWeightsByIdData, DeleteApiUsersMeWeightsByIdResponses, GetApiFoodsBarcodeByBarcodeData, GetApiFoodsBarcodeByBarcodeResponses, GetApiFoodsSearchData, GetApiFoodsSearchResponses, GetApiLogsDailyData, GetApiLogsDailyResponses, GetApiLogsDailySummariesData, GetApiLogsDailySummariesResponses, GetApiLogsDailySummaryData, GetApiLogsDailySummaryResponses, GetApiUserLibraryData, GetApiUserLibraryResponses, GetApiUsersMeData, GetApiUsersMeResponses, GetApiUsersMeWeightsData, GetApiUsersMeWeightsResponses, PostApiAuthLoginData, PostApiAuthLoginResponses, PostApiAuthLogoutData, PostApiAuthLogoutResponses, PostApiAuthRefreshData, PostApiAuthRefreshResponses, PostApiAuthRegisterData, PostApiAuthRegisterResponses, PostApiFoodsData, PostApiFoodsResponses, PostApiLogsDailyData, PostApiLogsDailyResponses, PostApiUserLibraryData, PostApiUserLibraryResponses, PostApiUsersMeWeightsData, PostApiUsersMeWeightsResponses, PutApiFoodsByIdData, PutApiFoodsByIdResponses, PutApiLogsDailyByIdData, PutApiLogsDailyByIdResponses, PutApiUsersMeData, PutApiUsersMeResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -74,6 +74,21 @@ export class Users extends HeyApiClient {
     }
     
     /**
+     * Delete the current user account
+     */
+    public deleteCurrentUser<ThrowOnError extends boolean = false>(options: Options<DeleteApiUsersMeData, ThrowOnError>) {
+        return (options.client ?? this.client).delete<DeleteApiUsersMeResponses, unknown, ThrowOnError>({
+            security: [{ scheme: 'bearer', type: 'http' }],
+            url: '/api/users/me',
+            ...options,
+            headers: {
+                'Content-Type': 'application/json',
+                ...options.headers
+            }
+        });
+    }
+    
+    /**
      * List current user weight entries
      */
     public listCurrentUserWeights<ThrowOnError extends boolean = false>(options?: Options<GetApiUsersMeWeightsData, ThrowOnError>) {
@@ -96,6 +111,17 @@ export class Users extends HeyApiClient {
                 'Content-Type': 'application/json',
                 ...options.headers
             }
+        });
+    }
+    
+    /**
+     * Delete a current user weight entry
+     */
+    public deleteCurrentUserWeight<ThrowOnError extends boolean = false>(options: Options<DeleteApiUsersMeWeightsByIdData, ThrowOnError>) {
+        return (options.client ?? this.client).delete<DeleteApiUsersMeWeightsByIdResponses, unknown, ThrowOnError>({
+            security: [{ scheme: 'bearer', type: 'http' }],
+            url: '/api/users/me/weights/{id}',
+            ...options
         });
     }
 }

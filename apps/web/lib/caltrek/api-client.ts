@@ -13,6 +13,7 @@ import {
 import { ErrorUtils } from "./error-utils";
 import type { AuthSession, MealType } from "./models";
 import { MealUtils } from "./meal-utils";
+import { preferredTimezone } from "./timezone-utils";
 
 type ApiResult<T> = {
   data?: T;
@@ -50,7 +51,7 @@ export class CaltrekApiClient {
           password,
           firstName,
           lastName,
-          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+          timezone: preferredTimezone(),
         },
       }),
     );
@@ -84,6 +85,12 @@ export class CaltrekApiClient {
   saveWeight(measuredOn: string, weightKg: number) {
     return this.request<UserWeightResponse>((token) =>
       this.api.users.saveCurrentUserWeight({ auth: token, body: { measuredOn, weightKg } }),
+    );
+  }
+
+  deleteWeight(id: string) {
+    return this.request<Record<string, never>>((token) =>
+      this.api.users.deleteCurrentUserWeight({ auth: token, path: { id } }),
     );
   }
 
@@ -128,6 +135,13 @@ export class CaltrekApiClient {
     return this.request<Record<string, never>>((token) =>
       this.api.dailyLogs.deleteDailyLog({ auth: token, path: { id } }),
     );
+  }
+
+  async deleteAccount(password: string) {
+    await this.request<Record<string, never>>((token) =>
+      this.api.users.deleteCurrentUser({ auth: token, body: { password } }),
+    );
+    this.saveSession(null);
   }
 
   getLibrary() {

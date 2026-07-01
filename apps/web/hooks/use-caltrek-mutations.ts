@@ -36,6 +36,15 @@ export function useCaltrekMutations(api: CaltrekApiClient, date: string) {
         ]);
       },
     }),
+    deleteWeight: useMutation({
+      mutationFn: (id: string) => api.deleteWeight(id),
+      onSuccess: async () => {
+        await Promise.all([
+          queryClient.invalidateQueries({ queryKey: caltrekQueryKeys.weights() }),
+          queryClient.invalidateQueries({ queryKey: caltrekQueryKeys.profile() }),
+        ]);
+      },
+    }),
     createLog: useMutation({
       mutationFn: ({
         food,
@@ -67,6 +76,9 @@ export function useCaltrekMutations(api: CaltrekApiClient, date: string) {
     deleteLog: useMutation({
       mutationFn: (entry: LogEntry) => api.deleteLog(entry.id),
       onSuccess: invalidateDay,
+    }),
+    deleteAccount: useMutation({
+      mutationFn: (password: string) => api.deleteAccount(password),
     }),
     saveLibraryFood: useMutation({
       mutationFn: ({ food, favorite }: { food: Food; favorite: boolean }) =>

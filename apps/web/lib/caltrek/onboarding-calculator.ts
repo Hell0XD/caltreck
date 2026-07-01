@@ -1,8 +1,23 @@
+import type { ActivityLevel, NutritionGoal } from "@caltrek/api-client";
 import type { MacroGoals } from "./models";
 
 export type GenderValue = "male" | "female" | "other";
-export type ActivityLevelValue = "sedentary" | "light" | "moderate" | "active" | "very_active";
-export type NutritionGoalValue = "lose" | "maintain" | "gain";
+export type ActivityLevelValue = ActivityLevel;
+export type NutritionGoalValue = NutritionGoal;
+
+export const activityLevelValues = [
+  "sedentary",
+  "light",
+  "moderate",
+  "active",
+  "very_active",
+] as const satisfies readonly ActivityLevel[];
+
+export const nutritionGoalValues = [
+  "lose",
+  "maintain",
+  "gain",
+] as const satisfies readonly NutritionGoal[];
 
 export const genderOptions: Array<{ value: GenderValue; label: string }> = [
   { value: "male", label: "Male" },
@@ -10,7 +25,7 @@ export const genderOptions: Array<{ value: GenderValue; label: string }> = [
   { value: "other", label: "Other" },
 ];
 
-export const activityOptions: Array<{ value: ActivityLevelValue; label: string }> = [
+export const activityOptions: Array<{ value: ActivityLevel; label: string }> = [
   { value: "sedentary", label: "Sedentary" },
   { value: "light", label: "Light" },
   { value: "moderate", label: "Moderate" },
@@ -18,7 +33,7 @@ export const activityOptions: Array<{ value: ActivityLevelValue; label: string }
   { value: "very_active", label: "Very active" },
 ];
 
-export const nutritionGoalOptions: Array<{ value: NutritionGoalValue; label: string }> = [
+export const nutritionGoalOptions: Array<{ value: NutritionGoal; label: string }> = [
   { value: "lose", label: "Lose weight" },
   { value: "maintain", label: "Maintain" },
   { value: "gain", label: "Gain weight" },

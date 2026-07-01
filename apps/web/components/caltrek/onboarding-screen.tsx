@@ -20,6 +20,7 @@ import {
 import { DateUtils } from "@/lib/caltrek/date-utils";
 import { ErrorUtils } from "@/lib/caltrek/error-utils";
 import type { MacroGoals } from "@/lib/caltrek/models";
+import { UnitUtils, type UnitSystem } from "@/lib/caltrek/unit-utils";
 import {
   activityOptions,
   ageFromDateOfBirth,
@@ -61,11 +62,12 @@ export function OnboardingScreen({
 }) {
   const [step, setStep] = useState<1 | 2>(1);
   const [error, setError] = useState<string | null>(null);
+  const unitSystem = UnitUtils.normalize(user.unitSystem);
   const [draft, setDraft] = useState<OnboardingDraft>(() => ({
     gender: (user.gender as GenderValue | undefined) ?? "other",
     dateOfBirth: user.dateOfBirth ?? "",
-    heightCm: user.heightCm ? String(user.heightCm) : "",
-    startingWeightKg: user.latestWeightKg ? String(user.latestWeightKg) : "",
+    heightCm: UnitUtils.formatHeightInput(user.heightCm, unitSystem),
+    startingWeightKg: UnitUtils.formatWeightInput(user.latestWeightKg, unitSystem),
     activityLevel: (user.activityLevel as ActivityLevelValue | undefined) ?? "moderate",
     nutritionGoal: (user.nutritionGoal as NutritionGoalValue | undefined) ?? "maintain",
     calorieGoal: String(goals.calories),
@@ -75,16 +77,16 @@ export function OnboardingScreen({
   }));
 
   const recommendation = useMemo(() => {
-    const heightCm = Number(draft.heightCm);
-    const weightKg = Number(draft.startingWeightKg);
-    if (!draft.dateOfBirth || !Number.isFinite(heightCm) || !Number.isFinite(weightKg)) {
+    const displayHeight = Number(draft.heightCm);
+    const displayWeight = Number(draft.startingWeightKg);
+    if (!draft.dateOfBirth || !Number.isFinite(displayHeight) || !Number.isFinite(displayWeight)) {
       return goals;
     }
     return recommendedGoals({
       gender: draft.gender,
       dateOfBirth: draft.dateOfBirth,
-      heightCm,
-      weightKg,
+      heightCm: UnitUtils.displayHeightToCm(displayHeight, unitSystem),
+      weightKg: UnitUtils.displayWeightToKg(displayWeight, unitSystem),
       activityLevel: draft.activityLevel,
       nutritionGoal: draft.nutritionGoal,
     });
@@ -96,6 +98,7 @@ export function OnboardingScreen({
     draft.nutritionGoal,
     draft.startingWeightKg,
     goals,
+    unitSystem,
   ]);
 
   function update<K extends keyof OnboardingDraft>(key: K, value: OnboardingDraft[K]) {
@@ -103,7 +106,7 @@ export function OnboardingScreen({
   }
 
   function continueToTargets() {
-    const validation = validateProfileStep(draft);
+    const validation = validateProfileStep(draft, unitSystem);
     if (validation) {
       setError(validation);
       return;
@@ -120,7 +123,7 @@ export function OnboardingScreen({
   }
 
   async function finish() {
-    const profileError = validateProfileStep(draft);
+    const profileError = validateProfileStep(draft, unitSystem);
     const targetError = validateTargets(draft);
     if (profileError || targetError) {
       setError(profileError ?? targetError);
@@ -133,9 +136,10 @@ export function OnboardingScreen({
           firstName: user.firstName || user.email.split("@")[0] || "User",
           lastName: user.lastName || "User",
           timezone: user.timezone,
+          unitSystem,
           gender: draft.gender,
           dateOfBirth: draft.dateOfBirth,
-          heightCm: Number(draft.heightCm),
+          heightCm: UnitUtils.displayHeightToCm(Number(draft.heightCm), unitSystem),
           activityLevel: draft.activityLevel,
           nutritionGoal: draft.nutritionGoal,
           onboardingCompleted: true,
@@ -144,7 +148,7 @@ export function OnboardingScreen({
           carbsGoal: Number(draft.carbsGoal),
           fatGoal: Number(draft.fatGoal),
         },
-        Number(draft.startingWeightKg),
+        UnitUtils.displayWeightToKg(Number(draft.startingWeightKg), unitSystem),
       );
     } catch (nextError) {
       setError(ErrorUtils.message(nextError));
@@ -187,18 +191,20 @@ export function OnboardingScreen({
                   toYear={new Date().getFullYear() - 13}
                 />
                 <InputField
-                  label="Height (cm)"
+                  label={UnitUtils.heightLabel(unitSystem)}
                   type="number"
                   value={draft.heightCm}
                   onChange={(value) => update("heightCm", value)}
                   min="1"
+                  step={UnitUtils.heightInputStep(unitSystem)}
                 />
                 <InputField
-                  label="Starting weight (kg)"
+                  label={UnitUtils.weightLabel(unitSystem).replace("Weight", "Starting weight")}
                   type="number"
                   value={draft.startingWeightKg}
                   onChange={(value) => update("startingWeightKg", value)}
                   min="1"
+                  step={UnitUtils.weightInputStep(unitSystem)}
                 />
                 <SelectField
                   label="Activity"
@@ -375,7 +381,7 @@ function SelectField({
     <label className="grid gap-2">
       <span className="text-xs font-bold text-[var(--muted-foreground)]">{label}</span>
       <Select value={value} onValueChange={onChange}>
-        <SelectTrigger>
+        <SelectTrigger aria-label={label}>
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
@@ -390,16 +396,18 @@ function SelectField({
   );
 }
 
-function validateProfileStep(draft: OnboardingDraft) {
+function validateProfileStep(draft: OnboardingDraft, unitSystem?: UnitSystem) {
   const age = ageFromDateOfBirth(draft.dateOfBirth);
   if (age < 13 || age > 120) {
     return "Enter a date of birth for someone between 13 and 120 years old.";
   }
   if (!positiveNumber(draft.heightCm)) {
-    return "Enter your height in centimeters.";
+    return unitSystem === "imperial" ? "Enter your height in inches." : "Enter your height in centimeters.";
   }
   if (!positiveNumber(draft.startingWeightKg)) {
-    return "Enter your starting weight in kilograms.";
+    return unitSystem === "imperial"
+      ? "Enter your starting weight in pounds."
+      : "Enter your starting weight in kilograms.";
   }
   if (draft.dateOfBirth >= DateUtils.todayIso()) {
     return "Date of birth must be in the past.";

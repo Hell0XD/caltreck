@@ -75,6 +75,8 @@ export type CaltrekContextValue = {
   updateProfile: (profile: ProfileUpdateRequest) => Promise<void>;
   completeOnboarding: (profile: ProfileUpdateRequest, weightKg: number) => Promise<void>;
   saveWeight: (measuredOn: string, weightKg: number) => Promise<void>;
+  deleteWeight: (id: string) => Promise<void>;
+  deleteAccount: (password: string) => Promise<void>;
   openOnboardingHelper: () => void;
   replayAppTour: () => void;
   logout: () => void;
@@ -330,6 +332,16 @@ export function CaltrekProvider({ children }: { children: ReactNode }) {
     setToast("Weight entry saved.");
   }
 
+  async function deleteWeight(id: string) {
+    await mutations.deleteWeight.mutateAsync(id);
+    setToast("Weight entry deleted.");
+  }
+
+  async function deleteAccount(password: string) {
+    await mutations.deleteAccount.mutateAsync(password);
+    queryClient.removeQueries({ queryKey: caltrekQueryKeys.all });
+  }
+
   async function completeAppTour() {
     setTourRun(false);
     setTourSeenThisSession(true);
@@ -460,6 +472,8 @@ export function CaltrekProvider({ children }: { children: ReactNode }) {
     updateProfile,
     completeOnboarding,
     saveWeight,
+    deleteWeight,
+    deleteAccount,
     openOnboardingHelper: () => setOnboardingHelperOpen(true),
     replayAppTour: () => {
       setTourSeenThisSession(true);

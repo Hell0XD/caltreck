@@ -22,6 +22,7 @@ public record User(
         @Column("onboarding_completed") boolean onboardingCompleted,
         @Column("app_tour_completed") boolean appTourCompleted,
         String timezone,
+        @Column("unit_system") String unitSystem,
         @Column("created_at") OffsetDateTime createdAt,
         @Column("updated_at") OffsetDateTime updatedAt) {
 }
