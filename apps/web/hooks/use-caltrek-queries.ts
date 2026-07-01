@@ -47,6 +47,11 @@ export function useCaltrekQueries(
     enabled: authenticated && Boolean(historyFrom && historyTo),
     staleTime: 5 * 60_000,
   });
+  const streakQuery = useQuery({
+    queryKey: caltrekQueryKeys.streak(date),
+    queryFn: () => api.getDailyGoalStreak(date),
+    enabled: authenticated,
+  });
   const history = (historyQuery.data ?? []).reduce<Record<string, DailySummaryResponse>>(
     (summaries, summary) => {
       summaries[summary.logDate] = summary;
@@ -61,6 +66,9 @@ export function useCaltrekQueries(
     library,
     weights,
     search,
+    streak: streakQuery.data,
+    streakLoading: streakQuery.isPending,
+    streakError: streakQuery.error,
     history,
     historyLoading: historyQuery.isPending,
     historyError: historyQuery.error,

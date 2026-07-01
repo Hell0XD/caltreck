@@ -13,6 +13,7 @@ export function useCaltrekMutations(api: CaltrekApiClient, date: string) {
       queryClient.invalidateQueries({ queryKey: caltrekQueryKeys.logs(date) }),
       queryClient.invalidateQueries({ queryKey: caltrekQueryKeys.summary(date) }),
       queryClient.invalidateQueries({ queryKey: caltrekQueryKeys.summaries() }),
+      queryClient.invalidateQueries({ queryKey: caltrekQueryKeys.streak(date) }),
     ]);
   const invalidateLibrary = () =>
     queryClient.invalidateQueries({ queryKey: caltrekQueryKeys.library() });
@@ -23,7 +24,10 @@ export function useCaltrekMutations(api: CaltrekApiClient, date: string) {
       mutationFn: (profile: ProfileUpdateRequest) => api.updateProfile(profile),
       onSuccess: async (user) => {
         queryClient.setQueryData(caltrekQueryKeys.profile(), user);
-        await queryClient.invalidateQueries({ queryKey: caltrekQueryKeys.summaries() });
+        await Promise.all([
+          queryClient.invalidateQueries({ queryKey: caltrekQueryKeys.summaries() }),
+          queryClient.invalidateQueries({ queryKey: caltrekQueryKeys.streak() }),
+        ]);
       },
     }),
     saveWeight: useMutation({

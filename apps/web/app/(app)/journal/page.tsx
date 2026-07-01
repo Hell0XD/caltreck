@@ -10,6 +10,7 @@ import {
   ChevronRight,
   Flame,
   Info,
+  LoaderCircle,
   Plus,
   Sparkles,
   Trash2,
@@ -56,13 +57,15 @@ export default function JournalPage() {
     setHistoryMonth,
     history,
     historyLoading,
+    goalStreak,
+    goalStreakLoading,
     openFoodSearch,
     startEdit,
     requestDelete,
   } = useCaltrek();
   const isToday = selectedDate === DateUtils.todayIso();
   const selectedGoals = GoalStatusUtils.goalsForSummary(history[selectedDate], goals);
-  const selectedStatus = GoalStatusUtils.forTotals(totals, logs.length > 0, selectedGoals);
+  const selectedStatus = GoalStatusUtils.forSummary(history[selectedDate]);
 
   return (
     <div className="space-y-5 lg:space-y-6">
@@ -73,6 +76,7 @@ export default function JournalPage() {
               {DateUtils.relativeLabel(selectedDate)}
             </span>
             <StatusBadge status={selectedStatus} />
+            <StreakBadge streakDays={goalStreak?.streakDays ?? 0} loading={goalStreakLoading} />
           </div>
           <h1 className="text-3xl font-bold tracking-[-0.04em] sm:text-4xl">
             {DateUtils.format(selectedDate, { month: "long", day: "numeric" })}
@@ -104,7 +108,6 @@ export default function JournalPage() {
               <GoalCalendar
                 month={historyMonth}
                 selectedDate={selectedDate}
-                goals={selectedGoals}
                 summaries={history}
                 loading={historyLoading}
                 onMonthChange={setHistoryMonth}
@@ -156,7 +159,6 @@ export default function JournalPage() {
           <GoalCalendar
             month={historyMonth}
             selectedDate={selectedDate}
-            goals={selectedGoals}
             summaries={history}
             loading={historyLoading}
             onMonthChange={setHistoryMonth}
@@ -406,6 +408,18 @@ function StatusBadge({ status }: { status: GoalStatus }) {
   return (
     <span className={cn("rounded-full px-2 py-0.5 text-[0.65rem] font-bold", content.className)}>
       {content.label}
+    </span>
+  );
+}
+
+function StreakBadge({ streakDays, loading }: { streakDays: number; loading: boolean }) {
+  return (
+    <span
+      className="inline-flex items-center gap-1 rounded-full bg-[var(--primary-soft)] px-2 py-0.5 text-[0.65rem] font-bold text-[var(--primary)]"
+      aria-label={`${streakDays} day goal streak`}
+    >
+      {loading ? <LoaderCircle className="size-3 animate-spin" /> : <Flame className="size-3" />}
+      {loading ? "Streak..." : `${streakDays} day${streakDays === 1 ? "" : "s"}`}
     </span>
   );
 }

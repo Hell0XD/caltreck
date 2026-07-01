@@ -2,7 +2,7 @@
 
 import type { Client, Options as Options2, TDataShape } from './client';
 import { client } from './client.gen';
-import type { DeleteApiLogsDailyByIdData, DeleteApiLogsDailyByIdResponses, DeleteApiUserLibraryByIdData, DeleteApiUserLibraryByIdResponses, DeleteApiUsersMeData, DeleteApiUsersMeResponses, DeleteApiUsersMeWeightsByIdData, DeleteApiUsersMeWeightsByIdResponses, GetApiFoodsBarcodeByBarcodeData, GetApiFoodsBarcodeByBarcodeResponses, GetApiFoodsSearchData, GetApiFoodsSearchResponses, GetApiLogsDailyData, GetApiLogsDailyResponses, GetApiLogsDailySummariesData, GetApiLogsDailySummariesResponses, GetApiLogsDailySummaryData, GetApiLogsDailySummaryResponses, GetApiUserLibraryData, GetApiUserLibraryResponses, GetApiUsersMeData, GetApiUsersMeResponses, GetApiUsersMeWeightsData, GetApiUsersMeWeightsResponses, PostApiAuthLoginData, PostApiAuthLoginResponses, PostApiAuthLogoutData, PostApiAuthLogoutResponses, PostApiAuthRefreshData, PostApiAuthRefreshResponses, PostApiAuthRegisterData, PostApiAuthRegisterResponses, PostApiFoodsData, PostApiFoodsResponses, PostApiLogsDailyData, PostApiLogsDailyResponses, PostApiUserLibraryData, PostApiUserLibraryResponses, PostApiUsersMeWeightsData, PostApiUsersMeWeightsResponses, PutApiFoodsByIdData, PutApiFoodsByIdResponses, PutApiLogsDailyByIdData, PutApiLogsDailyByIdResponses, PutApiUsersMeData, PutApiUsersMeResponses } from './types.gen';
+import type { DeleteApiLogsDailyByIdData, DeleteApiLogsDailyByIdResponses, DeleteApiUserLibraryByIdData, DeleteApiUserLibraryByIdResponses, DeleteApiUsersMeData, DeleteApiUsersMeResponses, DeleteApiUsersMeWeightsByIdData, DeleteApiUsersMeWeightsByIdResponses, GetApiFoodsBarcodeByBarcodeData, GetApiFoodsBarcodeByBarcodeResponses, GetApiFoodsSearchData, GetApiFoodsSearchResponses, GetApiLogsDailyData, GetApiLogsDailyResponses, GetApiLogsDailyStreakData, GetApiLogsDailyStreakResponses, GetApiLogsDailySummariesData, GetApiLogsDailySummariesResponses, GetApiLogsDailySummaryData, GetApiLogsDailySummaryResponses, GetApiUserLibraryData, GetApiUserLibraryResponses, GetApiUsersMeData, GetApiUsersMeResponses, GetApiUsersMeWeightsData, GetApiUsersMeWeightsResponses, PostApiAuthLoginData, PostApiAuthLoginResponses, PostApiAuthLogoutData, PostApiAuthLogoutResponses, PostApiAuthRefreshData, PostApiAuthRefreshResponses, PostApiAuthRegisterData, PostApiAuthRegisterResponses, PostApiFoodsData, PostApiFoodsResponses, PostApiLogsDailyData, PostApiLogsDailyResponses, PostApiUserLibraryData, PostApiUserLibraryResponses, PostApiUsersMeWeightsData, PostApiUsersMeWeightsResponses, PutApiFoodsByIdData, PutApiFoodsByIdResponses, PutApiLogsDailyByIdData, PutApiLogsDailyByIdResponses, PutApiUsersMeData, PutApiUsersMeResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -48,6 +48,21 @@ class HeyApiRegistry<T> {
 
 export class Users extends HeyApiClient {
     /**
+     * Delete the current user account
+     */
+    public deleteCurrentUser<ThrowOnError extends boolean = false>(options: Options<DeleteApiUsersMeData, ThrowOnError>) {
+        return (options.client ?? this.client).delete<DeleteApiUsersMeResponses, unknown, ThrowOnError>({
+            security: [{ scheme: 'bearer', type: 'http' }],
+            url: '/api/users/me',
+            ...options,
+            headers: {
+                'Content-Type': 'application/json',
+                ...options.headers
+            }
+        });
+    }
+    
+    /**
      * Get the current user profile
      */
     public getCurrentUser<ThrowOnError extends boolean = false>(options?: Options<GetApiUsersMeData, ThrowOnError>) {
@@ -63,21 +78,6 @@ export class Users extends HeyApiClient {
      */
     public updateCurrentUser<ThrowOnError extends boolean = false>(options: Options<PutApiUsersMeData, ThrowOnError>) {
         return (options.client ?? this.client).put<PutApiUsersMeResponses, unknown, ThrowOnError>({
-            security: [{ scheme: 'bearer', type: 'http' }],
-            url: '/api/users/me',
-            ...options,
-            headers: {
-                'Content-Type': 'application/json',
-                ...options.headers
-            }
-        });
-    }
-    
-    /**
-     * Delete the current user account
-     */
-    public deleteCurrentUser<ThrowOnError extends boolean = false>(options: Options<DeleteApiUsersMeData, ThrowOnError>) {
-        return (options.client ?? this.client).delete<DeleteApiUsersMeResponses, unknown, ThrowOnError>({
             security: [{ scheme: 'bearer', type: 'http' }],
             url: '/api/users/me',
             ...options,
@@ -197,6 +197,17 @@ export class DailyLogs extends HeyApiClient {
         return (options.client ?? this.client).get<GetApiLogsDailySummariesResponses, unknown, ThrowOnError>({
             security: [{ scheme: 'bearer', type: 'http' }],
             url: '/api/logs/daily/summaries',
+            ...options
+        });
+    }
+    
+    /**
+     * Get current goal-hit streak
+     */
+    public getDailyGoalStreak<ThrowOnError extends boolean = false>(options: Options<GetApiLogsDailyStreakData, ThrowOnError>) {
+        return (options.client ?? this.client).get<GetApiLogsDailyStreakResponses, unknown, ThrowOnError>({
+            security: [{ scheme: 'bearer', type: 'http' }],
+            url: '/api/logs/daily/streak',
             ...options
         });
     }

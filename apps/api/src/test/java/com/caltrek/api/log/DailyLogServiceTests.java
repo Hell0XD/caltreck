@@ -52,17 +52,20 @@ class DailyLogServiceTests {
                     assertThat(summary.logDate()).isEqualTo(from);
                     assertThat(summary.calories()).isEqualByComparingTo(BigDecimal.ZERO);
                     assertThat(summary.calorieGoal()).isEqualByComparingTo("2000");
+                    assertThat(summary.goalStatus()).isEqualTo(DailyGoalStatus.NO_LOG);
                     assertThat(summary.entries()).isEmpty();
                 })
                 .assertNext(summary -> {
                     assertThat(summary.logDate()).isEqualTo(from.plusDays(1));
                     assertThat(summary.calories()).isEqualByComparingTo("250.00");
                     assertThat(summary.calorieGoal()).isEqualByComparingTo("2400");
+                    assertThat(summary.goalStatus()).isEqualTo(DailyGoalStatus.MISSED);
                     assertThat(summary.entries()).hasSize(1);
                 })
                 .assertNext(summary -> {
                     assertThat(summary.logDate()).isEqualTo(to);
                     assertThat(summary.calorieGoal()).isEqualByComparingTo("2400");
+                    assertThat(summary.goalStatus()).isEqualTo(DailyGoalStatus.NO_LOG);
                     assertThat(summary.entries()).isEmpty();
                 })
                 .verifyComplete();
@@ -87,6 +90,38 @@ class DailyLogServiceTests {
 
         verifyNoInteractions(logRepository);
         verifyNoInteractions(userGoalService);
+    }
+
+    @Test
+    void tracksCurrentGoalStreakUntilTheFirstNonHitDay() {
+        DailyLogRepository logRepository = mock(DailyLogRepository.class);
+        FoodRepository foodRepository = mock(FoodRepository.class);
+        UserGoalService userGoalService = mock(UserGoalService.class);
+        DailyLogService service = new DailyLogService(logRepository, foodRepository, userGoalService);
+        UUID userId = UUID.randomUUID();
+        UUID foodId = UUID.randomUUID();
+        LocalDate date = LocalDate.of(2026, 6, 3);
+        Food food = food(foodId);
+        UserGoal hitGoal = goal(userId, date, "250", "20", "30", "5");
+
+        when(logRepository.findByUserIdAndLogDateOrderByCreatedAtAsc(userId, date))
+                .thenReturn(Flux.just(dailyLog(userId, foodId, date)));
+        when(logRepository.findByUserIdAndLogDateOrderByCreatedAtAsc(userId, date.minusDays(1)))
+                .thenReturn(Flux.just(dailyLog(userId, foodId, date.minusDays(1))));
+        when(logRepository.findByUserIdAndLogDateOrderByCreatedAtAsc(userId, date.minusDays(2)))
+                .thenReturn(Flux.empty());
+        when(foodRepository.findById(foodId)).thenReturn(Mono.just(food));
+        when(userGoalService.goalForDate(userId, date)).thenReturn(Mono.just(hitGoal));
+        when(userGoalService.goalForDate(userId, date.minusDays(1))).thenReturn(Mono.just(hitGoal));
+        when(userGoalService.goalForDate(userId, date.minusDays(2))).thenReturn(Mono.just(hitGoal));
+
+        StepVerifier.create(service.currentGoalStreak(userId, date))
+                .assertNext(streak -> {
+                    assertThat(streak.streakDays()).isEqualTo(2);
+                    assertThat(streak.startDate()).isEqualTo(date.minusDays(1));
+                    assertThat(streak.throughDate()).isEqualTo(date);
+                })
+                .verifyComplete();
     }
 
     private DailyLog dailyLog(UUID userId, UUID foodId, LocalDate date) {
@@ -134,15 +169,25 @@ class DailyLogServiceTests {
     }
 
     private UserGoal goal(UUID userId, LocalDate effectiveFrom, String calories) {
+        return goal(userId, effectiveFrom, calories, "150", "250", "70");
+    }
+
+    private UserGoal goal(
+            UUID userId,
+            LocalDate effectiveFrom,
+            String calories,
+            String protein,
+            String carbs,
+            String fat) {
         OffsetDateTime now = OffsetDateTime.now();
         return new UserGoal(
                 UUID.randomUUID(),
                 userId,
                 effectiveFrom,
                 new BigDecimal(calories),
-                new BigDecimal("150"),
-                new BigDecimal("250"),
-                new BigDecimal("70"),
+                new BigDecimal(protein),
+                new BigDecimal(carbs),
+                new BigDecimal(fat),
                 now,
                 now);
     }

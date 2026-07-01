@@ -3,6 +3,7 @@ import {
   type AuthResponse,
   type CreateFoodRequest,
   type DailyLogResponse,
+  type DailyStreakResponse,
   type DailySummaryResponse,
   type FoodResponse,
   type ProfileUpdateRequest,
@@ -110,6 +111,25 @@ export class CaltrekApiClient {
     return this.request<DailySummaryResponse[]>((token) =>
       this.api.dailyLogs.listDailySummaries({ auth: token, query: { from, to } }),
     );
+  }
+
+  getDailyGoalStreak(date: string) {
+    return this.request<DailyStreakResponse>(async (token) => {
+      const response = await fetch(
+        `${apiBaseUrl()}/api/logs/daily/streak?date=${encodeURIComponent(date)}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+      const data = response.status === 204 ? undefined : await response.json().catch(() => null);
+      return {
+        data: response.ok ? data : undefined,
+        error: response.ok ? undefined : data,
+        response,
+      } satisfies ApiResult<DailyStreakResponse>;
+    });
   }
 
   createLog(foodId: string, date: string, meal: MealType, quantity: number, unit: string) {
@@ -237,4 +257,8 @@ export class CaltrekApiClient {
       user: auth.user,
     });
   }
+}
+
+function apiBaseUrl() {
+  return process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8080";
 }

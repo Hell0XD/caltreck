@@ -12,6 +12,8 @@ export type ActivityLevel = 'sedentary' | 'light' | 'moderate' | 'active' | 'ver
 
 export type NutritionGoal = 'lose' | 'maintain' | 'gain';
 
+export type DailyGoalStatus = 'hit' | 'almost' | 'missed' | 'no-log';
+
 export type ProfileUpdateRequest = {
     firstName: string;
     lastName: string;
@@ -50,10 +52,6 @@ export type UserResponse = {
     proteinGoal: number;
     carbsGoal: number;
     fatGoal: number;
-};
-
-export type DeleteAccountRequest = {
-    password: string;
 };
 
 export type UpdateDailyLogRequest = {
@@ -224,8 +222,35 @@ export type DailySummaryResponse = {
     proteinGoal: number;
     carbsGoal: number;
     fatGoal: number;
+    goalStatus: DailyGoalStatus;
     entries: Array<DailyLogResponse>;
 };
+
+export type DailyStreakResponse = {
+    streakDays?: number;
+    startDate?: string;
+    throughDate: string;
+};
+
+export type DeleteAccountRequest = {
+    password: string;
+};
+
+export type DeleteApiUsersMeData = {
+    body: DeleteAccountRequest;
+    path?: never;
+    query?: never;
+    url: '/api/users/me';
+};
+
+export type DeleteApiUsersMeResponses = {
+    /**
+     * No Content
+     */
+    204: void;
+};
+
+export type DeleteApiUsersMeResponse = DeleteApiUsersMeResponses[keyof DeleteApiUsersMeResponses];
 
 export type GetApiUsersMeData = {
     body?: never;
@@ -258,22 +283,6 @@ export type PutApiUsersMeResponses = {
 };
 
 export type PutApiUsersMeResponse = PutApiUsersMeResponses[keyof PutApiUsersMeResponses];
-
-export type DeleteApiUsersMeData = {
-    body: DeleteAccountRequest;
-    path?: never;
-    query?: never;
-    url: '/api/users/me';
-};
-
-export type DeleteApiUsersMeResponses = {
-    /**
-     * No Content
-     */
-    204: void;
-};
-
-export type DeleteApiUsersMeResponse = DeleteApiUsersMeResponses[keyof DeleteApiUsersMeResponses];
 
 export type DeleteApiLogsDailyByIdData = {
     body?: never;
@@ -360,24 +369,6 @@ export type PostApiUsersMeWeightsResponses = {
 };
 
 export type PostApiUsersMeWeightsResponse = PostApiUsersMeWeightsResponses[keyof PostApiUsersMeWeightsResponses];
-
-export type DeleteApiUsersMeWeightsByIdData = {
-    body?: never;
-    path: {
-        id: string;
-    };
-    query?: never;
-    url: '/api/users/me/weights/{id}';
-};
-
-export type DeleteApiUsersMeWeightsByIdResponses = {
-    /**
-     * No Content
-     */
-    204: void;
-};
-
-export type DeleteApiUsersMeWeightsByIdResponse = DeleteApiUsersMeWeightsByIdResponses[keyof DeleteApiUsersMeWeightsByIdResponses];
 
 export type GetApiUserLibraryData = {
     body?: never;
@@ -564,6 +555,24 @@ export type GetApiLogsDailySummariesResponses = {
 
 export type GetApiLogsDailySummariesResponse = GetApiLogsDailySummariesResponses[keyof GetApiLogsDailySummariesResponses];
 
+export type GetApiLogsDailyStreakData = {
+    body?: never;
+    path?: never;
+    query: {
+        date: string;
+    };
+    url: '/api/logs/daily/streak';
+};
+
+export type GetApiLogsDailyStreakResponses = {
+    /**
+     * OK
+     */
+    200: DailyStreakResponse;
+};
+
+export type GetApiLogsDailyStreakResponse = GetApiLogsDailyStreakResponses[keyof GetApiLogsDailyStreakResponses];
+
 export type GetApiFoodsSearchData = {
     body?: never;
     path?: never;
@@ -600,6 +609,24 @@ export type GetApiFoodsBarcodeByBarcodeResponses = {
 };
 
 export type GetApiFoodsBarcodeByBarcodeResponse = GetApiFoodsBarcodeByBarcodeResponses[keyof GetApiFoodsBarcodeByBarcodeResponses];
+
+export type DeleteApiUsersMeWeightsByIdData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/users/me/weights/{id}';
+};
+
+export type DeleteApiUsersMeWeightsByIdResponses = {
+    /**
+     * No Content
+     */
+    204: void;
+};
+
+export type DeleteApiUsersMeWeightsByIdResponse = DeleteApiUsersMeWeightsByIdResponses[keyof DeleteApiUsersMeWeightsByIdResponses];
 
 export type DeleteApiUserLibraryByIdData = {
     body?: never;

@@ -59,6 +59,14 @@ public class DailyLogController {
         return dailyLogService.listDailySummaries(user.id(), from, to);
     }
 
+    @GetMapping("/streak")
+    @Operation(summary = "Get current goal-hit streak", operationId = "getDailyGoalStreak")
+    public Mono<DailyStreakResponse> streak(
+            @AuthenticationPrincipal AuthenticatedUser user,
+            @RequestParam LocalDate date) {
+        return dailyLogService.currentGoalStreak(user.id(), date);
+    }
+
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "Create a daily log entry", operationId = "createDailyLog")

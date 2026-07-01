@@ -2,6 +2,7 @@
 
 import type {
   DailySummaryResponse,
+  DailyStreakResponse,
   ProfileUpdateRequest,
   UserResponse,
   UserWeightResponse,
@@ -57,6 +58,8 @@ export type CaltrekContextValue = {
   setHistoryMonth: (date: string) => void;
   history: Record<string, DailySummaryResponse>;
   historyLoading: boolean;
+  goalStreak?: DailyStreakResponse;
+  goalStreakLoading: boolean;
   weights: UserWeightResponse[];
   query: string;
   setQuery: (query: string) => void;
@@ -150,6 +153,7 @@ export function CaltrekProvider({ children }: { children: ReactNode }) {
       queries.library.error ??
       queries.weights.error ??
       queries.search.error ??
+      queries.streakError ??
       queries.historyError;
     if (error) {
       setToast(ErrorUtils.message(error));
@@ -160,6 +164,7 @@ export function CaltrekProvider({ children }: { children: ReactNode }) {
     queries.logs.error,
     queries.profile.error,
     queries.search.error,
+    queries.streakError,
     queries.weights.error,
   ]);
 
@@ -451,6 +456,8 @@ export function CaltrekProvider({ children }: { children: ReactNode }) {
     setHistoryMonth: (date) => setHistoryMonthState(DateUtils.monthStart(date)),
     history: queries.history,
     historyLoading: queries.historyLoading,
+    goalStreak: queries.streak,
+    goalStreakLoading: queries.streakLoading,
     weights: queries.weights.data ?? [],
     query,
     setQuery,

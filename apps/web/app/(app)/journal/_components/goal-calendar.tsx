@@ -6,7 +6,6 @@ import { ChevronLeft, ChevronRight, LoaderCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DateUtils } from "@/lib/caltrek/date-utils";
 import { GoalStatusUtils, type GoalStatus } from "@/lib/caltrek/goal-status";
-import type { MacroGoals } from "@/lib/caltrek/models";
 import { cn } from "@/lib/utils";
 
 const weekdays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
@@ -29,7 +28,6 @@ const dotStyles: Record<GoalStatus, string> = {
 export function GoalCalendar({
   month,
   selectedDate,
-  goals,
   summaries,
   loading,
   onMonthChange,
@@ -37,7 +35,6 @@ export function GoalCalendar({
 }: {
   month: string;
   selectedDate: string;
-  goals: MacroGoals;
   summaries: Record<string, DailySummaryResponse>;
   loading: boolean;
   onMonthChange: (date: string) => void;
@@ -49,7 +46,7 @@ export function GoalCalendar({
     DateUtils.monthStart(nextMonth) <= DateUtils.monthStart(DateUtils.todayIso());
   const statuses = Object.entries(summaries).map(([date, summary]) => ({
     date,
-    status: GoalStatusUtils.forSummary(summary, goals),
+    status: GoalStatusUtils.forSummary(summary),
   }));
   const wins = statuses.filter(({ status }) => status === "hit").length;
   const almost = statuses.filter(({ status }) => status === "almost").length;
@@ -123,7 +120,7 @@ export function GoalCalendar({
               const selected = date === selectedDate;
               const today = date === DateUtils.todayIso();
               const status = inMonth
-                ? GoalStatusUtils.forSummary(summaries[date], goals)
+                ? GoalStatusUtils.forSummary(summaries[date])
                 : "no-log";
 
               return (

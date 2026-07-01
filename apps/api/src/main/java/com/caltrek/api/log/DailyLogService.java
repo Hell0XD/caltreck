@@ -23,6 +23,8 @@ import reactor.core.publisher.Mono;
 public class DailyLogService {
 
     private static final BigDecimal ONE_HUNDRED = new BigDecimal("100");
+    private static final BigDecimal TARGET_FLOOR = new BigDecimal("0.9");
+    private static final BigDecimal CALORIE_CEILING = new BigDecimal("1.1");
     private static final long MAX_SUMMARY_RANGE_DAYS = 62;
     private final DailyLogRepository dailyLogRepository;
     private final FoodRepository foodRepository;
@@ -63,6 +65,10 @@ public class DailyLogService {
                                     entriesForDate(tuple.getT1(), date),
                                     tuple.getT2().get(date));
                         }));
+    }
+
+    public Mono<DailyStreakResponse> currentGoalStreak(UUID userId, LocalDate date) {
+        return currentGoalStreak(userId, date, 0);
     }
 
     public Mono<DailyLogResponse> create(UUID userId, CreateDailyLogRequest request) {
@@ -146,17 +152,71 @@ public class DailyLogService {
     }
 
     private DailySummaryResponse toSummary(LocalDate date, List<DailyLogResponse> entries, UserGoal goal) {
+        BigDecimal calories = sum(entries, DailyLogResponse::calories);
+        BigDecimal protein = sum(entries, DailyLogResponse::protein);
+        BigDecimal carbs = sum(entries, DailyLogResponse::carbs);
+        BigDecimal fat = sum(entries, DailyLogResponse::fat);
         return new DailySummaryResponse(
                 date,
-                sum(entries, DailyLogResponse::calories),
-                sum(entries, DailyLogResponse::protein),
-                sum(entries, DailyLogResponse::carbs),
-                sum(entries, DailyLogResponse::fat),
+                calories,
+                protein,
+                carbs,
+                fat,
                 goal.calorieGoal(),
                 goal.proteinGoal(),
                 goal.carbsGoal(),
                 goal.fatGoal(),
+                goalStatus(entries, calories, protein, carbs, fat, goal),
                 entries);
+    }
+
+    private Mono<DailyStreakResponse> currentGoalStreak(UUID userId, LocalDate date, int streakDays) {
+        return Mono.defer(() -> getDailySummary(userId, date)
+                .flatMap(summary -> {
+                    if (summary.goalStatus() != DailyGoalStatus.HIT) {
+                        LocalDate startDate = streakDays == 0 ? null : date.plusDays(1);
+                        return Mono.just(new DailyStreakResponse(streakDays, startDate, date.plusDays(streakDays)));
+                    }
+                    return currentGoalStreak(userId, date.minusDays(1), streakDays + 1);
+                }));
+    }
+
+    private DailyGoalStatus goalStatus(
+            List<DailyLogResponse> entries,
+            BigDecimal calories,
+            BigDecimal protein,
+            BigDecimal carbs,
+            BigDecimal fat,
+            UserGoal goal) {
+        if (entries.isEmpty()) {
+            return DailyGoalStatus.NO_LOG;
+        }
+
+        boolean caloriesHit = atLeast(calories, goal.calorieGoal(), TARGET_FLOOR)
+                && atMost(calories, goal.calorieGoal(), CALORIE_CEILING);
+        boolean macrosHit = atLeastOrSkipped(protein, goal.proteinGoal(), TARGET_FLOOR)
+                && atLeastOrSkipped(carbs, goal.carbsGoal(), TARGET_FLOOR)
+                && atLeastOrSkipped(fat, goal.fatGoal(), TARGET_FLOOR);
+
+        if (caloriesHit && macrosHit) {
+            return DailyGoalStatus.HIT;
+        }
+        if (caloriesHit) {
+            return DailyGoalStatus.ALMOST;
+        }
+        return DailyGoalStatus.MISSED;
+    }
+
+    private boolean atLeastOrSkipped(BigDecimal value, BigDecimal goal, BigDecimal multiplier) {
+        return goal.compareTo(BigDecimal.ZERO) <= 0 || atLeast(value, goal, multiplier);
+    }
+
+    private boolean atLeast(BigDecimal value, BigDecimal goal, BigDecimal multiplier) {
+        return value.compareTo(goal.multiply(multiplier)) >= 0;
+    }
+
+    private boolean atMost(BigDecimal value, BigDecimal goal, BigDecimal multiplier) {
+        return value.compareTo(goal.multiply(multiplier)) <= 0;
     }
 
     private List<DailyLogResponse> entriesForDate(
