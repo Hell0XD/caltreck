@@ -48,7 +48,16 @@ export class DateUtils {
     const mondayOffset = (start.getDay() + 6) % 7;
     start.setDate(start.getDate() - mondayOffset);
 
-    return Array.from({ length: 42 }, (_, index) => {
+    const end = this.fromIso(this.monthStart(iso));
+    end.setMonth(end.getMonth() + 1);
+    end.setDate(end.getDate() - 1);
+    const sundayOffset = (7 - end.getDay()) % 7;
+    end.setDate(end.getDate() + sundayOffset);
+
+    const dayCount =
+      Math.round((end.getTime() - start.getTime()) / (24 * 60 * 60 * 1000)) + 1;
+
+    return Array.from({ length: dayCount }, (_, index) => {
       const date = new Date(start);
       date.setDate(start.getDate() + index);
       return this.toIso(date);
