@@ -65,6 +65,7 @@ export type CaltrekContextValue = {
   favoriteFoods: Food[];
   dashboardLoading: boolean;
   searchLoading: boolean;
+  openFoodSearch: (meal?: MealType) => void;
   openAddFood: (food: Food, meal?: MealType) => void;
   startEdit: (entry: LogEntry) => void;
   requestDelete: (entry: LogEntry) => void;
@@ -102,6 +103,7 @@ export function CaltrekProvider({ children }: { children: ReactNode }) {
   const [quantity, setQuantity] = useState(1);
   const [quantityMode, setQuantityMode] = useState<QuantityMode>("servings");
   const [meal, setMeal] = useState<MealType>("breakfast");
+  const [pendingSearchMeal, setPendingSearchMeal] = useState<MealType | null>(null);
   const [toast, setToast] = useState<string | null>(null);
   const [foodEditorOpen, setFoodEditorOpen] = useState(false);
   const [foodEditorTarget, setFoodEditorTarget] = useState<Food | null>(null);
@@ -182,11 +184,17 @@ export function CaltrekProvider({ children }: { children: ReactNode }) {
     return () => window.clearTimeout(timeout);
   }, [toast]);
 
-  function openAddFood(food: Food, nextMeal: MealType = "breakfast") {
+  function openFoodSearch(nextMeal?: MealType) {
+    setPendingSearchMeal(nextMeal ?? null);
+    router.push("/search");
+  }
+
+  function openAddFood(food: Food, nextMeal?: MealType) {
     setSelectedFood(food);
     setQuantity(food.defaultServings ?? 1);
     setQuantityMode("servings");
-    setMeal(nextMeal);
+    setMeal(nextMeal ?? pendingSearchMeal ?? "breakfast");
+    setPendingSearchMeal(null);
   }
 
   function selectDate(date: string) {
@@ -451,6 +459,7 @@ export function CaltrekProvider({ children }: { children: ReactNode }) {
     favoriteFoods: libraryFoods.filter((food) => food.favorite),
     dashboardLoading: queries.logs.isPending || queries.profile.isPending,
     searchLoading: query.trim() !== searchTerm || queries.search.isFetching,
+    openFoodSearch,
     openAddFood,
     startEdit,
     requestDelete: setDeleteTarget,

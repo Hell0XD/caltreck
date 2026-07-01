@@ -1,6 +1,4 @@
 "use client";
-
-import Link from "next/link";
 import { LayoutGroup, motion, useReducedMotion } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
 import {
@@ -58,6 +56,7 @@ export function TodayDashboard() {
     setHistoryMonth,
     history,
     historyLoading,
+    openFoodSearch,
     startEdit,
     requestDelete,
   } = useCaltrek();
@@ -80,15 +79,13 @@ export function TodayDashboard() {
           </h1>
         </div>
         <Button
-          asChild
           size="lg"
           className="rounded-xl px-4 shadow-[var(--shadow-button)]"
           data-tour="add-food"
+          onClick={() => openFoodSearch()}
         >
-          <Link href="/search">
-            <Plus className="size-4" />
-            Add food
-          </Link>
+          <Plus className="size-4" />
+          Add food
         </Button>
       </header>
 
@@ -138,6 +135,7 @@ export function TodayDashboard() {
                     key={meal}
                     meal={meal}
                     entries={logs.filter((entry) => entry.meal === meal)}
+                    onAdd={() => openFoodSearch(meal)}
                     onEdit={startEdit}
                     onDelete={requestDelete}
                   />
@@ -415,11 +413,13 @@ function StatusBadge({ status }: { status: GoalStatus }) {
 function MealSection({
   meal,
   entries,
+  onAdd,
   onEdit,
   onDelete,
 }: {
   meal: MealType;
   entries: LogEntry[];
+  onAdd: () => void;
   onEdit: (entry: LogEntry) => void;
   onDelete: (entry: LogEntry) => void;
 }) {
@@ -442,16 +442,14 @@ function MealSection({
             </div>
           </div>
           <Button
-            asChild
             variant="outline"
             size="icon"
             className="rounded-xl"
             aria-label={`Add ${MealUtils.label(meal)}`}
             title={`Add ${MealUtils.label(meal)}`}
+            onClick={onAdd}
           >
-            <Link href="/search">
-              <Plus className="size-4" />
-            </Link>
+            <Plus className="size-4" />
           </Button>
         </div>
         <div className="mt-3 space-y-2">

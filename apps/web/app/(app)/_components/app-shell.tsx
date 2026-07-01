@@ -5,7 +5,7 @@ import type { Route } from "next";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion, useReducedMotion } from "framer-motion";
-import { CalendarDays, ChevronRight, Heart, ScanLine, Search, UserRound } from "lucide-react";
+import { CalendarDays, ChevronRight, Heart, Search, UserRound } from "lucide-react";
 import { BrandBlock } from "@/components/caltrek/brand-block";
 import { MobileHeader } from "@/components/caltrek/mobile-header";
 import { ThemeToggle } from "@/components/caltrek/theme-toggle";
@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { useCaltrek } from "@/hooks/use-caltrek";
 import { cn } from "@/lib/utils";
 
-type AppRoute = "journal" | "search" | "scan" | "library" | "account";
+type AppRoute = "journal" | "search" | "library" | "account";
 
 const navItems: Array<{
   route: AppRoute;
@@ -23,7 +23,6 @@ const navItems: Array<{
 }> = [
   { route: "journal", href: "/journal", label: "Journal", icon: <CalendarDays /> },
   { route: "search", href: "/search", label: "Search", icon: <Search /> },
-  { route: "scan", href: "/scan", label: "Scan", icon: <ScanLine /> },
   { route: "library", href: "/library", label: "Library", icon: <Heart /> },
 ];
 
@@ -42,7 +41,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <ThemeToggle className="shrink-0" />
           </div>
           <DesktopNav activeRoute={activeRoute} />
-          <UserPanel email={user.email} />
+          <UserPanel name={`${user.firstName} ${user.lastName}`.trim() || user.email} />
         </aside>
 
         <section className="mx-auto flex min-h-dvh w-full max-w-md flex-col pb-24 lg:max-w-none lg:pb-0">
@@ -78,7 +77,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   );
 }
 
-function UserPanel({ email }: { email: string }) {
+function UserPanel({ name }: { name: string }) {
   return (
     <Link
       href="/account"
@@ -87,7 +86,7 @@ function UserPanel({ email }: { email: string }) {
     >
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-semibold">Signed in</p>
-        <p className="mt-0.5 truncate text-xs text-[var(--muted-foreground)]">{email}</p>
+        <p className="mt-0.5 truncate text-xs text-[var(--muted-foreground)]">{name}</p>
       </div>
       <ChevronRight className="size-4 shrink-0 text-[var(--muted-foreground)]" />
     </Link>
@@ -99,7 +98,7 @@ function routeFromPath(pathname: string): AppRoute {
     return "search";
   }
   if (pathname.startsWith("/scan")) {
-    return "scan";
+    return "search";
   }
   if (pathname.startsWith("/library")) {
     return "library";
@@ -116,7 +115,7 @@ function BottomNav({ activeRoute }: { activeRoute: AppRoute }) {
       data-tour="mobile-navigation"
       className="fixed inset-x-0 bottom-0 z-30 border-t border-[var(--border-strong)] bg-[color-mix(in_srgb,var(--card)_94%,transparent)] px-3 pb-[max(env(safe-area-inset-bottom),0.5rem)] pt-2 backdrop-blur lg:hidden"
     >
-      <div className="mx-auto grid max-w-md grid-cols-4 gap-1">
+      <div className="mx-auto grid max-w-md grid-cols-3 gap-1">
         {navItems.map((item) => (
           <NavLink key={item.route} activeRoute={activeRoute} {...item} />
         ))}

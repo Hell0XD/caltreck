@@ -1,6 +1,7 @@
 "use client";
 
-import { Plus, Search, X } from "lucide-react";
+import Link from "next/link";
+import { Plus, ScanLine, Search, X } from "lucide-react";
 import { useCaltrek } from "@/hooks/use-caltrek";
 import { FoodList } from "@/components/caltrek/food-list";
 import { EmptyState } from "@/components/caltrek/empty-state";
@@ -32,10 +33,18 @@ export default function SearchPage() {
         )}`}
         title="Add food"
         action={
-          <Button size="lg" className="px-4" onClick={openCreateFood}>
-            <Plus className="size-4" />
-            Manual
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button size="lg" className="px-4" onClick={openCreateFood}>
+              <Plus className="size-4" />
+              Manual
+            </Button>
+            <Button asChild size="lg" variant="outline" className="px-4">
+              <Link href="/scan">
+                <ScanLine className="size-4" />
+                Scan
+              </Link>
+            </Button>
+          </div>
         }
       />
       <div className="relative">

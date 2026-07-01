@@ -34,7 +34,7 @@ export function AppTour({ run, onDone }: { run: boolean; onDone: () => void }) {
       },
       {
         target: isDesktop ? "[data-tour='desktop-navigation']" : "[data-tour='mobile-navigation']",
-        content: "Move between the journal, search, scanner, and food library from here.",
+        content: "Move between the journal, search, and food library from here.",
       },
       {
         target: isDesktop ? "[data-tour='desktop-account-link']" : "[data-tour='mobile-account-link']",
