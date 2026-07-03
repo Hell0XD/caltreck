@@ -7,6 +7,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.caltrek.api.common.ActivityLevel;
+import com.caltrek.api.common.Gender;
 import com.caltrek.api.common.NutritionGoal;
 import com.caltrek.api.common.UnitSystem;
 import com.caltrek.api.common.UserTimezone;
@@ -66,7 +67,7 @@ class AuthServiceTests {
                 "Updated",
                 "Person",
                 UserTimezone.EUROPE_PRAGUE,
-                "female",
+                Gender.FEMALE,
                 LocalDate.of(1991, 4, 20),
                 new BigDecimal("168"),
                 ActivityLevel.MODERATE,
@@ -102,7 +103,7 @@ class AuthServiceTests {
                     assertThat(response.firstName()).isEqualTo("Updated");
                     assertThat(response.lastName()).isEqualTo("Person");
                     assertThat(response.timezone()).isEqualTo(UserTimezone.EUROPE_PRAGUE);
-                    assertThat(response.gender()).isEqualTo("female");
+                    assertThat(response.gender()).isEqualTo(Gender.FEMALE);
                     assertThat(response.dateOfBirth()).isEqualTo(LocalDate.of(1991, 4, 20));
                     assertThat(response.heightCm()).isEqualByComparingTo("168");
                     assertThat(response.activityLevel()).isEqualTo(ActivityLevel.MODERATE);

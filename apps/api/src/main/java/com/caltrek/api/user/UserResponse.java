@@ -1,6 +1,7 @@
 package com.caltrek.api.user;
 
 import com.caltrek.api.common.ActivityLevel;
+import com.caltrek.api.common.Gender;
 import com.caltrek.api.common.NutritionGoal;
 import com.caltrek.api.common.UnitSystem;
 import com.caltrek.api.common.UserTimezone;
@@ -14,7 +15,7 @@ public record UserResponse(
         @NotNull String email,
         @NotNull String firstName,
         @NotNull String lastName,
-        String gender,
+        Gender gender,
         LocalDate dateOfBirth,
         BigDecimal heightCm,
         ActivityLevel activityLevel,
@@ -40,7 +41,7 @@ public record UserResponse(
                 user.email(),
                 user.firstName(),
                 user.lastName(),
-                user.gender(),
+                Gender.fromStored(user.gender()),
                 user.dateOfBirth(),
                 user.heightCm(),
                 ActivityLevel.fromStored(user.activityLevel()),

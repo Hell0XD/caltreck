@@ -1,6 +1,7 @@
 package com.caltrek.api.auth;
 
 import com.caltrek.api.common.ActivityLevel;
+import com.caltrek.api.common.Gender;
 import com.caltrek.api.common.NutritionGoal;
 import com.caltrek.api.common.UnitSystem;
 import com.caltrek.api.common.UserTimezone;
@@ -14,7 +15,7 @@ public record ProfileUpdateRequest(
         @NotBlank String firstName,
         @NotBlank String lastName,
         @NotNull UserTimezone timezone,
-        String gender,
+        Gender gender,
         LocalDate dateOfBirth,
         @DecimalMin(value = "0.0", inclusive = false) BigDecimal heightCm,
         ActivityLevel activityLevel,

@@ -1,9 +1,11 @@
-import type { ActivityLevel, NutritionGoal } from "@caltrek/api-client";
+import type { ActivityLevel, Gender, NutritionGoal } from "@caltrek/api-client";
 import type { MacroGoals } from "./models";
 
-export type GenderValue = "male" | "female" | "other";
+export type GenderValue = Gender;
 export type ActivityLevelValue = ActivityLevel;
 export type NutritionGoalValue = NutritionGoal;
+
+export const genderValues = ["male", "female", "other"] as const satisfies readonly Gender[];
 
 export const activityLevelValues = [
   "sedentary",

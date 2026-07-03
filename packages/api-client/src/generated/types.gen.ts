@@ -8,6 +8,8 @@ export type UserTimezone = 'Europe/Prague' | 'Europe/Berlin' | 'Europe/London' |
 
 export type UnitSystem = 'metric' | 'imperial';
 
+export type Gender = 'male' | 'female' | 'other';
+
 export type ActivityLevel = 'sedentary' | 'light' | 'moderate' | 'active' | 'very_active';
 
 export type NutritionGoal = 'lose' | 'maintain' | 'gain';
@@ -18,7 +20,7 @@ export type ProfileUpdateRequest = {
     firstName: string;
     lastName: string;
     timezone: UserTimezone;
-    gender?: string;
+    gender?: Gender;
     dateOfBirth?: string;
     heightCm?: number;
     activityLevel?: ActivityLevel;
@@ -37,7 +39,7 @@ export type UserResponse = {
     email: string;
     firstName: string;
     lastName: string;
-    gender?: string;
+    gender?: Gender;
     dateOfBirth?: string;
     heightCm?: number;
     activityLevel?: ActivityLevel;

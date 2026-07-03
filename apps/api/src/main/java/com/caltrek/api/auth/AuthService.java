@@ -140,7 +140,7 @@ public class AuthService {
                         user.passwordHash(),
                         request.firstName().trim(),
                         request.lastName().trim(),
-                        valueOrExisting(request.gender(), user.gender()),
+                        request.gender() == null ? user.gender() : request.gender().value(),
                         valueOrExisting(request.dateOfBirth(), user.dateOfBirth()),
                         valueOrExisting(request.heightCm(), user.heightCm()),
                         request.activityLevel() == null ? user.activityLevel() : request.activityLevel().value(),
