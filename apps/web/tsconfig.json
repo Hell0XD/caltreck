@@ -4,8 +4,7 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["./*"],
-      "@caltrek/api-client": ["../../packages/api-client/src"],
-      "@caltrek/shared-types": ["../../packages/shared-types/src"]
+      "@caltrek/api-client": ["../../packages/api-client/src"]
     },
     "plugins": [
       {

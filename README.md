@@ -8,7 +8,7 @@ This repository is named `caltrek` and is structured as a monorepo.
 
 - Frontend: Next.js App Router, TypeScript, Tailwind CSS, shadcn/ui, Vaul, Framer Motion.
 - Backend: Java 25, Spring Boot 3.x, WebFlux, Spring Data R2DBC, PostgreSQL.
-- Integrations: device camera barcode scanning, Nutridatabaze.cz, OpenFoodFacts.
+- Integrations: device camera barcode scanning and OpenFoodFacts.
 - Tooling: pnpm workspaces, Gradle Kotlin DSL, Docker Compose.
 
 ## Structure
@@ -18,7 +18,6 @@ apps/
   web/      Next.js PWA shell
   api/      Spring Boot WebFlux API shell
 packages/
-  shared-types/  Shared TypeScript contracts
   config/        Shared frontend tooling config
 infra/
   postgres/migrations/  Database migrations
