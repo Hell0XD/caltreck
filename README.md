@@ -1,8 +1,6 @@
 # caltrek
 
-caltrek is a mobile-first calorie tracking PWA for fast food search, barcode scanning, daily macro logging, and offline-aware use.
-
-This repository is named `caltrek` and is structured as a monorepo.
+caltrek is a calorie tracker for searching foods, scanning barcodes, and logging daily calories and macros. It's built for mobile browsers, with offline support.
 
 ## Stack
 
@@ -15,13 +13,12 @@ This repository is named `caltrek` and is structured as a monorepo.
 
 ```text
 apps/
-  web/      Next.js PWA shell
-  api/      Spring Boot WebFlux API shell
+  web/      Next.js frontend
+  api/      Spring Boot API
 packages/
   config/        Shared frontend tooling config
 infra/
   postgres/migrations/  Database migrations
-docs/       Source-of-truth planning documents
 ```
 
 ## Prerequisites
@@ -30,8 +27,6 @@ docs/       Source-of-truth planning documents
 - pnpm 10.x through Corepack.
 - JDK 25.
 - Docker Desktop or a compatible Docker runtime.
-
-The current scaffold intentionally does not vendor dependencies. Install them after prerequisites are available.
 
 ## Setup
 
@@ -44,9 +39,9 @@ docker compose up -d postgres
 
 ## Database Migrations
 
-Database migrations are managed by Flyway and live in `infra/postgres/migrations`.
+Flyway runs the database migrations in `infra/postgres/migrations`.
 
-Migration files must use Flyway naming:
+Name migration files using this format:
 
 ```text
 V<version>__<description>.sql
@@ -65,9 +60,8 @@ cd apps/api
 gradle flywayMigrate
 ```
 
-The Gradle Flyway task uses the `flywayDatabase` configuration for PostgreSQL support. In Kotlin
-DSL this is declared with `add("flywayDatabase", "...")`. Keep `flyway-database-postgresql` there
-when upgrading Flyway, otherwise Flyway can fail with
+Keep `flyway-database-postgresql` in Gradle's `flywayDatabase` configuration when
+upgrading Flyway. Without it, migrations can fail with
 `No Flyway database plugin found to handle jdbc:postgresql://...`.
 
 Flyway defaults to the local Docker database:
@@ -95,13 +89,12 @@ cd apps/api
 gradle bootRun
 ```
 
-OpenAPI and Swagger UI are available after the backend starts:
+With the backend running:
 
 - OpenAPI JSON: `http://localhost:8080/v3/api-docs`
 - Swagger UI: `http://localhost:8080/swagger-ui.html`
 
-Generate the `@caltrek/api-client` package from the OpenAPI definition after backend
-contract changes:
+Regenerate `@caltrek/api-client` after changing the API:
 
 ```bash
 pnpm generate:api
@@ -131,7 +124,3 @@ Backend checks:
 cd apps/api
 gradle test
 ```
-
-## Documentation
-
-Planning documents live in `docs/` and should be updated before changing product scope or architecture.
